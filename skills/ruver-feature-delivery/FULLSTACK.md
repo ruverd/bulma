@@ -20,15 +20,15 @@ scope: fullstack
 repos:
   frontend: <from env / AGENTS.md>
   backend: <from env / AGENTS.md>
-branch: <tracker_branch or feature/<id-lowercase>>
+branch: feature/<id-lowercase>
 ```
 
 Empty sibling → do not enter this path.
 
 ## 2. One branch
 
-1. the tracker's branch name if it exists
-2. else `feature/<id-lowercase>`
+`feature/<id-lowercase>` on both repos
+([JOBS.md](../ruver-bus/JOBS.md) §Worktree).
 
 **Forbidden:** different branch names across repos unless the user asked.
 

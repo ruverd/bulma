@@ -42,7 +42,7 @@ Adapted grill: [GRILL.md](GRILL.md). ASK the user only as a last resort.
 /ruver-fd … --no-pr
 ```
 
-Checkout is the task branch: tracker name or `feature/<id-lowercase>`.
+Checkout is `feature/<id-lowercase>`.
 Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 
 ## Orchestrator loop

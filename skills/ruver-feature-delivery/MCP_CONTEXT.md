@@ -110,7 +110,7 @@ get_issue on related/parent/children
 extract_images if screenshots matter
 ```
 
-Branch: `gitBranchName` or `feature/<id-lower>`.
+Branch: [JOBS.md](../ruver-bus/JOBS.md) (`feature/<id-lowercase>`).
 
 ### Figma
 

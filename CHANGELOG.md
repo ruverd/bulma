@@ -4,6 +4,14 @@ Notable changes per release. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), pre-1.0.
 
+## [Unreleased]
+
+### Fixed
+
+- Tracker checkout is always `feature/<id-lowercase>` (`DEV-4525` →
+  `feature/dev-4525`). Host `{login}/<id>` worktrees and tracker
+  `gitBranchName` no longer win.
+
 ## [0.9.0] - 2026-09-03
 
 ### Added
