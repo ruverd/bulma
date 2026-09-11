@@ -46,15 +46,18 @@ the official binary or npm) and Chrome, and warns if `gh` is older
 than 2.99 (`--attach`). Plugin install does not; run `ruver setup`
 for that CLI.
 
-Install works by symlinking, and `ruver update` relies on those links to pick
-up new commits. Windows Git Bash turns `ln -s` into a silent copy unless
+Install uses symlinks for Grok, Claude, and Cursor homes. When Codex is
+installed, shared `~/.agents` home gets managed copies because its plugin
+detector namespaces symlink targets below `plugin.json`; installing a second
+copy under `~/.codex` would duplicate every skill. `ruver update` refreshes
+managed copies. Windows Git Bash turns
+`ln -s` into a silent copy unless
 Developer Mode is on and `MSYS=winsymlinks:nativestrict` is set, so `setup`
 checks whether symlinks actually work and refuses rather than installing
 something that will never update. WSL is the supported path on Windows.
 
-That clones the repo, links `skills/<name>` into
-`~/.agents/skills` (and Grok, Claude, Cursor, Codex), and puts `ruver`
-on your PATH.
+That clones the repo, installs `skills/<name>` into `~/.agents/skills` and each
+detected host, and puts `ruver` on your PATH.
 
 ```bash
 ruver update     # git pull --ff-only main, then relink
@@ -183,6 +186,10 @@ load a model-invoked skill or an engine, but it never spawns another
 graph as a child.
 
 Deep pages live under [docs/commands](docs/commands/README.md).
+
+Codex submits `/ruver-*` as normal prompt text and routes it to matching
+standalone skill. Its slash popup lists built-in commands only; `$ruver-*` and
+skill menu provide autocomplete for same workflows.
 
 ### Graphs
 
@@ -336,7 +343,8 @@ skills/                         # this repo
   commands/                     # slash aliases
 ```
 
-One flat directory per skill, in git and after install alike. That is what
+One flat directory per skill, in git and after install alike. Codex copies that
+directory; other homes link it. That is what
 makes `../other-skill/FILE.md` resolve in both places, and `tests/repo.sh`
 fails any link that leaves the skills root. `category` in the frontmatter says
 whether a skill is a graph, an engine, or a lib primitive. Slash names stay

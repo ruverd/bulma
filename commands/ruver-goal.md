@@ -7,4 +7,4 @@ argument-hint: "<ticket | PR url | status | cancel>"
 
 Follow **`../skills/ruver-goal/SKILL.md`**.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.

@@ -9,7 +9,7 @@ Short alias: **`/qa`**.
 
 Follow **`../skills/ruver-qa/SKILL.md`** in full.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.
 
 PR link is required. If the user passed a number, resolve it in the
 current repo. If nothing was passed, ask.

@@ -15,6 +15,7 @@ assert_eq() {
 
 assert_file() { [[ -e "$1" ]] || fail "missing $1"; }
 assert_link() { [[ -L "$1" ]] || fail "not a symlink: $1"; }
+assert_dir() { [[ -d "$1" ]] || fail "not a directory: $1"; }
 assert_not() { [[ ! -e "$1" ]] || fail "should not exist: $1"; }
 # -e follows symlinks, so a dangling link satisfies assert_not. This one does not.
 assert_gone() { [[ ! -e "$1" && ! -L "$1" ]] || fail "should be gone: $1"; }
@@ -173,9 +174,18 @@ ok setup-only-existing-homes
 ALL_HOME="$(mktemp -d "${TMPDIR:-/tmp}/ruver-all.XXXXXX")"
 HOME="$ALL_HOME" XDG_CONFIG_HOME="$ALL_HOME/.config" \
   XDG_DATA_HOME="$ALL_HOME/.local/share" "$INSTALL" setup --all >/dev/null
-for h in claude grok cursor codex; do
+for h in claude grok cursor; do
   assert_link "$ALL_HOME/.$h/skills/unslop"
 done
+assert_not "$ALL_HOME/.codex/skills/unslop"
+assert_dir "$ALL_HOME/.agents/skills/unslop"
+[[ ! -L "$ALL_HOME/.agents/skills/unslop" ]] \
+  || fail "Shared skills must be copies when Codex is installed"
+grep -qx 'managed-by=ruver' \
+  "$ALL_HOME/.agents/skills/unslop/.ruver-installed-copy" \
+  || fail "shared Codex skill copy missing ownership marker"
+assert_file "$ALL_HOME/.agents/skills/ruver-developer/SKILL.md"
+assert_file "$ALL_HOME/.agents/skills/ruver-fd/SKILL.md"
 ok setup-all-hosts
 
 ONE_HOME="$(mktemp -d "${TMPDIR:-/tmp}/ruver-one.XXXXXX")"
@@ -318,14 +328,15 @@ echo '# gone' >"$mini/skills/gone/SKILL.md"
 printf -- '---\ndescription: gone\n---\n' >"$mini/commands/gone.md"
 HOME="$PR_HOME" XDG_CONFIG_HOME="$PR_HOME/.config" \
   XDG_DATA_HOME="$PR_HOME/.local/share" "$mini/install.sh" setup --all >/dev/null
-assert_link "$PR_HOME/.agents/skills/gone"
+assert_dir "$PR_HOME/.agents/skills/gone"
 assert_link "$PR_HOME/.claude/commands/gone.md"
+assert_not "$PR_HOME/.codex/skills/gone"
 rm -rf "$mini/skills/gone" "$mini/commands/gone.md"
 HOME="$PR_HOME" XDG_CONFIG_HOME="$PR_HOME/.config" \
   XDG_DATA_HOME="$PR_HOME/.local/share" "$mini/install.sh" setup --all >/dev/null
 assert_gone "$PR_HOME/.agents/skills/gone"
 assert_gone "$PR_HOME/.claude/commands/gone.md"
-assert_link "$PR_HOME/.agents/skills/unslop"
+assert_dir "$PR_HOME/.agents/skills/unslop"
 ok setup-prunes-removed-links
 
 rm -rf "$PR_HOME"

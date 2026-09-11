@@ -7,4 +7,4 @@ argument-hint: "<resume | status>"
 
 Follow **`../skills/ruver-bus/SKILL.md`**.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.

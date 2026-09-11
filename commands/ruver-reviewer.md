@@ -9,6 +9,6 @@ Short alias: **`/reviewer`**.
 
 Follow **`../skills/ruver-reviewer/SKILL.md`** in full.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.
 
 Start with `/ruver-code-review`. Draft DEFER is expected.

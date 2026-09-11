@@ -116,7 +116,7 @@ depends on. See
 |---|---|
 | Grok | `/developer` (command alias) or `/ruver-developer` (skill name) |
 | Claude Code | `/developer` or `/ruver-developer` |
-| Codex | `$ruver-developer` or the skill menu |
+| Codex | `/ruver-developer` as prompt text, `$ruver-developer`, or skill menu |
 | Cursor | `/ruver-developer` |
 
 Short command aliases (Grok / Claude, via `commands/`): `/developer`,

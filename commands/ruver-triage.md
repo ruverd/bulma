@@ -7,7 +7,7 @@ argument-hint: "<QA handoff or PR url>"
 
 Follow **`../skills/ruver-triage/SKILL.md`** in full.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.
 
 PR link is required. Investigate first. Decide second. Act third.
 

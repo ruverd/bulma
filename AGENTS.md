@@ -8,7 +8,7 @@ Marketplace of Ruver agent skills. Not an application repo.
   `../<name>/FILE.md` (`../ruver-bus/PROTOCOL.md`). No link may leave the skills
   root: the repo root is unreachable once a skill is installed. The host contract
   is the `ruver-host` skill, not a root file, for this reason.
-- `ruver setup` links `skills/<name>` to `~/.agents/skills/<name>`. Git and installed layouts match, so no link may leave the skills root.
+- `ruver setup` links `skills/<name>` into shared/host skill homes. When Codex is installed, shared `~/.agents` home gets managed copies so Codex does not namespace standalone skills through root `plugin.json` or discover duplicates. Installed layout still matches git, so no link may leave the skills root.
 - Short command aliases (`/developer`, `/reviewer`, `/lstm`, `/qa`) live in `commands/`. Skill ids stay `ruver-*`.
 - Do not write `.ruver-*` state in this repo. Runtime state belongs in `~/.ruver/<slug>/`. User/project memory: `~/.ruver/memory.md` and `$RUVER_ROOT/memory.md` (`ruver-memory`).
 - Graphs are host-agnostic. Harness APIs live in `ruver-host`. See `docs/GRAPH_ENGINEER.md`.

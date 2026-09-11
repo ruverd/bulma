@@ -9,7 +9,7 @@ Short alias: **`/developer`**.
 
 Follow **`../skills/ruver-developer/SKILL.md`** in full.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.
 
 Parse ARGS first. Delivery → `/ruver-feature-delivery`. Then gates. Then `ruver_qa`.
 ASK last resort. Chat: `ruver-memory`. Unslop always. Never merge. Ready only after QA PASS.

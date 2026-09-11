@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver Memory"
+  short_description: "Read or save durable Ruver preferences"
+  default_prompt: "Use $ruver-memory to read or save this durable preference."

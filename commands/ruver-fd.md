@@ -5,7 +5,7 @@ argument-hint: "<goal|ticket|resume> [--no-pr]"
 
 # /ruver-fd
 
-Alias of **`/ruver-feature-delivery`**. **Args:** `$ARGUMENTS`
+Alias of **`/ruver-feature-delivery`**. Use arguments from the user request.
 
 Follow **`/ruver-feature-delivery` in full** (same Load, same orchestrator) —
 this alias defines no steps of its own.
