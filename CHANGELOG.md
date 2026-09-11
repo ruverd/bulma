@@ -11,7 +11,10 @@ Notable changes per release. Format follows
 - Codex standalone installs now copy skills instead of symlinking them, keeping
   public ids such as `$ruver-developer` instead of plugin-namespaced ids.
 - Command templates no longer use features rejected by Codex command-to-skill
-  migration. Every `/ruver-*` entry now remains discoverable after migration.
+  migration.
+- Setup output and docs no longer claim Codex accepts direct `/ruver-*`
+  commands. Codex users invoke the same standalone skills with `$ruver-*` or
+  `/skills`.
 - Added `$ruver-fd` as a standalone alias for `ruver-feature-delivery`.
 
 ## [0.9.0] - 2026-09-03

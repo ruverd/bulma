@@ -66,6 +66,8 @@ readlink "$TEST_HOME/.local/bin/ruver" | grep -q 'install.sh' || fail "bin not i
 assert_file "$TEST_HOME/.ruver"
 assert_not "$TEST_HOME/.ruver/memory.md"
 grep -q 'agent-browser' /tmp/ruver-setup.out || fail "setup should mention agent-browser"
+grep -q "Codex: \$ruver-developer or /skills" /tmp/ruver-setup.out \
+  || fail "setup should print supported Codex invocation"
 ok setup
 
 # PATH snippet once. TEST_HOME/.local/bin is not on PATH, so setup must write the block.

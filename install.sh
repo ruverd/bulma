@@ -362,7 +362,9 @@ cmd_setup() {
   ensure_path_snippet
   ensure_agent_browser
   echo
-  echo "done. restart the agent session, then run /developer"
+  echo "done. restart the agent session"
+  echo "  Codex: \$ruver-developer or /skills"
+  echo "  Claude/Grok: /developer or /ruver-developer"
   echo "  export PATH=\"$BIN_DIR:\$PATH\""
 }
 

@@ -49,8 +49,8 @@ for that CLI.
 Install uses symlinks for Grok, Claude, and Cursor homes. When Codex is
 installed, shared `~/.agents` home gets managed copies because its plugin
 detector namespaces symlink targets below `plugin.json`; installing a second
-copy under `~/.codex` would duplicate every skill. `ruver update` refreshes
-managed copies. Windows Git Bash turns
+copy under `~/.codex/skills` would duplicate every skill. `ruver update`
+refreshes managed copies. Windows Git Bash turns
 `ln -s` into a silent copy unless
 Developer Mode is on and `MSYS=winsymlinks:nativestrict` is set, so `setup`
 checks whether symlinks actually work and refuses rather than installing
@@ -187,9 +187,10 @@ graph as a child.
 
 Deep pages live under [docs/commands](docs/commands/README.md).
 
-Codex submits `/ruver-*` as normal prompt text and routes it to matching
-standalone skill. Its slash popup lists built-in commands only; `$ruver-*` and
-skill menu provide autocomplete for same workflows.
+Codex reserves direct `/name` entries for built-in commands. Use
+`$ruver-developer` or `/skills`. Claude and Grok keep direct
+`/ruver-developer` and short aliases such as `/developer`. This difference
+comes from Codex's command parser, not skill installation.
 
 ### Graphs
 
