@@ -15,7 +15,7 @@ Follow:
 
 ## Must
 
-1. Same **branch** on frontend and backend (`tracker_branch` / `feature/<id-lowercase>`).
+1. Same **branch** on frontend and backend (`feature/<id-lowercase>`).
 2. Sibling names from PRODUCT.md (env / AGENTS.md). Never invent repo names.
 3. Create or reuse **worktrees** on **both** repos with that name (`git worktree`; Orca if it is up).
 4. Host `spawn_worker` on each worktree. Orca orchestration is optional, not a gate.

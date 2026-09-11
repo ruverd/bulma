@@ -63,7 +63,12 @@ Worker jobs use `.ruver-bus/jobs/<id>/STATE.md` only.
 
 Every task, including foreground, gets its own worktree and branch from
 `origin/main` (or the repo default). If the host already created a
-worktree, keep that branch.
+worktree, keep the **directory**. The **git branch** is still the name
+below. Host isolation on `{login}/dev-4525` (or any tracker
+`gitBranchName` that is not `feature/<id-lowercase>`) is not the task
+branch: `git checkout -b feature/<id-lowercase>` from `origin/main` if
+the name is free, else check that name out. Do not open the PR from
+`{login}/<id>`.
 
 If a UI route already exists, capture Before after this worktree exists
 and before the first RED
@@ -85,10 +90,13 @@ git worktree add ".worktrees/<id>" -b "<branch>" origin/main
 
 Branch name:
 
-- Tracker task: `feature/<id-lowercase>` (or the tracker's branch name).
+- Tracker id (`DEV-4525`, `ABC-123`): always `feature/<id-lowercase>`.
+  `DEV-4525` → `feature/dev-4525`. Ignore tracker `gitBranchName`.
+  Ignore `{login}/<id>`.
 - Free goal: `feature/<slug>`.
 - Name taken: append `-<n>`. Never reuse. Never force.
-- Resume with STATE: reuse the existing branch.
+- Resume with STATE: reuse STATE.branch only when it already matches
+  this rule. Else move to `feature/<id-lowercase>`.
 
 Never touch another agent's worktree, branch, or uncommitted files.
 Do not nest a worktree inside another worktree.

@@ -17,8 +17,9 @@ extract_images if screenshots matter
 
 ## Branch
 
-1. Issue `gitBranchName` if it exists
-2. else `feature/<id-lowercase>`
+[JOBS.md](../ruver-bus/JOBS.md) §Worktree. Always
+`feature/<id-lowercase>` (`DEV-4525` → `feature/dev-4525`). Do not
+checkout the issue `gitBranchName`.
 
 Checkout before implementing. Shipper checks the branch.
 

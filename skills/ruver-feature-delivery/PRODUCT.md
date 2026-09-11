@@ -38,8 +38,9 @@ From the **goal**, not from this plugin:
 Do not STOP because Linear is missing on a local goal.
 STOP when the user pasted a tracker URL and that source cannot be read.
 
-Branch: tracker `gitBranchName` if any, else `feature/<id-lowercase>`
-if there is an id, else `feature/<slug>`. Checkout is the task branch.
+Branch: [JOBS.md](../ruver-bus/JOBS.md) §Worktree. Tracker id → always
+`feature/<id-lowercase>` (`DEV-4525` → `feature/dev-4525`). Not
+`gitBranchName`. Not `{login}/<id>`. No id → `feature/<slug>`.
 
 ## 3. Toolchain
 

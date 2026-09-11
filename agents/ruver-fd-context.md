@@ -31,7 +31,7 @@ Follow:
    - Print the exact error block from MCP_CONTEXT.md ("ERROR: MCP unreachable"), in English.
    - Return `result: blocked`. Stop. No implement.
 5. If accessible: fetch fully → `*-context.md` + `mcp-sources.md`.
-6. Tracker OK → checkout its branch name or `feature/<id-lowercase>`.
+6. Tracker OK → checkout `feature/<id-lowercase>` (JOBS.md §Worktree).
 7. Critical sources all OK → `mcp_gate: passed`.
 
 Never use `orca linear`. Never implement product code.
