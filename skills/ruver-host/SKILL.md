@@ -110,14 +110,17 @@ A missing optional capability is never `mcp_gate: failed`. That flag means a
 depends on. See
 [MCP_CONTEXT.md](../ruver-feature-delivery/MCP_CONTEXT.md).
 
-## Slash / invoke
+## Starting graphs
 
 | Host | How the user starts a graph |
 |---|---|
 | Grok | `/developer` (command alias) or `/ruver-developer` (skill name) |
 | Claude Code | `/developer` or `/ruver-developer` |
-| Codex | `/ruver-developer` as prompt text, `$ruver-developer`, or skill menu |
+| Codex | `$ruver-developer` or select `ruver-developer` through `/skills` |
 | Cursor | `/ruver-developer` |
+
+Codex reserves slash input for built-in commands. Never tell a Codex user to
+run `/ruver-*`; the parser rejects it before skill routing.
 
 Short command aliases (Grok / Claude, via `commands/`): `/developer`,
 `/reviewer`, `/lstm`, `/qa`, `/memory`. Same skill. Skill folder names
