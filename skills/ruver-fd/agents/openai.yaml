@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver FD"
+  short_description: "Deliver work through draft PR and green CI"
+  default_prompt: "Use $ruver-fd to deliver this ticket or resume its delivery."

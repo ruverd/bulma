@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver Triage"
+  short_description: "Classify and route QA product failures"
+  default_prompt: "Use $ruver-triage to investigate and classify this QA failure."

@@ -77,6 +77,10 @@
             "description": "Graph: deliver a Linear ticket via grill → spec → tickets → TDD (ruver-feature-delivery), then MERGEABLE + ruver-qa over the bus."
           },
           {
+            "name": "ruver-fd",
+            "description": "Alias for ruver-feature-delivery."
+          },
+          {
             "name": "ruver-feature-delivery",
             "description": "Use when delivering a ticket, bug."
           },

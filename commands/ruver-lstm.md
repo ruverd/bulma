@@ -9,7 +9,7 @@ Short alias: **`/lstm`**.
 
 Follow **`../skills/ruver-lstm/SKILL.md`** in full.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.
 
 Same PR. Same branch. Draft stays draft. Always rebase conflicts.
 Load `receiving-code-review` before any patch.

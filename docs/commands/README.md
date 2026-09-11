@@ -4,6 +4,9 @@ Every slash command the graph engineer runs. Skill ids stay `ruver-*`.
 Short aliases (`/developer`, `/reviewer`, `/lstm`, `/qa`) are command
 files.
 
+Claude and Grok use commands below exactly as written. Codex reserves direct
+`/name` entries for built-ins, so use `$ruver-developer` or `/skills`.
+
 ## Graphs (main thread)
 
 These **are** the graph engineer. They walk a GRAPH. They do not

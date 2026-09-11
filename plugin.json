@@ -1,7 +1,7 @@
 {
   "name": "ruver",
   "displayName": "Ruver",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Agent graphs that deliver a ticket or local goal, QA a PR with evidence, and handle incoming review comments. Never merges.",
   "author": {
     "name": "Ruver Dornelas",
@@ -47,6 +47,7 @@
     "./skills/ruver-bus",
     "./skills/ruver-code-review",
     "./skills/ruver-developer",
+    "./skills/ruver-fd",
     "./skills/ruver-feature-delivery",
     "./skills/ruver-goal",
     "./skills/ruver-host",

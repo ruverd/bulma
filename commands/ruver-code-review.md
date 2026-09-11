@@ -7,7 +7,7 @@ argument-hint: "[PR ...] [--deep|--light] [--force] [--dry-run]"
 
 Follow **`../skills/ruver-code-review/SKILL.md`** in full.
 
-**Args:** `$ARGUMENTS`
+Use arguments from the user request.
 
 ```
 /ruver-code-review 123

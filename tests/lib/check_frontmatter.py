@@ -37,6 +37,7 @@ MAX_DISCOVERY_CHARS = 8000
 # Progressive disclosure: SKILL.md says when to run and what the invariants are,
 # then points at GRAPH.md, nodes/ and references/ for the detail.
 MAX_SKILL_LINES = 250
+MAX_CODEX_MIGRATED_COMMAND_BYTES = 4000
 
 # Item 1: the LSTM acronym stays in bodies, never in a description a picker or
 # a marketplace listing renders.
@@ -129,6 +130,29 @@ def main():
             report(errors, path, root, "no frontmatter")
             continue
         check_common(errors, path, root, fields, COMMAND_KEYS)
+        with open(path, encoding="utf-8") as handle:
+            command_text = handle.read()
+        unsupported = []
+        if "$ARGUMENTS" in command_text:
+            unsupported.append("$ARGUMENTS")
+        if any(f"${number}" in command_text for number in range(10)):
+            unsupported.append("numbered argument placeholder")
+        if "{{" in command_text and "}}" in command_text:
+            unsupported.append("template expression")
+        if "!`" in command_text or "! `" in command_text:
+            unsupported.append("shell interpolation")
+        if any(token.startswith("@") and len(token) > 1
+               for token in command_text.split()):
+            unsupported.append("file mention")
+        if unsupported:
+            report(errors, path, root,
+                   "Codex command migration rejects: " + ", ".join(unsupported))
+        # Codex adds a small skill wrapper around each command and caps the
+        # rendered result at 4,000 bytes. Keep enough room for that wrapper.
+        if len(command_text.encode("utf-8")) > MAX_CODEX_MIGRATED_COMMAND_BYTES - 500:
+            report(errors, path, root,
+                   f"command is too large for Codex migration: "
+                   f"{len(command_text.encode('utf-8'))} bytes")
 
     for line in errors:
         print(line)
