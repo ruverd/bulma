@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver Developer"
+  short_description: "Deliver tickets and goals through QA"
+  default_prompt: "Use $ruver-developer to deliver this ticket or goal end to end."

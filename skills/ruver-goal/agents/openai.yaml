@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver Goal"
+  short_description: "Drive delivery until QA evidence lands"
+  default_prompt: "Use $ruver-goal to drive this delivery through final QA evidence."

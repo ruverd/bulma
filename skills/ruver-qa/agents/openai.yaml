@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver QA"
+  short_description: "QA a PR with product-level evidence"
+  default_prompt: "Use $ruver-qa to QA this PR and publish evidence."

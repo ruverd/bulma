@@ -11,6 +11,18 @@ Notable changes per release. Format follows
 - Tracker checkout is always `feature/<id-lowercase>` (`DEV-4525` →
   `feature/dev-4525`). Host `{login}/<id>` worktrees and tracker
   `gitBranchName` no longer win.
+## [0.9.1] - 2026-09-11
+
+### Fixed
+
+- Codex standalone installs now copy skills instead of symlinking them, keeping
+  public ids such as `$ruver-developer` instead of plugin-namespaced ids.
+- Command templates no longer use features rejected by Codex command-to-skill
+  migration.
+- Setup output and docs no longer claim Codex accepts direct `/ruver-*`
+  commands. Codex users invoke the same standalone skills with `$ruver-*` or
+  `/skills`.
+- Added `$ruver-fd` as a standalone alias for `ruver-feature-delivery`.
 
 ## [0.9.0] - 2026-09-03
 

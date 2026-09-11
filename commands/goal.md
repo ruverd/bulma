@@ -5,7 +5,7 @@ argument-hint: "<PR url | ticket | resume>"
 
 # /goal
 
-Alias of **`/ruver-goal`**. **Args:** `$ARGUMENTS`
+Alias of **`/ruver-goal`**. Use arguments from the user request.
 
 Follow **`../skills/ruver-goal/SKILL.md`** in full. This alias defines no
 steps of its own.

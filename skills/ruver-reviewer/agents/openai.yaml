@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruver Reviewer"
+  short_description: "Review a PR or branch and diagnose CI"
+  default_prompt: "Use $ruver-reviewer to review this PR or branch."

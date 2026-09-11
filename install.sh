@@ -292,7 +292,7 @@ selected_hosts() {
   echo "$out"
 }
 
-# Grok and Claude read agents/ and commands/; Cursor and Codex do not.
+# Grok and Claude read agents/ and commands/. Cursor and Codex use skills.
 host_has_agents() {
   case "$1" in
     claude|grok) return 0 ;;
@@ -303,24 +303,44 @@ host_has_agents() {
 install_for_hosts() {
   local hosts h
   hosts="$(selected_hosts)"
-  local skills_dirs=("$HOME/.agents/skills")
+  local shared_skills_dir="$HOME/.agents/skills"
+  local skills_dirs=()
   local agents_dirs=()
   local commands_dirs=()
+  local codex_skills_dir=""
   for h in $hosts; do
-    skills_dirs+=("$HOME/.$h/skills")
+    if [[ "$h" == "codex" ]]; then
+      codex_skills_dir="$HOME/.codex/skills"
+    else
+      skills_dirs+=("$HOME/.$h/skills")
+    fi
     if host_has_agents "$h"; then
       agents_dirs+=("$HOME/.$h/agents")
       commands_dirs+=("$HOME/.$h/commands")
     fi
   done
+  if [[ -z "$codex_skills_dir" ]]; then
+    skills_dirs+=("$shared_skills_dir")
+  fi
   echo "hosts  ${hosts:-(none detected; ~/.agents/skills only)}"
-  install_skills "${skills_dirs[@]}"
+  if [[ "${#skills_dirs[@]}" -gt 0 ]]; then
+    install_skills "${skills_dirs[@]}"
+  fi
+  if [[ -n "$codex_skills_dir" ]]; then
+    install_codex_skills "$shared_skills_dir"
+    remove_legacy_codex_skills "$codex_skills_dir"
+  fi
   if [[ "${#agents_dirs[@]}" -gt 0 ]]; then
     install_tree "$REPO/agents" "${agents_dirs[@]}"
     install_tree "$REPO/commands" "${commands_dirs[@]}"
   fi
   if [[ "$UNINSTALL" -ne 1 ]]; then
-    prune_stale "${skills_dirs[@]}"
+    if [[ "${#skills_dirs[@]}" -gt 0 ]]; then
+      prune_stale "${skills_dirs[@]}"
+    fi
+    if [[ -n "$codex_skills_dir" ]]; then
+      prune_codex_copies "$shared_skills_dir"
+    fi
     if [[ "${#agents_dirs[@]}" -gt 0 ]]; then
       prune_stale "${agents_dirs[@]}" "${commands_dirs[@]}"
     fi
@@ -342,7 +362,9 @@ cmd_setup() {
   ensure_path_snippet
   ensure_agent_browser
   echo
-  echo "done. restart the agent session, then run /developer"
+  echo "done. restart the agent session"
+  echo "  Codex: \$ruver-developer or /skills"
+  echo "  Claude/Grok: /developer or /ruver-developer"
   echo "  export PATH=\"$BIN_DIR:\$PATH\""
 }
 
@@ -443,8 +465,7 @@ cmd_status() {
     "$HOME/.agents/skills/unslop" \
     "$HOME/.grok/skills/unslop" \
     "$HOME/.claude/skills/unslop" \
-    "$HOME/.cursor/skills/unslop" \
-    "$HOME/.codex/skills/unslop"
+    "$HOME/.cursor/skills/unslop"
   do
     if [[ -L "$dest" ]]; then
       if is_ours "$dest"; then
@@ -452,6 +473,8 @@ cmd_status() {
       else
         echo "not ours $dest"
       fi
+    elif codex_copy_is_ours "$dest"; then
+      echo "ok       $dest"
     elif [[ -e "$dest" ]]; then
       echo "not ours $dest"
     else
@@ -959,6 +982,84 @@ link_one() {
   run ln -sfn "$src" "$dest"
 }
 
+CODEX_COPY_MARKER=".ruver-installed-copy"
+
+codex_copy_is_ours() {
+  local dest="$1"
+  [[ -f "$dest/$CODEX_COPY_MARKER" ]] || return 1
+  grep -qx 'managed-by=ruver' "$dest/$CODEX_COPY_MARKER"
+}
+
+copy_codex_skill() {
+  local src="$1"
+  local dest="$2"
+  local tmp="${dest}.ruver-tmp-$$"
+  run mkdir -p "$(dirname "$dest")"
+
+  if [[ -L "$dest" ]] && is_ours "$dest"; then
+    echo "replace $dest symlink with Codex copy"
+    run rm "$dest"
+  elif codex_copy_is_ours "$dest"; then
+    echo "update  $dest"
+    run rm -rf "$dest"
+  elif [[ -e "$dest" || -L "$dest" ]]; then
+    local bak_dir bak
+    bak_dir="$BACKUP_ROOT/$(ts)"
+    bak="$bak_dir/$(basename "$dest")"
+    echo "backup $dest -> $bak"
+    run mkdir -p "$bak_dir"
+    run mv "$dest" "$bak"
+  else
+    echo "copy   $dest <- $src"
+  fi
+
+  if [[ "$DRY" -eq 1 ]]; then
+    echo "dry-run: copy $src to $dest"
+    return 0
+  fi
+  rm -rf "$tmp"
+  cp -R "$src" "$tmp"
+  printf 'managed-by=ruver\n' >"$tmp/$CODEX_COPY_MARKER"
+  mv "$tmp" "$dest"
+}
+
+remove_codex_skill() {
+  local dest="$1"
+  if [[ -L "$dest" ]]; then
+    unlink_one "$dest"
+  elif codex_copy_is_ours "$dest"; then
+    echo "rm     $dest"
+    run rm -rf "$dest"
+  elif [[ -e "$dest" ]]; then
+    echo "keep   $dest (not a Ruver-managed Codex copy)"
+  fi
+}
+
+remove_legacy_codex_skills() {
+  local dest_dir="$1"
+  local src name
+  for src in "$REPO/skills"/*; do
+    [[ -d "$src" ]] || continue
+    [[ -f "$src/SKILL.md" ]] || continue
+    name="$(basename "$src")"
+    remove_codex_skill "$dest_dir/$name"
+  done
+}
+
+prune_codex_copies() {
+  local dest_dir="$1"
+  local dest name
+  [[ -d "$dest_dir" ]] || return 0
+  for dest in "$dest_dir"/*; do
+    [[ -d "$dest" ]] || continue
+    codex_copy_is_ours "$dest" || continue
+    name="$(basename "$dest")"
+    [[ -f "$REPO/skills/$name/SKILL.md" ]] && continue
+    echo "prune  $dest"
+    run rm -rf "$dest"
+  done
+}
+
 # Drop links we own whose target no longer exists. Without this, renaming or
 # deleting a skill or command leaves a dead entry in every agent home forever,
 # and the host still offers it in the picker.
@@ -1025,6 +1126,25 @@ install_skills() {
         link_one "$src" "$dest"
       fi
     done
+  done
+}
+
+# Codex canonicalizes symlink targets and namespaces any skill below a plugin
+# manifest (`ruver:ruver-developer`). Managed copies in the shared skill home
+# keep standalone ids such as `$ruver-developer` without duplicate discovery.
+install_codex_skills() {
+  local dest_dir="$1"
+  local src dest name
+  for src in "$REPO/skills"/*; do
+    [[ -d "$src" ]] || continue
+    [[ -f "$src/SKILL.md" ]] || continue
+    name="$(basename "$src")"
+    dest="$dest_dir/$name"
+    if [[ "$UNINSTALL" -eq 1 ]]; then
+      remove_codex_skill "$dest"
+    else
+      copy_codex_skill "$src" "$dest"
+    fi
   done
 }
 

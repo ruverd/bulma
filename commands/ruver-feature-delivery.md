@@ -5,7 +5,7 @@ argument-hint: "<goal|ticket|resume> [--no-pr]"
 
 # /ruver-feature-delivery
 
-Alias: `/ruver-fd` · **Args:** `$ARGUMENTS` · User-facing chat in short English. Unslop always
+Alias: `/ruver-fd`. Use arguments from the user request.
 
 ## Load (progressive — do not load everything up front)
 
@@ -98,3 +98,5 @@ Do not invent a "ready" endpoint. Tell the user in English (draft link).
 - MCP/plan contexts in **files**; subagent gets only the ticket + paths
 - Do not re-paste the whole tracker-context; do not re-fetch MCP if gate passed
 - Chat without narrating every tool (`TOKEN_ECONOMY.md`)
+Follow **`../skills/ruver-feature-delivery/SKILL.md`** in full. That skill owns
+the graph, required references, resume behavior, gates, and token economy.
