@@ -35,7 +35,9 @@ then write `QA_RESULT` and **pop** the bus stack. Chat-only is not done.
 
 UI execute is agent-browser
 ([before-and-after](../before-and-after/SKILL.md)). Do not run the
-app's Playwright/Cypress. Backend-only PRs: HTTP the changed
+app's Playwright/Cypress. Run agent-browser headless. Never use the
+OS `open` command, Google Chrome.app, `--headed`, `--auto-connect`,
+`--cdp`, `--profile`, or a host browser MCP. Backend-only PRs: HTTP the changed
 endpoints unless a frontend sibling is resolved
 ([PRODUCT.md](../ruver-feature-delivery/PRODUCT.md)).
 Unit/CI/`git show` alone is not a complete QA execute.

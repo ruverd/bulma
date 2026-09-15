@@ -12,6 +12,12 @@ Stills on the **PR body**. Video is QA's job (`gh pr comment --attach`).
 Browser work is `agent-browser`. This skill owns session, capture
 inventory, height alignment, and the marked block.
 
+Run it headless. `agent-browser` launches its bundled Chrome for Testing
+process as the rendering engine; that process is expected. It must include
+`--headless=new` and must not open a visible window or the user's
+`/Applications/Google Chrome.app`. Never use `--headed`, `--auto-connect`,
+`--cdp`, `--profile`, the OS `open` command, or a host browser MCP.
+
 Load `agent-browser skills get core` before clicking. Do not copy
 vercel-labs/before-and-after (`format.mjs` is PolyForm Shield). Use
 the scripts here (MIT).
@@ -33,19 +39,25 @@ Not per-worktree. Base and HEAD share cookies:
 
 ```bash
 eval "$(../before-and-after/scripts/ensure-session.sh)"
-agent-browser --session "$SESSION" --restore open "$URL"
+agent-browser --session "$SESSION" --session-name "$SESSION" \
+  --headed false open "$URL"
 ```
 
 State: `$RUVER_HOME/agent-browser/ruver-<owner>-<repo>/`. Never git.
 Never Chrome `--profile Default`.
 
-After restore, open a gated route. Login form still up → repo helper
+After session restore, open a gated route. Login form still up → repo helper
 (`qa:otp` / `qa:login`, `docs/ai/qa-login.md`, `AGENTS.md`) → continue
-with `--restore` so the next run skips login.
+with `--session-name "$SESSION"` so the next run skips login.
 
-Auth until gated chrome, then
-`agent-browser --session "$SESSION" record start` with no URL and
-no `--state` (ruver-qa `references/EXECUTION.md`).
+Authenticate until the gated app route loads in that agent-browser session,
+then `agent-browser --session "$SESSION" --session-name "$SESSION"
+--headed false record start` with no URL and no `--state`
+(ruver-qa `references/EXECUTION.md`). `record start`
+opens a **new tab**. If that tab is Sign in / Check your email,
+restore auth with the repo's documented helper into **that session** and
+wait for the app shell before walking. Film and snapshot the same tab. A
+login-wall `.webm` is never PASS.
 
 ## Inventory
 
@@ -67,6 +79,8 @@ system. New route: after-only (`--before -`).
    pad **below** the shorter page, `--full` screenshot. Confirm pixel
    height matches. Component diffs: same selector, no padding.
 7. Reject login walls, blank frames, app errors, loading skeletons.
+8. After all captures, `agent-browser --session "$SESSION" close`.
+   `--session-name` keeps auth for the next run.
 
 Cannot start the app or auth helper: open the PR without the block.
 Do not invent a screen.
