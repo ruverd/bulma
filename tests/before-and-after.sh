@@ -11,6 +11,12 @@ ok() { echo "ok  $*"; }
 
 [[ -x "$FMT" ]] || fail "format.sh not executable"
 [[ -x "$SES" ]] || fail "ensure-session.sh not executable"
+grep -F -q -- '--headed false' "$ROOT/skills/before-and-after/SKILL.md" || fail "browser capture must be headless"
+grep -F -q -- "--session-name \"\$SESSION\"" "$ROOT/skills/before-and-after/SKILL.md" || fail "browser capture must restore supported session"
+grep -F -q "agent-browser --session \"\$SESSION\" close" "$ROOT/skills/before-and-after/SKILL.md" || fail "browser capture must close its session"
+if grep -F -q -- '--restore' "$ROOT/skills/before-and-after/SKILL.md"; then
+  fail "browser capture uses unsupported agent-browser --restore"
+fi
 
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/ruver-baa.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT

@@ -29,15 +29,23 @@ fi
 ok forbidden-recipe-gone
 
 # 2. Copy-paste sequence in EXECUTION.md (Auth)
-grep -F -q 'gated chrome' "$EXEC" || fail "EXECUTION.md missing 'gated chrome'"
+grep -F -q 'gated app route' "$EXEC" || fail "EXECUTION.md missing 'gated app route'"
 grep -F -q 'Never record before login' "$EXEC" || fail "EXECUTION.md missing 'Never record before login'"
-grep -F -q 'does not accept --state' "$EXEC" || fail "EXECUTION.md missing 'does not accept --state'"
+# shellcheck disable=SC2016  # markdown backticks are literal
+grep -F -q 'does not accept `--state`' "$EXEC" || fail "EXECUTION.md missing 'does not accept --state'"
 grep -F -q 'walk-video-gate.sh' "$EXEC" || fail "EXECUTION.md missing walk-video-gate.sh"
+grep -F -q -- "--session-name \"\$SESSION\"" "$EXEC" || fail "EXECUTION.md missing supported session restore"
+grep -F -q -- '--headed false' "$EXEC" || fail "EXECUTION.md must force headless agent-browser"
+grep -F -q 'Do not switch tools' "$EXEC" || fail "EXECUTION.md must forbid browser fallback"
+grep -F -q "agent-browser --session \"\$SESSION\" close" "$EXEC" || fail "EXECUTION.md must close its browser session"
+if grep -F -q -- '--restore' "$EXEC" || grep -F -q -- '--restore' "$BAA"; then
+  fail "QA docs use unsupported agent-browser --restore"
+fi
 
 if ! awk '
   /^[[:space:]]*```/ { fence = !fence; next }
   !fence { next }
-  /--session/ && /record start/ && $0 !~ /--state/ && $0 !~ /--restore/ && $0 !~ /https?:\/\// && $0 !~ /\$URL/ {
+  /--session/ && /record start/ && $0 !~ /--state/ && $0 !~ /https?:\/\// && $0 !~ /\$URL/ {
     found = 1
   }
   END { exit found ? 0 : 1 }
