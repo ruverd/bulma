@@ -24,8 +24,8 @@ Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 Init `.ruver-qa/STATE.md`. Walk GRAPH:
 **admit → resolve → plan → execute**.
 `admit` claims the single QA slot or **enqueues** (never two
-executes). `plan` writes `.ruver-qa/PLAN.md` from the diff (happy and
-user-break) before any test. Spawn execute nodes only.
+executes). `plan` writes `.ruver-qa/PLAN.md` from the diff (blast radius,
+happy and user-break) before any test. Spawn execute nodes only.
 Outbound triage → **bus switch** to `triage`. Never spawn `ruver_triage`.
 
 On `TRIAGE_RESULT`, continue at **verdict** (do not re-run execute).
@@ -34,8 +34,10 @@ When done: `scripts/publish-evidence.sh` posts the QA comment with
 then write `QA_RESULT` and **pop** the bus stack. Chat-only is not done.
 
 UI execute is agent-browser
-([before-and-after](../before-and-after/SKILL.md)). Do not run the
-app's Playwright/Cypress. Run agent-browser headless. Never use the
+([before-and-after](../before-and-after/SKILL.md)).
+Per-surface clips: [references/VIDEO.md](references/VIDEO.md).
+Do not run the app's Playwright/Cypress. Run agent-browser headless.
+Never use the
 OS `open` command, Google Chrome.app, `--headed`, `--auto-connect`,
 `--cdp`, `--profile`, or a host browser MCP. Backend-only PRs: HTTP the changed
 endpoints unless a frontend sibling is resolved

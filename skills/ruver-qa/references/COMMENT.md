@@ -9,9 +9,12 @@ Never comment `PENDING_TRIAGE`.
 
 QA execute must have recorded:
 
-- agent-browser **video** (`record start` / `record stop`)
-- Screenshots of the AC paths
+- agent-browser **per-surface clips** (`record start` / `record restart` /
+  `record stop`), concatenated to a reel when possible
+  ([VIDEO.md](VIDEO.md))
+- Annotated `pass_if` stills of the AC paths
 - command + exit + failing names if any
+- console / errors / network sample per UI surface
 
 Paths live under `$CAPTURE_DIR` or `.ruver-qa/artifacts`.
 
@@ -59,8 +62,19 @@ If the script exits 2, still get a comment up with the printed
 
 <summary of the plan + what passed>
 
+### AC coverage
+
+| Criterion | Step | Runtime | Evidence | Proof |
+|---|---|---|---|---|
+| <AC text or n/a> | S<n> | holds / fails / unproven | clip S<n> / still / HTTP | app |
+
+Proof `app` means the running app was driven and `pass_if` was
+observed. A Must criterion with proof below app is not PASS.
+
 ### Evidence
 [Walk video](VIDEO_PATH)
+
+exploratory: <no extra finding on <surfaces> | N findings, see F*>
 
 <!-- ruver-qa: v=1 verdict=PASS sha=<sha> -->
 ```
@@ -78,14 +92,17 @@ One comment per SHA. If a comment with the same
 - No verdict without this comment.
 - No comment without attempting `--attach` when a `.webm` exists.
 - **PASS requires evidence.** A `.webm` on disk is not enough. UI
-  PASS needs the plan walk on tape (happy and user-break). A login
-  wall / `Check your email` tape is not walk evidence and is never PASS
-  (re-record or BLOCKED). Execute must run `walk-video-gate.sh` on
-  start/stop snapshot text taken with the same `--session` as
-  `record start` (sampling the walk session while the recorder sat
-  on default/`qa:login` is the incident). API-only: HTTP record of
-  the changed endpoints (happy and user-break). If capture failed
-  on a UI run — including wrong-content capture — say so in the
-  comment and do **not** treat the run as a complete PASS.
+  PASS needs per-surface clips of the happy walk plus `pass_if`
+  stills. That is the walk evidence. User-break that holds: annotated
+  still of the refuse/recover state. User-break that fails: a repro
+  clip. A login wall / `Check your email` tape is not walk evidence
+  and is never PASS (re-record or BLOCKED). Execute must run
+  `walk-video-gate.sh` on start/stop snapshot text taken with the
+  same `--session` as `record start` (sampling the walk session
+  while the recorder sat on default/`qa:login` is the incident).
+  API-only: HTTP record of the changed endpoints (happy and
+  user-break). If capture failed on a UI run, including wrong-content
+  capture, say so in the comment and do **not** treat the run as a
+  complete PASS. Every Must AC in the coverage table must be `app`.
 - Do not commit videos to the PR branch.
 - Do not paste credentials or raw `.env`.

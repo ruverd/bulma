@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Walk video is the plan, not qa:login. Text fixtures only. No network.
+# Per-surface clips, not qa:login. Text fixtures only. No network.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -118,5 +118,94 @@ ok helper-all-login-wall
 gate_exit --stop "$TMP/gated.txt"
 [[ "$GATE_EXIT" -ne 0 ]] || fail "missing --start should fail (exit=$GATE_EXIT)"
 ok helper-missing-start
+
+# 6. Per-surface clips, not one whole-plan tape
+VIDEO="$ROOT/skills/ruver-qa/references/VIDEO.md"
+CONCAT="$ROOT/skills/ruver-qa/scripts/concat-clips.sh"
+PLAN="$ROOT/skills/ruver-qa/references/PLAN.md"
+TPL="$ROOT/skills/ruver-qa/templates/PLAN.md"
+CMD="$ROOT/docs/commands/ruver-qa.md"
+
+[[ -f "$VIDEO" ]] || fail "missing $VIDEO (clip recipe)"
+[[ -f "$PLAN" ]] || fail "missing $PLAN"
+[[ -f "$TPL" ]] || fail "missing $TPL"
+[[ -f "$CMD" ]] || fail "missing $CMD"
+
+if grep -F -q 'whole plan walk' "$EXEC"; then
+  fail "EXECUTION.md still records the whole plan walk as one tape"
+fi
+if grep -F -q 'Record the plan walk (happy' "$BAA"; then
+  fail "before-and-after still tells QA to record one plan-walk tape"
+fi
+
+grep -F -q 'record restart' "$VIDEO" || fail "VIDEO.md missing record restart"
+grep -qi 'per-surface' "$VIDEO" || fail "VIDEO.md missing per-surface clips"
+# type during record, fill only off-tape
+if ! grep -Eqi 'type.{0,40}not fill|not fill.{0,40}type' "$VIDEO"; then
+  fail "VIDEO.md must require type (not fill) while recording"
+fi
+grep -qi 'pass_if' "$VIDEO" || fail "VIDEO.md missing pass_if still"
+grep -qi 'annotate' "$VIDEO" || fail "VIDEO.md missing annotated pass_if still"
+grep -qi 'hydrat' "$VIDEO" || fail "VIDEO.md missing hydrate-then-record"
+grep -qiE 'login[- ]wall' "$VIDEO" || fail "VIDEO.md missing login-wall"
+ok clip-recipe
+
+[[ -f "$CONCAT" ]] || fail "concat-clips.sh missing"
+[[ -x "$CONCAT" ]] || fail "concat-clips.sh not executable"
+"$CONCAT" -h >/dev/null 2>&1 || "$CONCAT" --help >/dev/null 2>&1 \
+  || fail "concat-clips.sh --help should exit 0"
+ok concat-helper-exists
+
+# 7. Blast radius in the plan (before any browser step)
+grep -qi 'blast radius' "$PLAN" || fail "PLAN.md missing blast radius"
+grep -F -q 'UNKNOWN' "$PLAN" || fail "PLAN.md missing UNKNOWN (zero callers is not skip)"
+if ! grep -qiE 'zero callers|not skip|do not skip' "$PLAN"; then
+  fail "PLAN.md must say zero callers is UNKNOWN, not skip"
+fi
+grep -qi 'blast radius' "$TPL" || fail "templates/PLAN.md missing blast radius"
+grep -F -q 'UNKNOWN' "$TPL" || fail "templates/PLAN.md missing UNKNOWN"
+ok blast-radius
+
+# 8. AC coverage table, console/network, visual still, exploratory
+if ! grep -qiE 'AC coverage|coverage table' "$COMMENT"; then
+  fail "COMMENT.md missing AC coverage table"
+fi
+grep -qi 'Criterion' "$COMMENT" || fail "COMMENT.md AC table missing Criterion column"
+grep -qi 'Evidence' "$COMMENT" || fail "COMMENT.md AC table missing Evidence column"
+grep -qi 'console' "$EXEC" || fail "EXECUTION.md missing console check"
+grep -qi 'errors' "$EXEC" || fail "EXECUTION.md missing errors check"
+grep -qi 'network' "$EXEC" || fail "EXECUTION.md missing network check"
+grep -qi 'explorat' "$EXEC" || fail "EXECUTION.md missing exploratory pass"
+grep -F -q 'dogfood' "$EXEC" || fail "EXECUTION.md must load agent-browser dogfood for exploratory"
+if ! grep -qiE 'do not follow|off-script|not follow' "$EXEC"; then
+  fail "EXECUTION.md exploratory must not follow the scripted how"
+fi
+grep -qiE 'app-level|running app' "$VERDICTS" || fail "VERDICTS.md missing app-level proof on PASS"
+ok ac-evidence-exploratory
+
+grep -qi 'clip' "$CMD" || fail "docs/commands/ruver-qa.md should mention clips, not one walk tape"
+ok command-page-clips
+
+# concat-clips: missing args fail; with ffmpeg, concat two tiny webms
+"$CONCAT" >/dev/null 2>&1 && CONCAT_EXIT=0 || CONCAT_EXIT=$?
+[[ "$CONCAT_EXIT" -ne 0 ]] || fail "concat-clips.sh with no args should fail"
+ok concat-missing-args
+
+if command -v ffmpeg >/dev/null; then
+  CLIPDIR="$TMP/clips"
+  mkdir -p "$CLIPDIR"
+  ffmpeg -v error -y -f lavfi -i color=c=red:s=32x32:d=0.2 \
+    -c:v libvpx -b:v 50k "$CLIPDIR/a.webm" </dev/null \
+    || fail "could not make fixture clip a.webm"
+  ffmpeg -v error -y -f lavfi -i color=c=blue:s=32x32:d=0.2 \
+    -c:v libvpx -b:v 50k "$CLIPDIR/b.webm" </dev/null \
+    || fail "could not make fixture clip b.webm"
+  "$CONCAT" --out "$CLIPDIR/reel.webm" "$CLIPDIR/a.webm" "$CLIPDIR/b.webm" \
+    || fail "concat-clips.sh failed on two fixtures"
+  [[ -s "$CLIPDIR/reel.webm" ]] || fail "concat-clips.sh wrote empty reel"
+  ok concat-ffmpeg-reel
+else
+  ok concat-ffmpeg-skipped
+fi
 
 echo "all passed"

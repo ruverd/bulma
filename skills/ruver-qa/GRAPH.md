@@ -4,8 +4,8 @@
 start (PR from args or QA_REQUEST)
   → admit            # one QA slot; else enqueue and stop
   → resolve
-  → plan             # inventory + happy + user-break from the diff
-  → execute          # agent-browser or HTTP; append FINDINGS as they appear
+  → plan             # inventory + blast radius + happy + user-break
+  → execute          # clips + HTTP; exploratory; append FINDINGS
   → gate
        ├ no findings / unambiguous FAIL → verdict
        └ any product suspicion          → request_triage
@@ -28,7 +28,7 @@ start (PR from args or QA_REQUEST)
 | admit | `qa_active` holds another **live** PR | **enqueue** and **stop** |
 | admit | slot free, this job, or a claim that expired / was abandoned | **resolve** (claim, or take over and say so) |
 | resolve | ok | **plan** |
-| plan | PLAN.md gate (happy + user-break) | **execute** |
+| plan | PLAN.md gate (blast-radius, happy + user-break) | **execute** |
 | plan | no surface | **stop** (ask) |
 | execute | plan finished, no findings, user-break walked | **verdict** (`PASS` or infra `BLOCKED`) |
 | execute | plan finished, findings exist | **request_triage** |
@@ -42,6 +42,7 @@ Unambiguous FAIL: [references/VERDICTS.md](references/VERDICTS.md).
 Plan how: [references/PLAN.md](references/PLAN.md).  
 Handoff body: [references/HANDOFF.md](references/HANDOFF.md).  
 Execute how: [references/EXECUTION.md](references/EXECUTION.md).
+Clips: [references/VIDEO.md](references/VIDEO.md).
 
 ## Nodes
 

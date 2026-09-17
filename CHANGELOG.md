@@ -8,6 +8,12 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `/qa` plans a blast-radius table (callers → user flows; zero callers
+  is UNKNOWN, not skip) before any browser step, records per-surface
+  agent-browser clips instead of one whole-plan tape, and posts an AC
+  coverage table. After the scripted walk, a scoped dogfood pass
+  explores those surfaces off-script. `scripts/concat-clips.sh`
+  concatenates clips into the comment reel.
 - `/ruver-code-review` writes the ticket/PR acceptance checklist before
   reading product files, drops findings whose `path:line` is not in the
   patch (`scripts/bind-findings.py`), and spawns one fresh critic on
