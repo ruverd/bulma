@@ -45,7 +45,11 @@ done
 [[ -f "$BODY" ]] || { echo "body file does not exist: $BODY" >&2; exit 1; }
 
 if [[ -z "$VIDEO" ]]; then
-  VIDEO=$(find test-results .ruver-qa/artifacts -name '*.webm' 2>/dev/null | head -1 || true)
+  if [[ -f .ruver-qa/artifacts/reel.webm ]]; then
+    VIDEO=.ruver-qa/artifacts/reel.webm
+  else
+    VIDEO=$(find test-results .ruver-qa/artifacts -name '*.webm' 2>/dev/null | head -1 || true)
+  fi
 fi
 
 if [[ -z "$ARTIFACTS" && -d .ruver-qa/artifacts ]]; then

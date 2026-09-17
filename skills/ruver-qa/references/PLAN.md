@@ -36,6 +36,28 @@ types unless the query/mutation itself changed):
 One row per distinct **surface** (route or endpoint). Group
 files that only exist to serve the same screen.
 
+## Blast radius
+
+Map each changed file or symbol to the **user flows** that call it.
+Grep, or CodeGraph when the repo has it. Do not add GitNexus as a
+required tool.
+
+| Changed | d=1 callers / screens | User flow to walk | Risk |
+|---|---|---|---|
+| | | | |
+
+d=1 will break (direct callers). d=2 likely. d=3 maybe. Zero
+callers is **UNKNOWN**, not skip. UNKNOWN goes under Coverage gaps
+(why the walk could not resolve callers) **or** an extra step that
+hits a suspected host screen. Do not drop the row.
+
+Risk: LOW fewer than 5 d=1 callers, MEDIUM 5-15, HIGH more than 15
+or many flows, CRITICAL on auth / billing / tenant. UNKNOWN stays
+UNKNOWN until a search shows the symbol is unused.
+
+Every user flow in this table must appear as a plan step. Happy +
+user-break still apply on process surfaces.
+
 ## Steps
 
 Each step is **one walk**: the intended use, or one user-break on
@@ -103,11 +125,13 @@ user can see. Silent success, crash, blank screen, lost data, or a
 
 ## Gate before execute
 
-PLAN.md must have: inventory table, ≥1 `intent: happy` step, ≥1
-`intent: user-break` step per process surface (or a Coverage-gaps
-line that names the missing fixture), `intent` and `pass_if` on
-every step. Empty plan → stop and ask (no surface found). Happy-only
-plan → rewrite, do not execute.
+PLAN.md must have: inventory table, blast radius table, ≥1
+`intent: happy` step, ≥1 `intent: user-break` step per process
+surface (or a Coverage-gaps line that names the missing fixture),
+`intent` and `pass_if` on every step. Empty plan → stop and ask
+(no surface found). Happy-only plan → rewrite, do not execute.
+Blast radius with an UNKNOWN row and no Coverage-gaps line and no
+extra step → rewrite, do not execute.
 
 Chat (`ruver-memory`): list the steps in one short block, then execute.
 Do not wait for approval unless the user asked to review the plan.

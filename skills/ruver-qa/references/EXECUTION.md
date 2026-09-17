@@ -3,6 +3,7 @@
 Walk [PLAN.md](PLAN.md) (`.ruver-qa/PLAN.md`). That file is the
 surface. Do not skip steps. Do not add ad-hoc screens unless a step
 is impossible without them (record the extra step in PLAN.md first).
+Clip recipe: [VIDEO.md](VIDEO.md).
 
 UI execute is **agent-browser** only. Do not run the app's Playwright
 or Cypress suite (`e2e_cmd` is CI). Load
@@ -27,11 +28,20 @@ Do not switch tools.
 3. Check `pass_if`. Do not skip `intent: user-break` because a
    happy step passed.
 4. Record: command + exit, failing names, artifact paths, a short
-   excerpt — not the full log.
-5. **Evidence is mandatory.** UI: `agent-browser record` of the
-   whole plan walk (`.webm`), including user-break steps, plus
-   stills of the AC paths. API-only: recorded HTTP of happy and
-   user-break. Notes without that evidence are not enough for PASS.
+   excerpt, not the full log.
+5. **Evidence is mandatory.** UI: per-surface clips plus the
+   `pass_if` still ([VIDEO.md](VIDEO.md)). After `pass_if` on a
+   screen step, sample the browser:
+
+   ```bash
+   agent-browser --session "$SESSION" errors
+   agent-browser --session "$SESSION" console
+   agent-browser --session "$SESSION" network requests
+   ```
+
+   App 4xx/5xx and JS exceptions → FINDINGS. Analytics noise does
+   not. API-only: recorded HTTP of happy and user-break. Notes
+   without that evidence are not enough for PASS.
 
 One screenshot is not enough for a screen step.
 A unit/CI-only walk is not enough when a FE route exists.
@@ -82,12 +92,14 @@ agent-browser --session "$SESSION" --session-name "$SESSION" --headed false reco
       Do not snapshot tab A and record tab B.
 
 5. Walk PLAN.md (happy + user-break) with `--session "$SESSION"`
-   on the recording tab. Then
+   on the recording tab. One clip per UI surface, `record restart`
+   between them ([VIDEO.md](VIDEO.md)). Then
    `agent-browser --session "$SESSION" record stop`. Snapshot stop
    (same `--session`, same tab). Run
    `../scripts/walk-video-gate.sh --start … --stop …`. Login-wall /
    Check-your-email samples **or** a login-only `.webm` → re-record
-   or BLOCKED, never PASS — even if stills show the app.
+   or BLOCKED, never PASS, even if stills show the app. Concatenate
+   clips with `../scripts/concat-clips.sh`.
 6. **BLOCKED** only after the auth helper is missing or fails, or
    the walk-video gate fails and a re-record is impossible.
 
@@ -115,6 +127,23 @@ with no product smell → `BLOCKED`, no triage.
 
 A broken walk is **not** a verdict. It is evidence for a finding
 or for `BLOCKED`.
+
+## Exploratory (after the scripted walk)
+
+After the last PLAN.md step, before close. Same `$SESSION`.
+
+Load `agent-browser skills get dogfood`. Charter: explore the
+surfaces listed in the PLAN.md inventory with this session to
+discover unexpected regressions around the change.
+
+Do not follow the scripted `how`. One off-script pass per planned
+UI surface, then stop. Do not open the rest of the app.
+
+Interactive suspicion: clip the repro ([VIDEO.md](VIDEO.md)), append
+FINDINGS, continue. Static: annotated still only.
+
+No extra finding: one line in the comment, `exploratory: no extra
+finding on <surfaces>`.
 
 ## After the last step
 

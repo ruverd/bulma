@@ -3,7 +3,8 @@
 Alias: **`/qa`**. Graph engineer for **product QA**. One
 QA execute slot. Plan happy and user-break from the diff
 before any click.
-Comment with a video of the walk. UI stills go on the PR body
+Comment with per-surface clips (a concatenated reel). UI stills
+go on the PR body
 ([before-and-after](../../skills/before-and-after/SKILL.md)).
 
 Skill: [`../../skills/ruver-qa`](../../skills/ruver-qa).
@@ -19,8 +20,8 @@ Skill: [`../../skills/ruver-qa`](../../skills/ruver-qa).
 ```
 PR from args or QA_REQUEST
   → admit          one slot; else enqueue
-  → plan           happy + user-break from the diff, before any click
-  → execute        agent-browser or HTTP; record evidence
+  → plan           blast radius + happy + user-break, before any click
+  → execute        agent-browser clips or HTTP; then exploratory
   → triage?        product suspicion → bus → /ruver-triage
   → verdict        comment + video + QA_RESULT
 ```

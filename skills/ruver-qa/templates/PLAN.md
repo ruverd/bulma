@@ -10,6 +10,14 @@ Ticket:
 |---|---|---|
 | | | |
 
+## Blast radius
+
+| Changed | d=1 callers / screens | User flow | Risk |
+|---|---|---|---|
+| | | | |
+
+Zero callers = UNKNOWN (Coverage gaps or extra step). Not skip.
+
 ## Steps
 
 ### S1 —
