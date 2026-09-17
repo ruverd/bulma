@@ -5,7 +5,7 @@
 ## status
 
 ```
-init | resolving | rebasing | verifying | grilling | patching | replying | waiting_user | done | escalated
+init | resolving | rebasing | verifying | grilling | patching | proving | replying | waiting_user | done | escalated
 ```
 
 ## Fields
@@ -22,10 +22,17 @@ init | resolving | rebasing | verifying | grilling | patching | replying | waiti
 | `processed_comment_ids` | inline comment ids that already have 👍 **and** a thread reply |
 | `processed_review_ids` | review ids whose every in-scope comment is acked, plus 👍 on the review body |
 | `dispositions` | `fix` / `skip` / `unclear` counts or path |
+| `claim_true` | yes \| no \| unknown (per comment, in Dispositions table) |
+| `fix_ok_here` | yes \| no \| na |
+| `risk` | low \| normal \| elevated (per comment) |
 | `conflict_fixed` | yes / no / n/a |
 | `patched` | yes / no |
 | `grill` | skipped / done / waiting |
 | `coder_status` | DONE / NEEDS_CONTEXT / BLOCKED |
+| `spec_verdict` | pending \| pass \| fail |
+| `quality_verdict` | pending \| pass \| fail |
+| `tester` | pending \| pass \| fail |
+| `prove_fix_loops` / `prove_fix_loops_used` | remaining + used. Default 2 |
 | `job_id` | bus JOBS id (`lstm-pr-N`) |
 | `lane` | `foreground` \| `worker` |
 | `worktree` | path if lane=worker |

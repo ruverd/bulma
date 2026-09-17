@@ -88,8 +88,9 @@ URL | resume | LSTM_REQUEST
   → admit
   → resolve comments
   → rebase if DIRTY / CONFLICTING
-  → verify (receiving-code-review)
+  → verify (claim_true + fix_ok_here)
   → patch should-fix (ruver-fd-coder, TDD)
+  → prove (spec + quality + tester)
   → 👍 + unslopped reply on every comment
   → resolve + dismiss CHANGES_REQUESTED + re-request
 ```

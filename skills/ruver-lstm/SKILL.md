@@ -30,7 +30,8 @@ Busy main or 2+ PRs → worktree + `general-purpose` worker per PR.
 Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 
 Orchestrator does **not** write product code. **patch** spawns
-`ruver-fd-coder` (TDD). Grill only when the fix is complicated.
+`ruver-fd-coder` (TDD). **prove** runs the fd reviewer (spec + quality)
+and tester before **reply**. Grill only when the fix is complicated.
 ASK last resort: [DECISION_POLICY.md](../ruver-feature-delivery/DECISION_POLICY.md).
 
 Chat: `ruver-memory`. Unslop always. Every GitHub reply
@@ -38,7 +39,8 @@ Chat: `ruver-memory`. Unslop always. Every GitHub reply
 rewritten with bundled `unslop` before POST. Never POST the first draft.
 
 Reply is not optional. Every analyzed comment gets 👍 and a thread
-reply. Then dismiss `CHANGES_REQUESTED`. Then re-request if a fix
-landed. See [reply.md](nodes/reply.md).
+reply. Do not dismiss `CHANGES_REQUESTED` until **prove** passed (or
+the run was skip-only). Then re-request if a fix landed.
+See [reply.md](nodes/reply.md).
 
 Do not spawn `ruver_developer` / `ruver_reviewer` / `ruver_qa`.

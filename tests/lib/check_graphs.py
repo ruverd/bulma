@@ -35,6 +35,13 @@ NEEDS = [
         extra_files=(),
     ),
     Need(
+        skill="ruver-lstm",
+        node="prove",
+        after="patch",
+        before="reply",
+        extra_files=(),
+    ),
+    Need(
         skill="ruver-code-review",
         node="critic",
         after="review",

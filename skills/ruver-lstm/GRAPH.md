@@ -7,9 +7,10 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
   → admit
   → resolve          # PR + review ids + comment ids
   → conflict         # DIRTY / CONFLICTING → rebase always
-  → verify           # receiving-code-review → fix | skip | unclear
+  → verify           # claim_true + fix_ok_here → fix | skip | unclear
   → grill?           # complicated should-fix only
   → patch            # ruver-fd-coder + TDD, same branch
+  → prove            # spec_verdict + quality_verdict + tester
   → reply            # 👍 + unslopped reply on every comment, resolve, dismiss CHANGES_REQUESTED, re-request
   → report
 ```
@@ -33,8 +34,11 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | patch | complicated and grill not done | **grill** |
 | grill | frontier empty | **patch** (coder) |
 | grill | ASK last resort | **stop** (`waiting_user`) |
-| patch | coder DONE / pushed | **reply** |
+| patch | coder DONE / pushed | **prove** |
 | patch | coder NEEDS_CONTEXT | DECIDE or ASK last resort |
+| prove | spec_verdict=pass and quality_verdict=pass and tester pass | **reply** |
+| prove | either fail + loops left | **patch** |
+| prove | either fail + loops exhausted | **escalate** |
 | reply | always | **report** |
 | report | stacked | `LSTM_RESULT` + pop |
 | report | invoked alone | chat report only |
@@ -43,7 +47,8 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 
 `nodes/admit.md` · `nodes/resume.md` · `nodes/resolve.md` ·
 `nodes/conflict.md` · `nodes/verify.md` · `nodes/grill.md` ·
-`nodes/patch.md` · `nodes/reply.md` · `nodes/report.md`
+`nodes/patch.md` · `nodes/prove.md` · `nodes/reply.md` ·
+`nodes/report.md`
 
 Concurrency: `../ruver-bus/JOBS.md`.
 
@@ -59,6 +64,7 @@ new_pr: false
 same_branch: true
 always_rebase_conflicts: true
 tdd: required_for_behavior_change
+prove_fix_loops: 2
 chat_language: en
 voice: unslop
 decide_by_default: true

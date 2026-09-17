@@ -14,6 +14,9 @@ For **every** in-scope inline comment (fix **and** skip):
 Body-only review: 👍 on the review, then an unslopped COMMENT review
 after it.
 
+Enter this node only from GRAPH (**prove** pass, or verify skip-only).
+Do not dismiss a should-fix run that never passed **prove**.
+
 Then:
 
 4. Resolve the conversation when a fix landed. Skip stays open after
