@@ -21,7 +21,7 @@ Usage:
   ruver                 Menu (TTY) or command list (no TTY)
   ruver setup           Flatten skills into agent homes
   ruver update          git pull --ff-only main, then setup
-  ruver status          Repo, version, SHA, homes, worktrees
+  ruver status          Repo, version, SHA, homes, worktrees, cwd job Walk
   ruver report          Wall time and laps per graph node; host token totals when a transcript exists
   ruver uninstall       Remove our symlinks
   ruver uninstall --purge
@@ -436,6 +436,27 @@ status_worktrees() {
   done < <(git -C "$1" worktree list --porcelain 2>/dev/null || true; echo)
 }
 
+# Product-repo job, if cwd has STATE. Plugin health is the block above.
+status_job() {
+  local top home slug root state walk
+  top="$(git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  home="${RUVER_HOME:-$HOME/.ruver}"
+  if [[ ! -e "$home" && -d "$HOME/.grok/ruver" ]]; then
+    home="$HOME/.grok/ruver"
+  fi
+  slug="$(printf '%s' "$top" | sed 's|^/||; s|/|-|g')"
+  root="$home/$slug"
+  state="$root/.ruver-feature-delivery/STATE.md"
+  walk="$REPO/skills/ruver-feature-delivery/scripts/status-walk.sh"
+  if [[ -f "$state" && -f "$walk" ]]; then
+    echo "cwd      $top"
+    bash "$walk" "$state"
+  elif [[ -f "$root/.ruver-developer/STATE.md" ]]; then
+    echo "cwd      $top"
+    echo "job      developer (no fd STATE)"
+  fi
+}
+
 cmd_status() {
   local repo sha behind dest
   repo="$(config_get repo)"
@@ -451,6 +472,7 @@ cmd_status() {
     echo "behind   $behind"
     status_worktrees "$repo"
   fi
+  status_job
   if command -v ruver >/dev/null 2>&1; then
     echo "path     $(command -v ruver)"
   else
@@ -756,7 +778,7 @@ print_home() {
   print_banner
   printf '  $ ruver setup      Flatten skills into agent homes\n'
   printf '  $ ruver update     git pull --ff-only main\n'
-  printf '  $ ruver status     Repo, version, homes, worktrees\n'
+  printf '  $ ruver status     Repo, version, homes, worktrees, cwd job Walk\n'
   printf '  $ ruver uninstall  Remove our symlinks\n'
   echo
   echo "  try: ruver setup"

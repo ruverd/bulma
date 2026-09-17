@@ -30,7 +30,7 @@ Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 
 Parse `$ARGUMENTS` with [ARGS.md](ARGS.md) **before** anything else.
 
-**Resume** (`resume` / same tracker id with existing STATE): reconcile, continue at the saved node. The current message is the answer if `waiting_user`. Do not re-init STATE. Do not re-grill settled decisions.
+**Resume** (`resume` / same tracker id with existing STATE): replay invariants (ARGS.md), continue at the saved node. Skip finished only when invariants match. The current message is the answer if `waiting_user`. Do not re-init STATE. Do not re-grill settled decisions unless an AC line contradicts them.
 
 **Goal or ticket** (free text, or tracker id/URL, no live STATE for that id):
 

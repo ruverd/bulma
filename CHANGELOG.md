@@ -8,6 +8,18 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `/ruver-developer` triage writes `risk: low | normal | elevated`
+  orthogonal to `path`. An auth bug stays `debug_fix` + `elevated`;
+  `light_change` + `elevated` runs blast. Resume replays world vs STATE
+  (HANDOFF `# expect:` plus the ARGS.md table) and re-enters a node
+  whose outputs are stale. The fd reviewer writes `spec_verdict` and
+  `quality_verdict`; the graph passes only if both pass.
+- `plan_critic` runs after tickets on `full_feature` when `risk` is not
+  `low`: main-thread scan at `normal`, one read-only spawn at `elevated`.
+  Bugs and chores skip it. Chat status adds a Walk line (`✓` / `●` / `○`)
+  derived from ROUTING stages. `ruver status` prints that Walk from cwd
+  STATE. Elevated UI tickets capture an After still before the next
+  ticket. The last `review_fix_loops` slot is a fresh coder.
 - `/qa` plans a blast-radius table (callers → user flows; zero callers
   is UNKNOWN, not skip) before any browser step, records per-surface
   agent-browser clips instead of one whole-plan tape, and posts an AC

@@ -9,12 +9,12 @@ goal / resume
   → mcp_context
   → triage
        ├ scope=fullstack → fullstack (same branch, git worktrees; Orca optional) then this path per worker
-       ├ full_feature → grill → spec → tickets → implement* → review → tester
+       ├ full_feature → grill → spec → tickets → plan_critic → implement* → review → tester
        ├ debug_fix    → diagnose → one ticket → implement → review → tester
        └ light_change → tickets (single) → implement → review → tester
   → (more tickets? implement next)
   → evidence
-  → blast (skip on light_change)
+  → blast (skip on light_change unless risk=elevated)
   → quality (thermo fix all)
   → shipper → ci_watch
 ```
@@ -25,13 +25,16 @@ After all tickets pass tester, **evidence**, then blast and/or quality.
 ticket before starting the next (bundled
 `principle-sequence-verifiable-units`).
 
-Grill, spec, and tickets run on the **main thread**. Implement / review / diagnose / tester / evidence / quality / shipper / ci are nodes (subagents where the adapter says so).
+Grill, spec, and tickets run on the **main thread**. `plan_critic` is
+main-thread too, except `risk=elevated` which spawns a read-only worker.
+Implement / review / diagnose / tester / evidence / quality / shipper / ci
+are nodes (subagents where the adapter says so).
 
 ## Edges
 
 | From | Condition | To |
 |---|---|---|
-| start | resume with live STATE | current node (skip finished) |
+| start | resume with live STATE | current node (skip finished when invariants match) |
 | start | fresh goal / ticket | **mcp_context** |
 | mcp_context | mcp_gate=passed / passed_partial | **triage** |
 | mcp_context | mcp_gate=failed | **STOP** + English error |
@@ -44,21 +47,25 @@ Grill, spec, and tickets run on the **main thread**. Implement / review / diagno
 | grill | ungrillable | prototype, then DECIDE or ASK |
 | grill | ASK in flight | `waiting_user` **stop** |
 | spec | SPEC.md written | **tickets** |
-| tickets | tickets written, seams decided | **implement** (first unblocked ticket) |
+| tickets | tickets written, seams decided, path=full_feature and risk≠low | **plan_critic** |
+| tickets | tickets written, seams decided, else | **implement** (first unblocked ticket) |
+| plan_critic | pass or skip | **implement** (first unblocked ticket) |
+| plan_critic | revise + loops left | apply on main, **plan_critic** |
+| plan_critic | revise + loops exhausted | DECIDE residuals; **implement** unless every path is a guess → **escalate** |
 | diagnose | root cause + fix slice | **implement** (one ticket) |
 | diagnose | this is a feature | re-route **grill** |
 | diagnose | ASK needed | `waiting_user` |
 | implement | DONE | **review** |
 | implement | NEEDS_CONTEXT / BLOCKED | ASK or escalate |
-| review | fail + loops left | **implement** (same ticket) |
-| review | fail + loops exhausted | **escalate** |
-| review | pass | **tester** |
+| review | spec_verdict=fail or quality_verdict=fail + loops left | **implement** (same ticket) |
+| review | either fail + loops exhausted | **escalate** |
+| review | spec_verdict=pass and quality_verdict=pass | **tester** |
 | tester | fail + loops left | **implement** |
 | tester | fail + loops exhausted | **escalate** |
 | tester | pass + more tickets | **implement** (next) |
 | tester | pass + no more tickets | **evidence** |
-| evidence | done + not light | **blast** |
-| evidence | done + light_change | **quality** |
+| evidence | done + (not light_change or risk=elevated) | **blast** |
+| evidence | done + light_change + risk≠elevated | **quality** |
 | blast | done | **quality** |
 | quality | ok | **shipper** |
 | quality | blocked | **escalate** |
@@ -83,6 +90,7 @@ ci_green_required: true
 ci_fix_loops: 5
 review_fix_loops: 2
 test_fix_loops: 2
+plan_critic_loops: 1
 tdd: required_for_behavior_change
 subagents_on_implement: always
 never_merge: true
@@ -108,3 +116,5 @@ See [PSTACK.md](PSTACK.md). Grill is [GRILL.md](GRILL.md). Voice is [VOICE.md](V
 - Auto-merge
 - Interviewing the user through the grill tree
 - Pasting GRAPH.md, `why`, or the parent tool catalog into a worker
+- Spawning plan_critic on debug_fix or light_change
+- Spawning plan_critic on every full_feature (normal is main-thread)

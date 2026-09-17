@@ -175,12 +175,16 @@
             "description": "Ruver FD fullstack coordinator. Worktrees on FE+BE with SAME branch name; host workers (Orca optional). Use when scope is fullstack."
           },
           {
+            "name": "ruver-fd-plan-critic",
+            "description": "Ruver FD plan critic. Read-only on SPEC and TICKETS. Table of plan defects. Never edits product code or the plan files."
+          },
+          {
             "name": "ruver-fd-quality",
             "description": "Ruver FD quality gate. Runs thermo-nuclear-code-quality-review and applies fix all before any final commit/push/PR."
           },
           {
             "name": "ruver-fd-reviewer",
-            "description": "Ruver FD reviewer. Read-only; fails missing TDD, off-design, or UI design-system violations."
+            "description": "Ruver FD reviewer. Read-only. Writes spec_verdict and quality_verdict. Pass only if both pass."
           },
           {
             "name": "ruver-fd-shipper",

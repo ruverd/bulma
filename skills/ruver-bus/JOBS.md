@@ -117,7 +117,8 @@ on a shared DB. Install deps inside the worktree with the discovered
 
 Keep the worktree until the PR is merged or closed. Cleanup is
 `git worktree remove` + `git branch -D` by a human after `ruver status`
-lists orphans. No auto-remove.
+lists orphans. No auto-remove. `ruver status` also prints the cwd job
+Walk when fd STATE exists (plugin health first, then the job).
 
 Do not run the full test suite as a baseline (too heavy).
 

@@ -61,7 +61,7 @@ detected host, and puts `ruver` on your PATH.
 
 ```bash
 ruver update     # git pull --ff-only main, then relink
-ruver status
+ruver status     # plugin health, then cwd job Walk if STATE exists
 ruver report     # wall time, laps, and host token totals
 ruver uninstall
 ```

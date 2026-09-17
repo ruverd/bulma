@@ -3,8 +3,8 @@
 Alias: `/ruver-fd`.
 
 Delivery **engine** inside [`/ruver-developer`](ruver-developer.md).
-Grill → spec → tickets → TDD implement → review → CI. The main thread
-still does not write product code.
+Grill → spec → tickets → plan_critic (gated) → TDD implement → review → CI.
+The main thread still does not write product code.
 
 Skill: [`../../skills/ruver-feature-delivery`](../../skills/ruver-feature-delivery).
 
@@ -22,8 +22,8 @@ Prefer `/ruver-developer` when you also want MERGEABLE + QA after CI.
 ## Spine
 
 ```
-grill-with-docs → spec → tickets → implement (TDD) → review → tester
-  → blast → quality → shipper → CI
+grill-with-docs → spec → tickets → plan_critic → implement (TDD) → review → tester
+  → blast (not light unless elevated) → quality → shipper → CI
 ```
 
 | Path | When |
@@ -33,7 +33,8 @@ grill-with-docs → spec → tickets → implement (TDD) → review → tester
 | `light_change` | chore — one ticket, one coder |
 | `scope: fullstack` | FE and BE, same branch |
 
-Grill, spec, and tickets stay on the **main thread**. Implement /
+Grill, spec, and tickets stay on the **main thread**. `plan_critic`
+runs there too, except `risk=elevated` (one read-only spawn). Implement /
 tester / quality / shipper are workers (`ruver-fd-coder`, …).
 
 ## What “delivered” means here

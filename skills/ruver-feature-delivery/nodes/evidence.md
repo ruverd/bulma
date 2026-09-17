@@ -7,13 +7,14 @@
 ## Mission
 
 After every ticket has passed tester, before blast (`full_feature` /
-`debug_fix`) or before quality (`light_change`). Capture After. Write a
+`debug_fix` / `light_change`+`risk=elevated`) or before quality
+(`light_change` and `risk` is not `elevated`). Capture After. Write a
 fragment the shipper pastes into [../templates/PR_BODY.md](../templates/PR_BODY.md).
 
 ## When
 
-Tester pass, no tickets left. Then this node. Then blast, or quality on
-`light_change`. GRAPH.md owns the edges.
+Tester pass, no tickets left. Then this node. Then blast, or quality
+when ROUTING.md skips blast. GRAPH.md owns the edges.
 
 ## Before capture
 
@@ -44,6 +45,20 @@ Before. Restore the shared session first.
 
 Save PNGs under `$RUVER_ROOT/.ruver-feature-delivery/evidence/`
 (`before.png` / `after.png`, or `n/a`).
+
+## Ticket After (`risk=elevated` UI)
+
+After a UI ticket passes tester and more tickets remain. One PNG of
+**this** ticket's route, same viewport as Before.
+`$RUVER_ROOT/.ruver-feature-delivery/evidence/after-ticket-<N>.png`.
+
+Parent calls this from [IMPLEMENTATION.md](../IMPLEMENTATION.md). Do not
+rewrite the PR fragment here. The final After (`after.png`) still runs
+when no tickets are left.
+
+Skip when `qa_tool` is not `agent-browser`, or `risk` is not `elevated`.
+Missing file on a UI elevated ticket is a fail. Do not start the next
+ticket.
 
 ## Publish
 
