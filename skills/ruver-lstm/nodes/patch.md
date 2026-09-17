@@ -47,4 +47,4 @@ If the SHA changed, recapture After and `gh pr edit --body` so the
 Before → After section matches HEAD.
 [evidence.md](../../ruver-feature-delivery/nodes/evidence.md).
 
-Then **reply**.
+Then **prove**. Do not **reply** from this node.

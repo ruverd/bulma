@@ -28,6 +28,7 @@ jobs:
       - run: bash tests/ruver-qa.sh
       - run: bash tests/ruver-code-review.sh
       - run: bash tests/ruver-developer.sh
+      - run: bash tests/ruver-lstm.sh
 
   cli:
     name: cli (${{ matrix.os }})

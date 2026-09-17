@@ -8,6 +8,12 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `/ruver-lstm` verify binds each comment to HEAD (`claim_true`,
+  `fix_ok_here`, `risk`) and skip must cite a path or test. After a
+  should-fix patch, **prove** runs the fd reviewer (`spec_verdict` =
+  this comment, `quality_verdict` = TDD/DS) and tester before reply.
+  Fail does not dismiss `CHANGES_REQUESTED`. Last `prove_fix_loops`
+  slot is a fresh coder.
 - `/ruver-developer` triage writes `risk: low | normal | elevated`
   orthogonal to `path`. An auth bug stays `debug_fix` + `elevated`;
   `light_change` + `elevated` runs blast. Resume replays world vs STATE

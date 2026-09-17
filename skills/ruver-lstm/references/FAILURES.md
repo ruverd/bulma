@@ -3,7 +3,8 @@
 | Class | Action |
 |---|---|
 | Review still valid | **fix** |
-| Review stale / wrong / YAGNI | **skip** + reason |
+| Review stale / wrong / YAGNI | **skip** + cite (path, test, or DECIDE) |
+| Patch did not address the comment | **prove** fail → patch; do not dismiss |
 | Merge conflict | rebase, always |
 | Test / CI red after patch | fix or escalate; never `--no-verify` |
 | Unclear product / security | ASK last resort or escalate |
