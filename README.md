@@ -22,7 +22,7 @@ TDD on behavior change. ASK the user only as a last resort.
 | You type | What happens |
 |---|---|
 | `/developer` | Grill, spec, tickets, TDD, draft PR, CI, then QA |
-| `/qa` | Exercise the PR (agent-browser or HTTP). Comment with a video |
+| `/qa` | Exercise the PR (agent-browser or HTTP). Comment with video (UI) or an HTTP still (API) |
 | `/reviewer` | Review the PR. Diagnose CI |
 | `/lstm` | Incoming review. Patch the same branch |
 | `/goal` | Keep going until QA evidence lands on the head SHA |
@@ -142,7 +142,9 @@ On a GitHub PR that changes a screen, two artifacts:
 Login is reused from `$HOME/.ruver/agent-browser/ruver-<owner>-<repo>/`
 until it expires, then the repo's `qa:login` / `qa:otp` helper.
 
-API-only PRs skip stills and video. HTTP record is the evidence.
+API-only PRs skip video. Attach an HTTP still of the changed
+endpoints, or stills of the FE screens that call them. Missing UI
+is not a skip.
 
 **Links in the goal**
 
@@ -199,7 +201,7 @@ Main-thread graph engineer. `category: graph`. Source: [`skills/`](skills/README
 **User-invoked**
 
 - **[ruver-developer](skills/ruver-developer/SKILL.md)** (`/developer`, `/ruver-developer`): Ticket, goal, or PR_BUG fix. Draft PR, MERGEABLE, then QA. [page](docs/commands/ruver-developer.md)
-- **[ruver-qa](skills/ruver-qa/SKILL.md)** (`/qa`, `/ruver-qa`): Exercise a PR (agent-browser or HTTP). Comment with a video. [page](docs/commands/ruver-qa.md)
+- **[ruver-qa](skills/ruver-qa/SKILL.md)** (`/qa`, `/ruver-qa`): Exercise a PR (agent-browser or HTTP). Comment with video (UI) or an HTTP still (API). [page](docs/commands/ruver-qa.md)
 - **[before-and-after](skills/before-and-after/SKILL.md)**: UI stills on the GitHub PR body. Loaded by the shipper and `/qa`.
 - **[ruver-triage](skills/ruver-triage/SKILL.md)** (`/ruver-triage`): Classify a QA finding. [page](docs/commands/ruver-triage.md)
 - **[ruver-reviewer](skills/ruver-reviewer/SKILL.md)** (`/reviewer`, `/ruver-reviewer`): Review a PR. Diagnose CI. [page](docs/commands/ruver-reviewer.md)

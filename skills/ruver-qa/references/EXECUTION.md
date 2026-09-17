@@ -15,13 +15,25 @@ Run agent-browser headless. It launches bundled Chrome for Testing as its
 rendering engine; that process is expected. It must include `--headless=new`
 and must not open a visible browser window or the user's Google Chrome.app.
 Never use `--headed`, `--auto-connect`, `--cdp`, `--profile`, the OS `open`
-command, or a host browser MCP. If agent-browser fails, report `BLOCKED`.
-Do not switch tools.
+command, or a host browser MCP. If agent-browser fails on a UI step,
+report `BLOCKED`. Do not switch tools.
 
 ## Per step
 
-1. If `kind` is `endpoint` and there is no UI: HTTP the changed
-   path. Record status + body excerpt.
+1. If `kind` is `endpoint` and no FE caller is resolved: HTTP the
+   changed path against the repo's documented origin. Save the
+   transcript, then render an HTTP still:
+
+   ```bash
+   curl -sS -i -X METHOD "$ORIGIN$path" ... \
+     | tee .ruver-qa/artifacts/S<n>.http
+   ../scripts/http-proof.sh --out .ruver-qa/artifacts/S<n>-http.png \
+     --from .ruver-qa/artifacts/S<n>.http --title "S<n> METHOD /path"
+   ```
+
+   `pass_if` is status + body. Notes without that PNG are not enough.
+   If a FE caller is resolved, walk that screen instead (step 2). The
+   screen is the proof. Do not invent a host.
 2. If `kind` is a screen / widget / visual / state: agent-browser.
    Restore the shared session, then follow that step's `how`
    (happy or user-break).
@@ -40,16 +52,18 @@ Do not switch tools.
    ```
 
    App 4xx/5xx and JS exceptions → FINDINGS. Analytics noise does
-   not. API-only: recorded HTTP of happy and user-break. Notes
-   without that evidence are not enough for PASS.
+   not. API-only: HTTP stills of happy and user-break (or FE stills
+   of the callers). Notes without that PNG are not enough for PASS.
 
 One screenshot is not enough for a screen step.
 A unit/CI-only walk is not enough when a FE route exists.
+An HTTP still is enough for an endpoint step.
 
 Do not invent credentials; use the repo's documented test auth.
 
 `command -v agent-browser` fails on a UI PR → `BLOCKED`. Do not
 reach for Playwright, Cypress, or a host browser MCP.
+Missing agent-browser on endpoint-only is not BLOCKED.
 
 ## Auth (gated screens)
 
@@ -120,7 +134,8 @@ app code):
 
 Stop the plan only when QA cannot run: no PR, no env, no auth,
 app will not start, no agent-browser on UI → `BLOCKED`. That is
-not a finding.
+not a finding. Missing agent-browser on endpoint-only is not
+BLOCKED. A backend PR with no screen still executes.
 
 Clearly infra (dev server down, expired login, missing fixture)
 with no product smell → `BLOCKED`, no triage.
@@ -130,7 +145,11 @@ or for `BLOCKED`.
 
 ## Exploratory (after the scripted walk)
 
-After the last PLAN.md step, before close. Same `$SESSION`.
+Exploratory is UI surfaces only. If every planned step is
+`kind: endpoint`, skip the browser dogfood. The HTTP stills from
+the scripted walk are the proof.
+
+After the last PLAN.md UI step, before close. Same `$SESSION`.
 
 Load `agent-browser skills get dogfood`. Charter: explore the
 surfaces listed in the PLAN.md inventory with this session to

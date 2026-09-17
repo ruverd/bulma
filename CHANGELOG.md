@@ -6,6 +6,13 @@ Notable changes per release. Format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `/qa` on a backend PR still plans and executes. Endpoint proof is
+  an attached HTTP still (`scripts/http-proof.sh`) or the FE screens
+  that call those endpoints. Missing UI is not a skip. API-only
+  `PASS` does not need a `.webm`.
+
 ### Added
 
 - `/ruver-lstm` verify binds each comment to HEAD (`claim_true`,

@@ -109,13 +109,15 @@ Rules:
   even if a screen step exists (the walk can miss the contract).
   Endpoint user-breaks: missing required field, unauthenticated if
   gated, duplicate POST on a mutation.
-- **Backend-only PR, no frontend sibling:** HTTP the changed
-  endpoints (happy + user-break). Do not invent a screen. Evidence of
-  those calls is enough. `git show` / unit/CI alone is still not a
+- **Backend-only PR, no frontend sibling:** still run. HTTP the
+  changed endpoints (happy + user-break) and render each call to an
+  HTTP still. Do not invent a screen.
+  Missing UI is not a skip. `git show` / unit/CI alone is still not a
   complete plan.
 - **Backend-only PR with a resolved frontend:** map the handler to
   the UI that calls it and exercise that route (happy + user-break).
-  If no caller exists, HTTP only.
+  Those screens are the proof. If no caller exists, HTTP still as
+  above.
 - A plan that is only `intent: happy` (plus login) is not a plan.
   Rewrite before execute.
 
@@ -129,7 +131,8 @@ PLAN.md must have: inventory table, blast radius table, ≥1
 `intent: happy` step, ≥1 `intent: user-break` step per process
 surface (or a Coverage-gaps line that names the missing fixture),
 `intent` and `pass_if` on every step. Empty plan → stop and ask
-(no surface found). Happy-only plan → rewrite, do not execute.
+(no route and no endpoint). A backend diff with handlers is a plan.
+Missing UI is not a skip. Happy-only plan → rewrite, do not execute.
 Blast radius with an UNKNOWN row and no Coverage-gaps line and no
 extra step → rewrite, do not execute.
 

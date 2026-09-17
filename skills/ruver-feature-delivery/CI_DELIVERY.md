@@ -81,7 +81,7 @@ Graph `status: done` **only** if `ci.status: green` (when there was a PR).
 
 If this run sits **inside** the `ruver-developer` graph, `done` here
 **does not** finish delivery: the developer orchestrator continues to
-`mergeable` → `request_qa`. QA (comment + video on the PR) belongs to
+`mergeable` → `request_qa`. QA (comment + evidence on the PR) belongs to
 `ruver-qa`, not this graph. `/ruver-fd` alone **does not** call QA.
 
 ## User summary

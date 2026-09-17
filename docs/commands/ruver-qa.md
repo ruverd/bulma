@@ -3,8 +3,8 @@
 Alias: **`/qa`**. Graph engineer for **product QA**. One
 QA execute slot. Plan happy and user-break from the diff
 before any click.
-Comment with per-surface clips (a concatenated reel). UI stills
-go on the PR body
+Comment with per-surface clips (a concatenated reel) or HTTP
+stills on API. UI stills go on the PR body
 ([before-and-after](../../skills/before-and-after/SKILL.md)).
 
 Skill: [`../../skills/ruver-qa`](../../skills/ruver-qa).
@@ -23,17 +23,19 @@ PR from args or QA_REQUEST
   → plan           blast radius + happy + user-break, before any click
   → execute        agent-browser clips or HTTP; then exploratory
   → triage?        product suspicion → bus → /ruver-triage
-  → verdict        comment + video + QA_RESULT
+  → verdict        comment + evidence + QA_RESULT
 ```
 
 ## What “done” means
 
-A PR comment on the **head SHA** with evidence (video and/or HTTP).
-Chat-only is not done. Unit tests or `git show` are not a complete execute.
+A PR comment on the **head SHA** with evidence (UI video and/or
+HTTP still). Chat-only is not done. Unit tests or `git show` are
+not a complete execute.
 
 UI: agent-browser only. The app's Playwright/Cypress suite stays in CI.
-Backend-only PRs with no UI sibling: HTTP the changed endpoints.
-With a sibling UI: hit that screen when a caller exists.
+A backend PR still runs. Prove the changed endpoints with an HTTP
+still, or by walking the FE screens that call them. Missing UI is
+not a skip.
 
 ## Slot
 
@@ -49,7 +51,7 @@ The graph engineer does **not** classify bugs. Suspicion →
 - Spawn `ruver_triage` as a child.
 - Skip the PR comment.
 - `gh gist create` on `.webm` (use `scripts/publish-evidence.sh`).
-- PASS without evidence (FE video, or HTTP record on API-only).
+- PASS without evidence (FE video, or HTTP still / FE screens on API).
 - PASS on a happy-only walk. User-break steps are required.
 - Fall back to Playwright or a host browser MCP.
 

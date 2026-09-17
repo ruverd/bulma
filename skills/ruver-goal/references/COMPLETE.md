@@ -13,8 +13,9 @@ The goal is done only when **all** are true on the **current head SHA**:
 
    `sha=` must equal `headRefOid`.
 5. That same comment has evidence. UI: a `user-attachments` URL (the
-   `--attach` video). API-only: an HTTP record of the changed
-   endpoints. Local `test-results/*.webm` is not enough.
+   `--attach` video). API-only: an attached HTTP still of the changed
+   endpoints, or FE stills of the callers. Local
+   `test-results/*.webm` is not enough.
 
 `FAIL` still completes **this** goal if the comment is on the head SHA
 (QA ran). A `PR_BUG` reopens work: new SHA → loop continues until a
@@ -23,4 +24,4 @@ new comment matches the new SHA.
 Verifier: `gh pr view --json headRefOid,url,mergeable,mergeStateStatus`
 plus `gh api repos/$REPO/issues/$PR/comments` and grep the marker.
 If that review cannot find the marker plus evidence (video URL or
-HTTP record), the goal stays open.
+HTTP still), the goal stays open.

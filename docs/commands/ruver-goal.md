@@ -22,8 +22,8 @@ All must hold on the **current** head SHA:
 2. Required CI green
 3. MERGEABLE
 4. QA comment with `ruver-qa` marker for that SHA
-5. That comment has evidence (Video URL when recorded; HTTP record
-   is enough on API-only)
+5. That comment has evidence (Video URL when recorded; HTTP still
+   or FE screens of callers on API-only)
 
 See [COMPLETE.md](../../skills/ruver-goal/references/COMPLETE.md).
 

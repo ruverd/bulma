@@ -17,3 +17,7 @@ did not copy it. `format.sh` here is MIT and images-only.
 
 GitLab and `--no-pr` skip the body block. UI without agent-browser is
 BLOCKED, not a silent skip.
+
+Backend PRs still execute. Evidence is an attached HTTP still (PNG
+of the call) or the FE screens that call those endpoints. Missing
+UI is not a skip.

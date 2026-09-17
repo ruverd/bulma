@@ -208,4 +208,81 @@ else
   ok concat-ffmpeg-skipped
 fi
 
+# 9. Backend / endpoint PRs still execute. Proof is an HTTP still or FE screens.
+SKILL="$ROOT/skills/ruver-qa/SKILL.md"
+GRAPH="$ROOT/skills/ruver-qa/GRAPH.md"
+PRODUCT="$ROOT/skills/ruver-feature-delivery/PRODUCT.md"
+REQ_QA="$ROOT/skills/ruver-developer/nodes/request_qa.md"
+README="$ROOT/README.md"
+PROOF="$ROOT/skills/ruver-qa/scripts/http-proof.sh"
+
+[[ -f "$SKILL" ]] || fail "missing $SKILL"
+[[ -f "$GRAPH" ]] || fail "missing $GRAPH"
+[[ -f "$PRODUCT" ]] || fail "missing $PRODUCT"
+[[ -f "$REQ_QA" ]] || fail "missing $REQ_QA"
+
+if grep -F -q '| plan | no surface |' "$GRAPH"; then
+  fail "GRAPH.md still stops on no surface (endpoints are a plan)"
+fi
+grep -F -q 'no route and no endpoint' "$GRAPH" \
+  || fail "GRAPH.md must stop only when there is no route and no endpoint"
+
+grep -F -q 'A backend PR still runs' "$SKILL" \
+  || fail "SKILL.md must say a backend PR still runs"
+if ! grep -qiE 'missing UI is not a skip|not a skip' "$PLAN"; then
+  fail "PLAN.md must say missing UI is not a skip"
+fi
+grep -F -q 'no route and no endpoint' "$PLAN" \
+  || fail "PLAN.md empty-plan gate must be no route and no endpoint"
+
+grep -F -q 'http-proof.sh' "$EXEC" \
+  || fail "EXECUTION.md missing http-proof.sh"
+grep -F -q 'Exploratory is UI surfaces only' "$EXEC" \
+  || fail "EXECUTION.md must skip browser exploratory on endpoint-only"
+grep -F -q 'Missing agent-browser on endpoint-only is not BLOCKED' "$EXEC" \
+  || fail "EXECUTION.md must not BLOCKED API-only when agent-browser is missing"
+
+echo "$pass_row" | grep -qi 'HTTP still' \
+  || fail "PASS row missing HTTP still for API/backend"
+echo "$pass_row" | grep -F -q 'kind: endpoint' \
+  || fail "PASS row must say .webm is not required for kind: endpoint"
+
+echo "$hard" | grep -qi 'HTTP still' \
+  || fail "Hard rules missing HTTP still"
+grep -qi 'HTTP still' "$COMMENT" || fail "COMMENT.md missing HTTP still"
+
+grep -qi 'HTTP still' "$PRODUCT" \
+  || fail "PRODUCT.md qa_tool=http must name HTTP still"
+
+if grep -F -q 'QA must still comment + video before' "$REQ_QA"; then
+  fail "request_qa.md still requires video on every QA including backend"
+fi
+grep -qi 'HTTP still' "$REQ_QA" \
+  || fail "request_qa.md must accept HTTP still as QA evidence"
+
+if grep -F -q 'API-only PRs skip stills and video' "$README"; then
+  fail "README still tells API QA to skip stills"
+fi
+
+[[ -f "$PROOF" ]] || fail "http-proof.sh missing"
+[[ -x "$PROOF" ]] || fail "http-proof.sh not executable"
+"$PROOF" -h >/dev/null 2>&1 || "$PROOF" --help >/dev/null 2>&1 \
+  || fail "http-proof.sh --help should exit 0"
+"$PROOF" >/dev/null 2>&1 && PROOF_EXIT=0 || PROOF_EXIT=$?
+[[ "$PROOF_EXIT" -ne 0 ]] || fail "http-proof.sh with no args should fail"
+"$PROOF" --out "$TMP/http-proof.png" --method GET \
+  --url 'http://example.test/v1/items' --status 200 \
+  --body '{"ok":true}' \
+  || fail "http-proof.sh failed on a fixture"
+python3 - "$TMP/http-proof.png" <<'PY' || fail "http-proof.sh did not write a PNG"
+import sys
+path = sys.argv[1]
+data = open(path, "rb").read()
+if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+    raise SystemExit("not a PNG")
+if len(data) < 200:
+    raise SystemExit("PNG too small")
+PY
+ok backend-endpoint-proof
+
 echo "all passed"

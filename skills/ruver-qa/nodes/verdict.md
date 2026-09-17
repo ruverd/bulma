@@ -3,7 +3,8 @@
 **Verb:** close
 
 1. Map TRIAGE_RESULT via [../references/HANDOFF.md](../references/HANDOFF.md).
-2. **Post the PR comment** with video attached —
+2. **Post the PR comment** with evidence attached (UI video
+   and/or HTTP stills) —
    [../references/COMMENT.md](../references/COMMENT.md)
    (`../scripts/publish-evidence.sh`, never `gh gist create` on
    binaries). No comment → this node has not finished.
