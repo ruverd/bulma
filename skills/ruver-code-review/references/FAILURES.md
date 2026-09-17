@@ -13,3 +13,5 @@
 | multi-PR invocation | **required** fan-out (§0) — one subagent per PR; never sequential multi-review on main |
 | child receives 2+ PRs | refuse, return ERROR; only the orchestrator fans out |
 | required CI pending | **wait_ci** ([LOOP.md](../LOOP.md)), never a PR comment |
+| python3 or bind/classify script missing | stop, print the error, post nothing |
+| critic spawn or script fails | keep the bound ledger, `critic=skip`, note `critic_failed` in chat, still publish |

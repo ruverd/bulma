@@ -53,8 +53,8 @@ Caller: <ruver-code-review | ruver-reviewer>
 
 Re-run §1–§3 on the live head SHA. Do not read the diff until CI is green.
 If required CI is still pending, do nothing else and end the turn.
-If green, cancel_wake, then run §4–§11 (deep if nothing
-was reviewed yet). If Caller is ruver-reviewer, after the review
+If green, cancel_wake, then run §4–§9 including critic then publish
+(deep if nothing was reviewed yet). If Caller is ruver-reviewer, after the review
 load_skill ruver-reviewer and continue at diagnose → report.
 If required CI failed or is unknown, cancel_wake and DEFER
 (reason=ci_red or ci_unknown) with the issue comment in SKILL §9.

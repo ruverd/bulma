@@ -27,6 +27,13 @@ NEEDS = [
         before="request_qa",
         extra_files=(),
     ),
+    Need(
+        skill="ruver-code-review",
+        node="critic",
+        after="review",
+        before="publish",
+        extra_files=("scripts/bind-findings.py", "scripts/classify-risk.py"),
+    ),
 ]
 
 BOLD = re.compile(r"\*\*([A-Za-z][A-Za-z0-9_]*)\*\*")

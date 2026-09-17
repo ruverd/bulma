@@ -5,7 +5,7 @@ start (args or REVIEW_REQUEST)
   → admit           # idle → main; busy or 2+ PRs → worker+worktree
   → resolve
   → wait_ci         # required CI pending — 5m loop, no PR comment
-  → code_review     # /ruver-code-review
+  → code_review     # /ruver-code-review (spec-first, bind, high-risk critic)
   → diagnose        # classify failures + mergeable
   → report          # REVIEW_RESULT + pop if stacked
 ```

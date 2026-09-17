@@ -11,6 +11,8 @@ verdict: ""
 defer_reason: ""
 reviewed_shas: ""
 loop_id: ""
+risk: ""
+critic: ""
 caller: ruver-code-review
 updated_at: ""
 ---
