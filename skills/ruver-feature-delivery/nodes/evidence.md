@@ -46,6 +46,20 @@ Before. Restore the shared session first.
 Save PNGs under `$RUVER_ROOT/.ruver-feature-delivery/evidence/`
 (`before.png` / `after.png`, or `n/a`).
 
+## Ticket After (`risk=elevated` UI)
+
+After a UI ticket passes tester and more tickets remain. One PNG of
+**this** ticket's route, same viewport as Before.
+`$RUVER_ROOT/.ruver-feature-delivery/evidence/after-ticket-<N>.png`.
+
+Parent calls this from [IMPLEMENTATION.md](../IMPLEMENTATION.md). Do not
+rewrite the PR fragment here. The final After (`after.png`) still runs
+when no tickets are left.
+
+Skip when `qa_tool` is not `agent-browser`, or `risk` is not `elevated`.
+Missing file on a UI elevated ticket is a fail. Do not start the next
+ticket.
+
 ## Publish
 
 Keep the PNGs on disk. There is no PR yet. Shipper attaches them with

@@ -41,7 +41,8 @@ Walk: <nodes for this path and risk>
 Walk is one line. Nodes from [ROUTING.md](ROUTING.md) stages for this
 `path` and `risk` (include `plan_critic` only when that gate is on).
 Mark done `✓`, current (the S node) `●`, later `○`. Skip nodes ROUTING
-says no. Do not paste GRAPH.md.
+says no. Do not paste GRAPH.md. `ruver status` prints the same Walk
+when cwd has fd STATE (`scripts/status-walk.sh`).
 
 On DECIDE, the D line names what you took. On ASK, P is the one question.
 

@@ -25,6 +25,9 @@ need "$FD/nodes/reviewer.md"
 need "$FD/nodes/plan_critic.md"
 need "$FD/VOICE.md"
 need "$FD/HANDOFF.md"
+need "$FD/scripts/status-walk.sh"
+need "$FD/IMPLEMENTATION.md"
+need "$FD/nodes/evidence.md"
 need "$DEV/ARGS.md"
 need "$DEV/nodes/resume.md"
 need "$DEV/GRAPH.md"
@@ -139,5 +142,67 @@ grep -F -q '●' "$FD/VOICE.md" || fail "$FD/VOICE.md missing current mark"
 grep -F -q '○' "$FD/VOICE.md" || fail "$FD/VOICE.md missing later mark"
 has 'Walk:' "$FD/TOKEN_ECONOMY.md"
 ok walk-line
+
+# --- status-walk.sh projection ---
+
+WALK="$FD/scripts/status-walk.sh"
+TMP="$(mktemp "${TMPDIR:-/tmp}/ruver-walk.XXXXXX")"
+trap 'rm -f "$TMP"' EXIT
+cat >"$TMP" <<'EOF'
+---
+status: ticketing
+path: full_feature
+risk: elevated
+branch: feature/dev-1
+current_ticket: "1"
+---
+# body
+EOF
+out="$(bash "$WALK" "$TMP")"
+echo "$out" | grep -F -q 'path     full_feature' || fail "walk missing path ($out)"
+echo "$out" | grep -F -q 'risk     elevated' || fail "walk missing risk ($out)"
+echo "$out" | grep -F -q '●tickets' || fail "walk should mark tickets current ($out)"
+echo "$out" | grep -F -q '○plan_critic' || fail "elevated full_feature walk must include plan_critic ($out)"
+echo "$out" | grep -F -q '✓grill' || fail "walk should mark grill done ($out)"
+
+cat >"$TMP" <<'EOF'
+---
+status: implementing
+path: full_feature
+risk: low
+branch: feature/dev-1
+---
+EOF
+out="$(bash "$WALK" "$TMP")"
+if echo "$out" | grep -F -q 'plan_critic'; then
+  fail "low-risk full_feature walk must skip plan_critic ($out)"
+fi
+echo "$out" | grep -F -q '●implement' || fail "walk should mark implement current ($out)"
+
+cat >"$TMP" <<'EOF'
+---
+status: testing
+path: light_change
+risk: elevated
+branch: feature/dev-1
+---
+EOF
+out="$(bash "$WALK" "$TMP")"
+echo "$out" | grep -F -q '○blast' || fail "elevated light_change walk must include blast ($out)"
+if echo "$out" | grep -F -q 'plan_critic'; then
+  fail "light_change walk must skip plan_critic ($out)"
+fi
+ok status-walk
+
+# --- ticket After + last-loop fresh coder ---
+
+has 'Ticket After' "$FD/nodes/evidence.md"
+has 'after-ticket-' "$FD/nodes/evidence.md"
+has 'risk=elevated' "$FD/IMPLEMENTATION.md"
+grep -F -q 'fresh** coder' "$FD/IMPLEMENTATION.md" \
+  || grep -F -q '**fresh** coder' "$FD/IMPLEMENTATION.md" \
+  || fail "IMPLEMENTATION.md must fresh-coder the last review_fix_loops slot"
+has 'status-walk.sh' "$ROOT/install.sh"
+ok ticket-after-and-fresh-coder
 
 echo "all passed"

@@ -1,6 +1,8 @@
 # Implementation
 
-Main thread **never** edits product code. One fresh `ruver-fd-coder` per ticket (or re-fix of the same ticket).
+Main thread **never** edits product code. One fresh `ruver-fd-coder` per
+ticket. Re-fix of the same ticket reuses that coder except on the last
+`review_fix_loops` slot (fresh).
 
 ## Prompt the coder with
 
@@ -30,10 +32,16 @@ If the coder wants a different design: `NEEDS_CONTEXT`. Parent DECIDE from spec 
 1. Orchestrator runs the ticket's test command. Exit code into `.ruver-feature-delivery/gates.log`. Red → re-dispatch coder (≤ `test_fix_loops`).
 2. Fresh `ruver-fd-reviewer`. Diff + done criteria + `gates.log`. Either
    `spec_verdict` or `quality_verdict` fail → same ticket (≤ `review_fix_loops`).
-   Graph pass only if both pass.
+   Graph pass only if both pass. Last remaining loop: **fresh** coder.
+   Earlier loops re-dispatch the same coder.
 3. Loops exhausted → ticket `blocked` + escalate. Never skip ahead.
 4. Tester hard gate after the ticket (or after the last ticket, per GRAPH).
-5. Next ticket only after this one passed review + tester.
+5. UI ticket (`qa_tool=agent-browser`) and `risk=elevated`: capture After
+   of this ticket's route ([evidence.md](nodes/evidence.md) §Ticket After)
+   before the next ticket. Missing After fails the ticket. Not a second QA
+   execute. Skip on `low` / `normal` and on non-UI.
+6. Next ticket only after this one passed review + tester (and ticket After
+   when step 5 applies).
 
 ## MCP precondition
 
