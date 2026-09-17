@@ -10,5 +10,5 @@ Maps [ruver-host](../../ruver-host/SKILL.md) primitives. Graphs stay generic.
 | `cancel_wake` | drop that wakeup |
 | `session_model` | inherit |
 
-Install drops skills in `~/.codex/skills` and `~/.agents/skills`.
+Installer copies this pack into the Codex and agents skill homes.
 Disk: `$HOME/.ruver/<slug>`.

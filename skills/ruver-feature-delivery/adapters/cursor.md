@@ -9,5 +9,5 @@ Maps [ruver-host](../../ruver-host/SKILL.md) primitives. Graphs stay generic.
 | `schedule_wake` | ask the user to re-run unless a loop command exists |
 | `session_model` | inherit |
 
-Install drops skills in `~/.cursor/skills`.
+Installer copies this pack into the Cursor skill home.
 Disk: `$HOME/.ruver/<slug>`.

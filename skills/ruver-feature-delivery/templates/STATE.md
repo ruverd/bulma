@@ -77,7 +77,7 @@ Index: `.ruver-feature-delivery/mcp-sources.md`
 - **forge:** github | gitlab | git
 - **tracker:** linear | github_issues | gitlab | jira | none
 - **pkg / cmds:**
-- **qa_tool:** agent-browser | http | none
+- **qa runner:** agent-browser | http | none
 - **assignee / reviewers / reviewers_status:** (PRODUCT.md §6)
 - **ID / URL:**
 - **Branch:**

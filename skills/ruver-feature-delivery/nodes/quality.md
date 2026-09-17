@@ -17,7 +17,7 @@ Before **shipper**. Thermo `fix all` is still required before any PR.
 
 ## Steps
 
-1. Collect context (orchestrator or this node):
+1. Load the branch diff and the touched files (orchestrator or this node):
    - `git diff <base_branch>...HEAD` (and unstaged if not committed yet)
    - contents of the touched files
 2. Invoke the thermo-nuclear review with the bundled skill
