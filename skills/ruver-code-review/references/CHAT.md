@@ -12,9 +12,11 @@ GitHub body into chat.
 | Head | <sha7> |
 | Prior | none | deep@<sha7> APPROVED | ... |
 | CI | success \| failure \| pending \| unknown |
-| Axes | 1,2,4,5,7,8,10 (skipped 3 no ticket, 6 no auth surface, 9 no render change) |
+| Axes | tests, correctness, security, standards (skipped a11y no UI, deps no lockfile) |
+| Risk | high or low |
+| Critic | skip, ran, or skip with critic_failed |
 | Read | 12 files, 5 codegraph queries |
-| Findings | N blockers · N majors · N nits · N dropped by self-verify |
+| Findings | N blockers · N majors · N nits · N dropped by self-verify · N dropped by bind |
 | Carried | N re-verified — N still reproduce, N resolved |
 | Coverage | 12/12 |
 | Posted | APPROVED \| CHANGES_REQUESTED \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |

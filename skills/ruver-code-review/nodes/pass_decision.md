@@ -14,7 +14,7 @@ Take the artifact with the latest timestamp. Parse its marker:
 
 ```
 <!-- ruver-review: v=1 pass=deep|light|none sha=<sha> blockers=<n> majors=<n> reason=<slug>
-     open=<path>:<line>:<slug>|<path>:<line>:<slug> -->
+     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran -->
 ```
 
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
@@ -22,7 +22,7 @@ below that leads to APPROVE must check for a `pass=deep|light` marker first.
 
 `open=` lists every **blocker and major** published by that run, max 10, `-` when
 none. Nits never enter the ledger — they are said once and never carried. It is the
-carry-forward ledger (§4.1): a light pass must re-verify each entry, because the
+carry-forward ledger (§4.2): a light pass must re-verify each entry, because the
 incremental diff alone cannot prove a prior finding was addressed. Slugs are short
 kebab-case labels of the finding title.
 

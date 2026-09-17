@@ -30,6 +30,7 @@ Adds the company seat picker. I did not find a merge blocker.
 | CI | green |
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors |
+| Acceptance | 1 done · 1 missing |
 
 ### 🛑 Blockers
 1. `src/x.ts:42`. **Retry keeps the old count.** If the user retries after a failure, `attempts` still has the old number and the cap never fires. Reset it before the new run.
@@ -53,21 +54,33 @@ Adds the company seat picker. I did not find a merge blocker.
 | `src/x.ts` | logic, contract, tests |
 </details>
 
+<details><summary>Acceptance</summary>
+
+| Criterion | Status |
+|---|---|
+| User can retry after a failure | done |
+| Seat cap is enforced on the write | missing |
+</details>
+
 <details><summary>Skipped axes</summary>
 
 - Perf. No render, query or effect change in the diff.
 </details>
 
 <!-- ruver-review: v=1 pass=deep sha=abc1234 blockers=1 majors=2 reason=-
-     open=src/x.ts:42:unreset-retry-count|src/y.ts:10:missing-empty-list-test|src/a.ts:42:seat-cap-not-rechecked -->
+     open=src/x.ts:42:unreset-retry-count|src/y.ts:10:missing-empty-list-test|src/a.ts:42:seat-cap-not-rechecked
+     risk=low critic=skip -->
 ```
 
 The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 `open=-`). Without it the next run loses the ledger and re-reviews from scratch.
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
-`## ⏸️ Deferred: <repo>#<pr>`. Sections with no content are omitted. Inline
-findings still appear in the body list so the summary stands alone.
+`## ⏸️ Deferred: <repo>#<pr>`. Sections with no content are omitted. Omit
+Acceptance when `AC.md` is `none`. Inline findings still appear in the body
+list so the summary stands alone. Do not print `axis` labels on the PR; the
+Acceptance table is the spec report, and a standards finding already quotes
+the rule.
 
 ### Inline comment — one shape only
 

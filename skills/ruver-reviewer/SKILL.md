@@ -18,6 +18,7 @@ bus PROTOCOL.md · skill `ruver-code-review` · `ruver-memory` ·
 [DISK.md](../ruver-bus/DISK.md) (`.ruver-*` is **global**, never git root)
 
 Init `.ruver-reviewer/STATE.md`. Walk GRAPH (**admit** first).
+`code_review` is the engine: spec-first, patch bind, high-risk critic.
 Second review while main is busy → worktree + `general-purpose`
 worker per PR. `--force` if CI red. Pending required CI waits 5m
 (no PR comment) via `wait_ci`. Draft / conflict / CI-red DEFER is

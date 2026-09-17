@@ -24,6 +24,7 @@ bash tests/install.sh          # the ruver CLI: setup, update, uninstall, flags
 bash tests/repo.sh             # repo invariants: links, frontmatter, manifests, structure
 bash tests/before-and-after.sh # PR stills formatter + session dir
 bash tests/ruver-qa.sh         # QA walk video is the plan, not qa:login
+bash tests/ruver-code-review.sh # spec-first, patch bind, high-risk critic
 ```
 
 These run in CI on every push. `tests/repo.sh` needs `python3`, and it runs

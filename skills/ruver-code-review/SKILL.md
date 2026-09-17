@@ -16,9 +16,10 @@ waits 5m and does **not** post. Red CI still DEFERS.
 
 ## Invariants — never break
 
-1. **Subagents only when reviewing 2+ PRs in one invocation.** Single-PR stays on
-   the main thread. Multi-PR: orchestrator must **not** review diffs itself —
-   spawn one fresh subagent per PR, each running this skill for **that PR only**.
+1. **Subagents.** Multi-PR: one fresh subagent per PR; the orchestrator must
+   **not** review diffs itself. Single-PR: at most one **high-risk critic**
+   ([nodes/critic.md](nodes/critic.md)). That spawn is not a second GitHub
+   artifact and does not fan out.
 2. **Exactly one artifact per PR** — one review (inline comments in the same
    call) or one issue comment. Never both. Never two of either **on the same PR**.
 3. **Never APPROVE** while any required check is failed, pending or unknown.
@@ -41,17 +42,26 @@ waits 5m and does **not** post. Red CI still DEFERS.
    a problem that still exists is found again by the axes; one that was fixed leaves
    nothing to deduplicate.
 10. **My own open findings never expire silently.** A prior finding of mine is
-    dropped only after it is re-verified against the head SHA (§4.1).
+    dropped only after it is re-verified against the head SHA (§4.2).
+11. **Patch bind.** After Phase 10, every finding goes through
+    `scripts/bind-findings.py`. A `path:line` that is not in this pass's patch
+    (or a carry-forward allow-path) is dropped in silence. A finding with no
+    `axis` is dropped the same way.
+12. **High-risk critic.** When `scripts/classify-risk.py` prints `high`, spawn
+    the critic before verdict. The critic walks contracts, integration/state,
+    and security/data-loss on one spawn, without voting findings off. When
+    the script prints `low`, skip the spawn.
 
 ## Caps
 
 | Budget | Deep | Light |
 |---|---|---|
-| Full files read | 15 (highest churn first) | 4 (only to confirm a suspicion) + carry-forward re-reads (§4.1, ≤10, outside the cap) |
+| Full files read | 15 (highest churn first) | 4 (only to confirm a suspicion) + carry-forward re-reads (§4.2, ≤10, outside the cap) |
 | Codegraph / caller queries | 8 | 3 |
 | Findings published | 10 (blockers first) | 10 |
 | Nits published | 5, collapsed block, never inline | 5 |
 | Neighbour test files | only when new logic has no test in the diff | same |
+| Critic (risk=high only) | 1 spawn, 4 Reads, 2 new blockers | same |
 
 Large PR (`additions + deletions > 2500` or `changedFiles > 25`): keep the caps,
 review hotspots first (auth, permissions, data writes, migrations, public API,
@@ -70,9 +80,10 @@ pass loads only what it needs.
 | 1. Resolve the PR | [nodes/resolve.md](nodes/resolve.md) |
 | 2. State to pass decision (deep or light) | [nodes/pass_decision.md](nodes/pass_decision.md) |
 | 3. Gates, before reading any diff | [nodes/gates.md](nodes/gates.md) |
-| 4. Fetch, pass dependent, plus carry-forward | [nodes/fetch.md](nodes/fetch.md) |
-| 5. Phases 1 to 10 | [nodes/review.md](nodes/review.md) |
-| 6-8. Severity, coverage, verdict | [nodes/verdict.md](nodes/verdict.md) |
+| 4. Patches, risk, then Reads after spec | [nodes/fetch.md](nodes/fetch.md) |
+| 5. Spec checklist, then axes, then bind | [nodes/review.md](nodes/review.md) |
+| 6. High-risk critic (no-op when low) | [nodes/critic.md](nodes/critic.md) |
+| 7-8. Severity, coverage, verdict | [nodes/verdict.md](nodes/verdict.md) |
 | 9. Publish, one artifact per PR | [nodes/publish.md](nodes/publish.md) |
 | CI wait | [nodes/wait_ci.md](nodes/wait_ci.md) · [LOOP.md](LOOP.md) |
 
@@ -84,4 +95,5 @@ pass loads only what it needs.
 | Graph and edges | [GRAPH.md](GRAPH.md) |
 | STATE | [STATE.schema.md](STATE.schema.md) · [templates/STATE.md](templates/STATE.md) |
 
-Phases 4, 8 and 10 are never skippable. A large diff is not a reason.
+Correctness, Standards, and Self-verify are never skippable. A large diff is
+not a reason.

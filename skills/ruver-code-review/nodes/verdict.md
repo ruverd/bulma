@@ -35,7 +35,7 @@ left unverified because of a cap is declared and forces **DEFER**, never APPROVE
 
 Reaching this section means §3 passed, so CI is green — unless `--force` was used.
 
-Carried findings that still reproduce (§4.1) count exactly like new ones. APPROVE
+Carried findings that still reproduce (§4.2) count exactly like new ones. APPROVE
 requires zero surviving findings, new **and** carried.
 
 | Findings | Verdict |

@@ -15,13 +15,19 @@ Skill: [`../../skills/ruver-code-review`](../../skills/ruver-code-review).
 
 ## Invariants
 
-1. One PR on the main thread. Two or more → one fresh worker per PR.
+1. One PR on the main thread (plus at most one high-risk critic spawn,
+   which does not post). Two or more PRs → one fresh worker per PR.
    Orchestrator does **not** read diffs itself.
 2. Exactly one artifact per PR. Never a review **and** an issue comment.
 3. Never APPROVE while required CI is failed, pending, or unknown.
 4. No finding without a concrete trigger. Drop in silence.
-5. Nits never block. Max 5, collapsed. Most stay silent.
-6. Other reviewers’ `CHANGES_REQUESTED` is ignored. Re-find from the
+5. Spec checklist (`AC.md`) is written before product-file Reads.
+   Tests are read before correctness. Findings are bound to the patch
+   and carry an `axis`. High-risk PRs get one critic spawn (three
+   lenses, no vote) before the verdict; that spawn does not post.
+   The GitHub body includes Acceptance coverage.
+6. Nits never block. Max 5, collapsed. Most stay silent.
+7. Other reviewers’ `CHANGES_REQUESTED` is ignored. Re-find from the
    head SHA.
 
 Pending required CI: `wait_ci` (5m `schedule_wake`, **no** PR comment).

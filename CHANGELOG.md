@@ -6,6 +6,19 @@ Notable changes per release. Format follows
 
 ## [Unreleased]
 
+### Added
+
+- `/ruver-code-review` writes the ticket/PR acceptance checklist before
+  reading product files, drops findings whose `path:line` is not in the
+  patch (`scripts/bind-findings.py`), and spawns one fresh critic on
+  high-risk diffs only (`scripts/classify-risk.py`). `/ruver-reviewer`
+  uses that path; it does not spawn a second critic.
+- The critic walks contracts, integration/state, and security/data-loss
+  on that one spawn and does not vote unique findings off. Tests run
+  before correctness. The GitHub body includes an Acceptance table.
+  Accessibility and lockfile review run only when the diff touches those
+  files. Risk also trips on public contract, concurrency, and wide diffs.
+
 ### Fixed
 
 - Tracker checkout is always `feature/<id-lowercase>` (`DEV-4525` →

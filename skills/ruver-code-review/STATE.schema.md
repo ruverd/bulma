@@ -25,6 +25,20 @@ init | waiting_ci | reviewing | published | deferred | done
 | `reviewed_shas` | SHAs already reviewed, so a light pass knows the carry-forward |
 | `caller` | the graph that asked, when invoked over the bus |
 | `loop_id` | host `schedule_wake` id while `waiting_ci` ([LOOP.md](LOOP.md)) |
+| `risk` | from `scripts/classify-risk.py`; high enables the critic |
+| `critic` | whether the critic spawned |
+
+## risk
+
+```
+low | high
+```
+
+## critic
+
+```
+skip | ran
+```
 
 ## Rules
 
