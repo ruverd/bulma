@@ -15,4 +15,5 @@ Then **Enqueue or start QA** (`ruver-bus/JOBS.md`):
 - Slot taken → append `qa_waiting`. Do not switch. Do not
   spawn `ruver_qa`. Tell the user their queue position (in English).
 
-QA must still comment + video before **this job** is done.
+QA must still comment with evidence (UI video, or HTTP still /
+FE screens of callers) before **this job** is done.

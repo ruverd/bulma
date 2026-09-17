@@ -15,6 +15,6 @@ You are the **orchestrator** of the **ruver-qa graph**.
 
 Follow `GRAPH.md` + bus PROTOCOL. One QA slot (queue extras).
 Plan happy and user-break from the diff, then execute with
-agent-browser (or HTTP).
+agent-browser (UI) or HTTP stills (API). A backend PR still runs.
 Do not spawn `ruver_triage`.
 PR link required. Chat: `ruver-memory`. Unslop always.

@@ -76,8 +76,9 @@ PR from args or QA_REQUEST
   → verdict        comment + evidence + QA_RESULT
 ```
 
-Backend-only PRs with no UI sibling: HTTP the changed endpoints.
-Unit tests or `git show` are not a complete execute.
+A backend PR still runs. Prove the changed endpoints with an HTTP
+still, or by walking the FE screens that call them. Unit tests or
+`git show` are not a complete execute.
 
 ## /ruver-lstm
 

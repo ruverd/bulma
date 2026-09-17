@@ -39,7 +39,9 @@ Per-surface clips: [references/VIDEO.md](references/VIDEO.md).
 Do not run the app's Playwright/Cypress. Run agent-browser headless.
 Never use the
 OS `open` command, Google Chrome.app, `--headed`, `--auto-connect`,
-`--cdp`, `--profile`, or a host browser MCP. Backend-only PRs: HTTP the changed
-endpoints unless a frontend sibling is resolved
+`--cdp`, `--profile`, or a host browser MCP. A backend PR still runs
+(admit → plan → execute). Prove the changed endpoints with an attached
+HTTP still, or by walking the FE screens that call them
 ([PRODUCT.md](../ruver-feature-delivery/PRODUCT.md)).
-Unit/CI/`git show` alone is not a complete QA execute.
+Missing UI is not a skip. Unit/CI/`git show` alone is not a complete
+QA execute.

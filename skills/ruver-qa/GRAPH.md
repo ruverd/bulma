@@ -5,7 +5,7 @@ start (PR from args or QA_REQUEST)
   → admit            # one QA slot; else enqueue and stop
   → resolve
   → plan             # inventory + blast radius + happy + user-break
-  → execute          # clips + HTTP; exploratory; append FINDINGS
+  → execute          # clips + HTTP stills; exploratory; append FINDINGS
   → gate
        ├ no findings / unambiguous FAIL → verdict
        └ any product suspicion          → request_triage
@@ -29,7 +29,7 @@ start (PR from args or QA_REQUEST)
 | admit | slot free, this job, or a claim that expired / was abandoned | **resolve** (claim, or take over and say so) |
 | resolve | ok | **plan** |
 | plan | PLAN.md gate (blast-radius, happy + user-break) | **execute** |
-| plan | no surface | **stop** (ask) |
+| plan | no route and no endpoint | **stop** (ask) |
 | execute | plan finished, no findings, user-break walked | **verdict** (`PASS` or infra `BLOCKED`) |
 | execute | plan finished, findings exist | **request_triage** |
 | execute | unambiguous FAIL (VERDICTS.md) | **verdict** `FAIL` |
