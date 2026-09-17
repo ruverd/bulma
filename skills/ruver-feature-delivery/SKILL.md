@@ -53,7 +53,7 @@ Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 
 1. Init STATE under `$RUVER_ROOT/.ruver-feature-delivery/`. Load `ruver-memory`.
 2. `mcp_context` then `triage`. Critical MCP down → STOP. Do not invent.
-3. Walk GRAPH. Grill / spec / tickets on the main thread. Spawn **one** node subagent at a time for implement / review / diagnose / tester / evidence / quality / shipper.
+3. Walk GRAPH. Grill / spec / tickets on the main thread. `plan_critic` on the main thread unless `risk=elevated` (then one read-only spawn). Spawn **one** node subagent at a time for implement / review / diagnose / tester / evidence / quality / shipper.
 4. Never merge. Draft PR only from `shipper`.
 5. Near context limit → `handoff`.
 
@@ -61,7 +61,7 @@ Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 
 | path / scope | When | How |
 |---|---|---|
-| **full_feature** | new behavior | grill → spec → tickets → TDD implement |
+| **full_feature** | new behavior | grill → spec → tickets → plan_critic (skip if `risk=low`) → TDD implement |
 | **debug_fix** | bug | diagnose → one TDD ticket |
 | **light_change** | chore | one ticket → one coder |
 | **`scope: fullstack`** | FE and BE, sibling resolved | same branch, git worktrees ([FULLSTACK.md](FULLSTACK.md); Orca optional) |

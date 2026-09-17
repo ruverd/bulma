@@ -38,6 +38,8 @@ If the coder wants a different design: `NEEDS_CONTEXT`. Parent DECIDE from spec 
 ## MCP precondition
 
 Do not dispatch implementers if `mcp_gate: failed`.
+Do not dispatch implementers if GRAPH still owes `plan_critic` (full_feature
+and `risk` is not `low`, and `plan_critic_verdict` is not `pass` / `skip`).
 
 ## What the orchestrator may do
 

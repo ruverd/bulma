@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Developer P0: risk orthogonal to path, split fd review verdicts,
-# resume replays world vs STATE. Text fixtures only. No network.
+# Developer P0+P1: risk axis, split review verdicts, resume invariants,
+# gated plan_critic, Walk line. Text fixtures only. No network.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,6 +22,8 @@ need "$FD/templates/STATE.md"
 need "$FD/nodes/triage.md"
 need "$FD/nodes/blast.md"
 need "$FD/nodes/reviewer.md"
+need "$FD/nodes/plan_critic.md"
+need "$FD/VOICE.md"
 need "$FD/HANDOFF.md"
 need "$DEV/ARGS.md"
 need "$DEV/nodes/resume.md"
@@ -107,5 +109,35 @@ fi
 has 'skip finished when invariants match' "$DEV/GRAPH.md"
 has 'invariants match' "$FD/GRAPH.md"
 ok resume-invariants
+
+# --- gated plan_critic ---
+
+has 'plan_critic' "$FD/GRAPH.md"
+has 'plan_critic' "$FD/ROUTING.md"
+has 'plan_critic' "$FD/nodes/plan_critic.md"
+has 'plan_critic_verdict' "$FD/STATE.schema.md"
+has 'plan_critic_verdict' "$FD/templates/STATE.md"
+has 'critiquing' "$FD/STATE.schema.md"
+has 'risk=elevated' "$FD/nodes/plan_critic.md"
+has 'spawn' "$FD/nodes/plan_critic.md"
+# Must not run on bugs.
+if ! tr '\n' ' ' < "$FD/nodes/plan_critic.md" | grep -E -q 'Skip.{0,80}debug_fix'; then
+  fail "plan_critic.md must skip debug_fix"
+fi
+# Normal is main thread, not a spawn.
+has 'main-thread too' "$FD/GRAPH.md"
+if ! grep -F -q 'Spawning plan_critic on every full_feature' "$FD/GRAPH.md"; then
+  fail "GRAPH.md must forbid spawning plan_critic on every full_feature"
+fi
+ok plan-critic-gated
+
+# --- Walk line in chat ---
+
+has 'Walk:' "$FD/VOICE.md"
+grep -F -q '✓' "$FD/VOICE.md" || fail "$FD/VOICE.md missing done mark"
+grep -F -q '●' "$FD/VOICE.md" || fail "$FD/VOICE.md missing current mark"
+grep -F -q '○' "$FD/VOICE.md" || fail "$FD/VOICE.md missing later mark"
+has 'Walk:' "$FD/TOKEN_ECONOMY.md"
+ok walk-line
 
 echo "all passed"

@@ -28,6 +28,9 @@ route_confidence: ""
 route_reason: ""
 spec_verdict: pending
 quality_verdict: pending
+plan_critic_verdict: pending
+plan_critic_loops: 1
+plan_critic_loops_used: 0
 tracker_id: ""
 tracker_url: ""
 tracker_branch: ""
@@ -134,6 +137,13 @@ Index: `.ruver-feature-delivery/mcp-sources.md`
 - **path:** `.ruver-feature-delivery/TICKETS.md`
 - **current:**
 - **seams:**
+
+## Plan critic
+
+- **plan_critic_verdict:** pending | skip | pass | revise
+- **plan_critic_mode:** main | spawn | skip
+- **findings:**
+- **summary:**
 
 ## Decisions
 

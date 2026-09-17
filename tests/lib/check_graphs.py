@@ -21,6 +21,13 @@ NEEDS = [
         extra_files=("templates/PR_BODY.md",),
     ),
     Need(
+        skill="ruver-feature-delivery",
+        node="plan_critic",
+        after="tickets",
+        before="implement",
+        extra_files=(),
+    ),
+    Need(
         skill="ruver-developer",
         node="bot_review",
         after="mergeable",

@@ -35,7 +35,13 @@ Speak this shape in the chat language:
 S: <current node>
 D: <what changed, one sentence>
 P: <next node, or the question that blocks>
+Walk: <nodes for this path and risk>
 ```
+
+Walk is one line. Nodes from [ROUTING.md](ROUTING.md) stages for this
+`path` and `risk` (include `plan_critic` only when that gate is on).
+Mark done `✓`, current (the S node) `●`, later `○`. Skip nodes ROUTING
+says no. Do not paste GRAPH.md.
 
 On DECIDE, the D line names what you took. On ASK, P is the one question.
 

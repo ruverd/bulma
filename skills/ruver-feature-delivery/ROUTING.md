@@ -34,7 +34,7 @@ Orthogonal to `path`. `path` is the spine. `risk` only toggles extra gates.
 
 | | `low` | `normal` | `elevated` |
 |---|---|---|---|
-| `full_feature` | grill stays | grill stays | grill stays |
+| `full_feature` | grill stays. no plan_critic | grill stays. plan_critic on main | grill stays. plan_critic spawn |
 | `debug_fix` | diagnose stays | diagnose stays | diagnose stays. Do not re-route to grill because the files look like auth |
 | `light_change` | no blast | no blast | **blast** |
 
@@ -70,9 +70,11 @@ On fullstack, `path` applies **per worker**.
 ### `full_feature`
 
 ```
-triage → grill → spec → tickets → implement* (TDD) → review → tester
+triage → grill → spec → tickets → plan_critic → implement* (TDD) → review → tester
        → evidence → blast → quality (thermo) → shipper → ci_watch
 ```
+
+`plan_critic` skips when `risk=low`. Main-thread scan when `normal`. Spawn when `elevated`.
 
 Use when: new feature, multi-file design still open. Auth/billing/contract as **new behavior** still `full_feature` (and `risk=elevated`). A bug in those areas is `debug_fix` + `elevated`.
 
@@ -107,6 +109,7 @@ Read-only diagnose. `done_report`. No PR. If it is a bug, re-route `debug_fix`. 
 | grill | yes | no | no |
 | diagnose | no | **required** | no |
 | spec + tickets | yes | one ticket | one ticket |
+| plan_critic | skip if `risk=low`; else yes | no | no |
 | TDD | yes | yes (repro test) | if behavior |
 | review | yes | yes | yes |
 | tester | yes | yes | yes |
@@ -119,6 +122,7 @@ Read-only diagnose. `done_report`. No PR. If it is a bug, re-route `debug_fix`. 
 - full_feature on a null-check
 - Upgrading a bug to full_feature because it touches auth
 - Skipping blast on light_change when `risk=elevated`
+- Spawning plan_critic on a bug, or on every full_feature
 - Quick fix of a bug with no diagnose
 - Skipping TDD because "I reproduced it by hand"
 - Skipping thermo when a PR will open

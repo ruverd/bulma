@@ -6,7 +6,7 @@
 
 ```
 init | mcp | triage | grilling | waiting_user | speccing | ticketing |
-diagnosing | implementing | reviewing | testing | blasting | quality |
+critiquing | diagnosing | implementing | reviewing | testing | blasting | quality |
 shipping | ci_watching | waiting_blocker | handed_off | done | done_local |
 done_report | escalated
 ```
@@ -46,6 +46,9 @@ done_report | escalated
 | `review_fix_loops` / `test_fix_loops` / `ci_fix_loops` | remaining + `*_used` |
 | `spec_verdict` | pending \| pass \| fail |
 | `quality_verdict` | pending \| pass \| fail |
+| `plan_critic_verdict` | pending \| skip \| pass \| revise |
+| `plan_critic_mode` | main \| spawn \| skip |
+| `plan_critic_loops` | remaining + `plan_critic_loops_used`. Default 1 |
 
 ## Whitelist per node
 
@@ -56,6 +59,7 @@ done_report | escalated
 | grill | goal, repo, tracker | decisions, approaches, `waiting_user` |
 | spec | decisions | SPEC.md, spec_path |
 | tickets | SPEC.md | TICKETS.md, seams, tickets_path |
+| plan_critic | SPEC.md, TICKETS.md, decisions | plan_critic_verdict, plan_critic section |
 | diagnose | sentry/linear, repo | debug (root cause, evidence, one ticket) |
 | implement | one ticket + spec excerpt | code, tdd evidence, files_touched |
 | review | spec, ticket, diff, gates.log | spec_verdict, quality_verdict, review |

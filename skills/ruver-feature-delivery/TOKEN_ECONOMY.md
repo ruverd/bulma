@@ -26,6 +26,7 @@ for the end (CI green / handoff).
 - Read the **summary** of tracker-context (AC bullets), not the raw 10k tokens again if it is already on disk.
 - Grill is the expensive model. Spec/tickets are synthesis, not a second interview.
 - Coder prompt = this ticket + decisions + whitelist. Not the grill transcript.
+- `plan_critic` is a table. Spawn only when `risk=elevated`. Skip on debug_fix, light_change, and `risk=low`.
 
 ### implement (subagents)
 Coder prompt **at most ~1–2 screens**:
@@ -62,7 +63,10 @@ Unslop. [VOICE.md](VOICE.md). Preferred format (spoken in English):
 S: phase + branch + mcp_gate
 D: what changed (1–3 bullets)
 P: next step / blocker / PR+CI
+Walk: ✓mcp ✓triage ●grill ○spec ○tickets …
 ```
+
+Walk marks: [VOICE.md](VOICE.md). One line. Do not paste GRAPH.md.
 
 No preamble "I will now…".
 
