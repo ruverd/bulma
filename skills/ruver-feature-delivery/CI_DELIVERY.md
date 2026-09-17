@@ -65,7 +65,7 @@ If loops blow / infinite flake / failure on main that is unrelated:
 - or `status: escalated` + a chat-language summary (PR URL, red checks, logs)
 
 **Forbidden:** declare done with CI red/pending.
-**Forbidden:** `--no-verify` to "pass".
+**Forbidden:** skip git hooks to fake a green commit.
 
 ## STATE
 

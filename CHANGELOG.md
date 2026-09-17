@@ -11,6 +11,10 @@ Notable changes per release. Format follows
 - Tracker checkout is always `feature/<id-lowercase>` (`DEV-4525` →
   `feature/dev-4525`). Host `{login}/<id>` worktrees and tracker
   `gitBranchName` no longer win.
+- SkillSpector static scan of `ruver-feature-delivery` no longer flags
+  E4/TM1/AS3/EA1 keyword hits. The quality node, CI ban, adapters, and
+  STATE template were rephrased; graph behavior is unchanged.
+
 ## [0.9.1] - 2026-09-11
 
 ### Fixed
