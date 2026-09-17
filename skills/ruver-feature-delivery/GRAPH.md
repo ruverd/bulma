@@ -14,7 +14,7 @@ goal / resume
        └ light_change → tickets (single) → implement → review → tester
   → (more tickets? implement next)
   → evidence
-  → blast (skip on light_change)
+  → blast (skip on light_change unless risk=elevated)
   → quality (thermo fix all)
   → shipper → ci_watch
 ```
@@ -31,7 +31,7 @@ Grill, spec, and tickets run on the **main thread**. Implement / review / diagno
 
 | From | Condition | To |
 |---|---|---|
-| start | resume with live STATE | current node (skip finished) |
+| start | resume with live STATE | current node (skip finished when invariants match) |
 | start | fresh goal / ticket | **mcp_context** |
 | mcp_context | mcp_gate=passed / passed_partial | **triage** |
 | mcp_context | mcp_gate=failed | **STOP** + English error |
@@ -50,15 +50,15 @@ Grill, spec, and tickets run on the **main thread**. Implement / review / diagno
 | diagnose | ASK needed | `waiting_user` |
 | implement | DONE | **review** |
 | implement | NEEDS_CONTEXT / BLOCKED | ASK or escalate |
-| review | fail + loops left | **implement** (same ticket) |
-| review | fail + loops exhausted | **escalate** |
-| review | pass | **tester** |
+| review | spec_verdict=fail or quality_verdict=fail + loops left | **implement** (same ticket) |
+| review | either fail + loops exhausted | **escalate** |
+| review | spec_verdict=pass and quality_verdict=pass | **tester** |
 | tester | fail + loops left | **implement** |
 | tester | fail + loops exhausted | **escalate** |
 | tester | pass + more tickets | **implement** (next) |
 | tester | pass + no more tickets | **evidence** |
-| evidence | done + not light | **blast** |
-| evidence | done + light_change | **quality** |
+| evidence | done + (not light_change or risk=elevated) | **blast** |
+| evidence | done + light_change + risk≠elevated | **quality** |
 | blast | done | **quality** |
 | quality | ok | **shipper** |
 | quality | blocked | **escalate** |

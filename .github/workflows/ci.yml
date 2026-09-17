@@ -27,6 +27,7 @@ jobs:
       - run: bash tests/before-and-after.sh
       - run: bash tests/ruver-qa.sh
       - run: bash tests/ruver-code-review.sh
+      - run: bash tests/ruver-developer.sh
 
   cli:
     name: cli (${{ matrix.os }})

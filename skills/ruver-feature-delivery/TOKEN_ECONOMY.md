@@ -68,8 +68,8 @@ No preamble "I will now…".
 
 ## Orchestrator: anti-waste
 
-1. **Do not** re-run MCP if `mcp_gate: passed` and context files exist (resume).
-2. **Do not** re-triage if path/scope is already in STATE (unless the goal changed).
+1. **Do not** re-run MCP if `mcp_gate: passed` and context files exist (resume), unless [HANDOFF.md](HANDOFF.md) invariants drifted.
+2. **Do not** re-triage if path/scope/risk is already in STATE (unless the goal changed or invariants drifted).
 3. Before a limit handoff: **stop expanding scope**; close the current phase + write HANDOFF.
 4. Prefer host `code_graph_explore` (required when an index exists) over `read` of 1k+ line files.
 

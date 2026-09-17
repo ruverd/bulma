@@ -28,7 +28,9 @@ If the coder wants a different design: `NEEDS_CONTEXT`. Parent DECIDE from spec 
 ## After each ticket
 
 1. Orchestrator runs the ticket's test command. Exit code into `.ruver-feature-delivery/gates.log`. Red → re-dispatch coder (≤ `test_fix_loops`).
-2. Fresh `ruver-fd-reviewer`. Diff + done criteria + `gates.log`. Fail → same ticket (≤ `review_fix_loops`).
+2. Fresh `ruver-fd-reviewer`. Diff + done criteria + `gates.log`. Either
+   `spec_verdict` or `quality_verdict` fail → same ticket (≤ `review_fix_loops`).
+   Graph pass only if both pass.
 3. Loops exhausted → ticket `blocked` + escalate. Never skip ahead.
 4. Tester hard gate after the ticket (or after the last ticket, per GRAPH).
 5. Next ticket only after this one passed review + tester.
@@ -59,5 +61,5 @@ Edit `src/` or product tests "to get ahead". Collapse N tickets into one coder. 
 
 ```markdown
 - ISO | node=implement | ticket=N | subagent=fresh | result=DONE|BLOCKED
-- ISO | node=review | ticket=N | verdict=pass|fail
+- ISO | node=review | ticket=N | spec_verdict=pass|fail | quality_verdict=pass|fail
 ```

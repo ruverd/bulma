@@ -23,7 +23,7 @@ Prefer `/ruver-developer` when you also want MERGEABLE + QA after CI.
 
 ```
 grill-with-docs → spec → tickets → implement (TDD) → review → tester
-  → blast → quality → shipper → CI
+  → blast (not light unless elevated) → quality → shipper → CI
 ```
 
 | Path | When |

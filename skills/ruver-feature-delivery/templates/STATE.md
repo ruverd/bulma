@@ -1,5 +1,5 @@
 ---
-schema_version: 4
+schema_version: 5
 status: init
 spec_path: ""
 tickets_path: ""
@@ -21,9 +21,13 @@ reviewers: ""
 reviewers_status: ""
 work_kind: ""
 path: ""
+risk: ""
+risk_reason: ""
 scope: ""
 route_confidence: ""
 route_reason: ""
+spec_verdict: pending
+quality_verdict: pending
 tracker_id: ""
 tracker_url: ""
 tracker_branch: ""
@@ -88,6 +92,8 @@ Index: `.ruver-feature-delivery/mcp-sources.md`
 - **work_kind:** feature | bug | regression | chore | spike
 - **scope:** frontend_only | backend_only | mono | fullstack
 - **path:** full_feature | debug_fix | light_change
+- **risk:** low | normal | elevated
+- **risk_reason:**
 - **confidence:**
 - **reason:**
 
@@ -164,7 +170,9 @@ Index: `.ruver-feature-delivery/mcp-sources.md`
 
 ## Review
 
-- **Verdict:** pending
+- **spec_verdict:** pending | pass | fail
+- **quality_verdict:** pending | pass | fail
+- **Verdict:** pending (pass only if both pass)
 - **Summary:**
 - **Findings:**
 - **TDD check:** pending

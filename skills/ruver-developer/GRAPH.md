@@ -52,7 +52,7 @@
 | start | no args, no STATE, no goal | **stop** (ask for the ticket or the goal) |
 | admit | idle main | **deliver** or **fix** |
 | admit | busy main | worker + worktree; **stop** this call |
-| resume | delivery not done | **deliver** (skip finished nodes) |
+| resume | delivery not done | **deliver** (skip finished when invariants match) |
 | resume | delivery done, bot_review in flight | **bot_review** |
 | resume | delivery done | **mergeable** or **apply_qa** as STATE says |
 | deliver | fd `status=done` (CI green) | **mergeable** |

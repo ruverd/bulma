@@ -55,6 +55,7 @@ Claude and Grok on this Mac read the same `$RUVER_ROOT`. Do not commit.
 - active_runtime: <to_runtime>
 - position: <node> (full enum: STATE.schema.md `status`)
 - path: <path> (full enum: STATE.schema.md)
+- risk: <risk> (full enum: STATE.schema.md)
 - scope: <scope> (full enum: STATE.schema.md)
 - mcp_gate: <gate> (full enum: STATE.schema.md — `passed_partial` is real,
   do not flatten it to passed or failed)
@@ -80,6 +81,28 @@ Claude and Grok on this Mac read the same `$RUVER_ROOT`. Do not commit.
 - Re-grill settled decisions / rewrite SPEC.md if it exists
 - Re-implement finished tickets
 
+## Invariants
+
+Read-only snapshot. Resume replays each command and compares to `# expect:`.
+Drift re-enters the node that produced the stale output. Match may skip.
+
+```bash
+git rev-parse HEAD                    # expect: <sha>
+git branch --show-current             # expect: <branch>
+git status --porcelain                # expect: empty or the known in-progress files
+```
+
+If a PR exists:
+
+```bash
+gh pr view --json headRefOid,mergeable -q .headRefOid   # expect: <sha>
+gh pr checks --json bucket -q '.[].bucket'              # expect: matches STATE.ci
+```
+
+If a tracker id exists, re-read it. `updatedAt` newer than STATE `updated_at`
+and the AC changed: re-read AC. Do not re-grill settled decisions unless an AC
+line contradicts a DECIDE row.
+
 ## Pass criteria (delivery)
 - [ ] thermo fix all done
 - [ ] PR(s) open
@@ -104,10 +127,10 @@ Claude and Grok on this Mac read the same `$RUVER_ROOT`. Do not commit.
    **rebuild** from git/gh/tracker (fallback), do not restart from a raw goal.
 3. Invoke: **`/skills ruver-feature-delivery`** and ask **resume**
    (`/ruver-fd` **does not exist** as a Grok slash command — those are built-in).
-4. **RECONCILE first** (required): `git status` + `git log origin/<branch>..HEAD`
-   + `gh pr list --head <branch>` + `gh pr checks` — compare with STATE; unverified
-   "done" becomes "unknown" and is re-checked; PR already exists → do not recreate.
-   Only then skip `Do NOT redo` and run **Next steps**.
+4. **RECONCILE first** (required): replay `## Invariants`. Compare actual vs
+   `# expect:`. Drift is information. Unverified "done" becomes "unknown" and
+   is re-checked. PR already exists → do not recreate. Skip a node only when
+   its outputs exist **and** its invariants match. Then run **Next steps**.
 5. Write `active_runtime: grok`. Continue until **CI green**.
 
 **Autonomy:** Grok on this setup runs `permission_mode = always-approve` — push,

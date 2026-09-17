@@ -7,13 +7,14 @@
 ## Mission
 
 After every ticket has passed tester, before blast (`full_feature` /
-`debug_fix`) or before quality (`light_change`). Capture After. Write a
+`debug_fix` / `light_change`+`risk=elevated`) or before quality
+(`light_change` and `risk` is not `elevated`). Capture After. Write a
 fragment the shipper pastes into [../templates/PR_BODY.md](../templates/PR_BODY.md).
 
 ## When
 
-Tester pass, no tickets left. Then this node. Then blast, or quality on
-`light_change`. GRAPH.md owns the edges.
+Tester pass, no tickets left. Then this node. Then blast, or quality
+when ROUTING.md skips blast. GRAPH.md owns the edges.
 
 ## Before capture
 

@@ -2,40 +2,57 @@
 
 **Verb:** review (read-only)
 **Capability:** read-only
-**Focus:** intent + patterns + **TDD evidence**
+**Focus:** two verdicts, one spawn
 
 ## Mission
 
-Judge whether the diff meets spec/ticket/done criteria **and** whether TDD was followed.
+Two questions, one worker. Never implement.
+
+1. Did we build the requested thing? (`spec_verdict`)
+2. Is what we built good? (`quality_verdict`)
+
 Standards: CLAUDE.md / AGENTS.md, `typescript-best-practices`, `no-comments`.
 Spec axis: the ticket + SPEC.md, not a new design.
-Never implement.
 
-## Checklist
+## spec_verdict
 
-1. Done criteria met?
-2. Followed spec/decisions (no invention)?
-3. **TDD:** every new piece of logic has a test; STATE has RED→GREEN evidence?
-4. Security/errors/loading if applicable?
-5. Tests assert behavior, not only mocks?
-6. **UI** (if the ticket/diff is UI) — [UI_DESIGN_SYSTEM.md](../UI_DESIGN_SYSTEM.md):
-   - reused repo DS/primitives?
-   - no magic colors/spacing / reinvented primitive?
-   - if Figma exists → aligned; if **no** Figma → evidence of a pattern
-     copied from recent same-type refs (e.g. other dialogs)?
-   - loading/empty/error like the refs?
+`pass` only if all of:
 
-## Verdict
+- Done criteria met
+- Followed spec/decisions (no invented behavior)
+- No contradicted DECIDE row
 
-- **pass** — criteria ok + TDD ok (+ DS ok if UI)
-- **fail** — missing tests, off design, **or a UI design-system violation**
+`fail` if any of those miss. A green test does not rescue a spec miss.
+
+## quality_verdict
+
+`pass` only if all of:
+
+- **TDD:** every new piece of logic has a test; STATE has RED→GREEN evidence
+- Tests assert behavior, not only mocks
+- Security/errors/loading if applicable
+- **UI** (if the ticket/diff is UI) — [UI_DESIGN_SYSTEM.md](../UI_DESIGN_SYSTEM.md):
+  reused repo DS/primitives; no magic colors/spacing / reinvented primitive;
+  Figma aligned when present; if **no** Figma, evidence of a pattern copied
+  from recent same-type refs; loading/empty/error like the refs
+
+`fail` if any of those miss. Spec-correct code with no TDD is a quality fail.
+
+## Graph pass
+
+Pass only if both pass. Either fail → **implement** (same ticket) while
+`review_fix_loops` remain. Loops exhausted → escalate.
+
+Do not spawn a second reviewer.
 
 ## Output
 
-Review section in STATE; `status: testing` or `implementing`.
+Review section in STATE: `spec_verdict`, `quality_verdict`, findings.
+`status: testing` only when both pass; else `implementing`.
 
 ## Hard rules
 
 - Read-only on product code.
-- Missing tests on new logic = **fail** (not a nit).
+- Missing tests on new logic = quality **fail** (not a nit).
+- Spec miss = spec **fail** even when tests and DS look fine.
 - Do not rubber-stamp.

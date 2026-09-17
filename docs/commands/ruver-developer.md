@@ -57,7 +57,8 @@ graph engineer only walks edges.
 - Merge.
 - Spawn `/ruver-qa` as a child. Bus switch.
 - Abort an in-flight QA because a new ticket arrived.
-- Re-grill settled decisions on `resume`.
+- Re-grill settled decisions on `resume` unless an AC line contradicts them.
+- Skip a node on `resume` only because the file still exists. Replay invariants.
 
 ## Related
 

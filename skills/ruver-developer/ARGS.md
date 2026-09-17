@@ -38,16 +38,27 @@ Load, in order:
 3. `$RUVER_ROOT/.ruver-feature-delivery/HANDOFF.md` (if present)
 4. `$RUVER_ROOT/.ruver-bus/STACK.md` + `ENVELOPE.md`
 
-**Reconcile** with git/gh before skipping nodes:
+**Reconcile** world vs STATE before skipping nodes. If fd STATE/HANDOFF
+exist, replay that `## Invariants` block first. Then the developer checks.
 
-- branch exists and is checked out (or the worktree path in STATE)
-- `pr_url` still points at that branch, if set
-- delivery `status` vs files on disk (SPEC.md, TICKETS.md)
+| Check | Drift |
+|---|---|
+| `git rev-parse HEAD` vs `STATE.sha` | sha unknown; do not skip implement/review/tester on the old sha |
+| `git branch --show-current` vs STATE branch | reconcile the checkout; do not invent a PR |
+| PR `headRefOid` vs `STATE.sha` | follow the new head (mergeable / bot_review / QA) |
+| `STATE.ci=green` and checks red | **ci_watch**, not done |
+| UI After bound to an old sha | re-enter **evidence** |
+| last `qa_verdict_log` row on another sha | that PASS does not count; QA again on HEAD |
+| SPEC.md / TICKETS.md missing with status already past those nodes | re-enter spec/tickets |
+| tracker `updatedAt` > STATE `updated_at` and AC changed | re-read AC; do not re-grill settled decisions unless an AC line contradicts a DECIDE row |
+
+Skip a node only when its outputs exist **and** its invariants match.
+Files matching STATE is not enough.
 
 Then continue at `next_node` / current graph status. Do **not**:
 
 - re-fetch the tracker as a blank start
-- re-grill settled `## Decisions`
+- re-grill settled `## Decisions` (unless an AC line contradicts them)
 - skip an open ASK; the current user message **is** the answer
 - restart delivery if `fd_status=done` (go **mergeable** / **bot_review** / QA instead)
 

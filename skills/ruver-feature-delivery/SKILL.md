@@ -47,7 +47,7 @@ Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 
 ## Orchestrator loop
 
-**Resume:** read STATE + HANDOFF, **RECONCILE** (git/gh vs STATE, see HANDOFF.md), continue at the current node. If `waiting_user`, the user message is the ASK answer. Do not re-init. Do not re-run mcp_context / triage / grill branches that are already settled.
+**Resume:** read STATE + HANDOFF, **RECONCILE** (replay HANDOFF invariants; git/gh vs STATE). Continue at the current node. Skip a settled node only when its invariants match. If `waiting_user`, the user message is the ASK answer. Do not re-init. Do not re-grill settled decisions unless an AC line contradicts them. Missing `risk` on a v4 STATE → `normal`.
 
 **Fresh:**
 
@@ -66,7 +66,7 @@ Worktree and branch rules: [JOBS.md](../ruver-bus/JOBS.md) §Worktree.
 | **light_change** | chore | one ticket → one coder |
 | **`scope: fullstack`** | FE and BE, sibling resolved | same branch, git worktrees ([FULLSTACK.md](FULLSTACK.md); Orca optional) |
 
-Ship: review → tester → evidence → blast (not light) → **thermo fix all** → commit → push → draft PR
+Ship: review → tester → evidence → blast (not light unless `risk=elevated`) → **thermo fix all** → commit → push → draft PR
 (reviewers and assignee: [PRODUCT.md](PRODUCT.md))
 → **CI 100% green** (only then **delivered**).
 
