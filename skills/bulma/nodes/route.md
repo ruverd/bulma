@@ -9,7 +9,7 @@ Deterministic first, Jev second. Never guess a graph.
 
 1. `../ARGS.md` already classified the args. Tracker id or tracker URL →
    `target: developer`, `target_args: <id or URL>`, no Jev call, write the
-   Route block with `why: deterministic: ticket id`, go to **overlay**.
+   Route block with `why: deterministic: ticket id`, go to **spend**.
 2. PR or MR URL, `owner/repo#N`, or free text → state JSON
    `{args, world, pr, user_login}` per the `entry.route` recipe in
    `../HOOKS.md` (trim `world` to `stack_top`, `jobs`, `states[]` with graph,
@@ -29,7 +29,7 @@ Deterministic first, Jev second. Never guess a graph.
      `status: waiting_user`, end the turn.
    - `act: true` → `target` = the choice (for `entry.next_step`, the
      candidate's `target` and `args`). Write the Route block with
-     `why: <decision_id> <confidence>`. Go to **overlay**.
+     `why: <decision_id> <confidence>`. Go to **spend**.
    - remaining `act: false` → list the top three
      options from `probabilities` with their numbers, ask one question,
      `status: waiting_user`, end the turn.
@@ -37,4 +37,4 @@ Deterministic first, Jev second. Never guess a graph.
 
 ## Output
 
-`target`, `target_args`, `status: overlay | waiting_user | done`.
+`target`, `target_args`, `status: spend | waiting_user | done`.

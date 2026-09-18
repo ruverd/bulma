@@ -227,7 +227,7 @@ the shared envelope, stack and QA-slot rules.
 
 **Model-invoked**
 
-- **[ruver-host](skills/ruver-host/SKILL.md)**: the host contract. Maps `load_skill`, `spawn_worker`, `worktree`, `schedule_wake`, `session_model` and the optional MCP capabilities onto whatever harness you are on. A graph loads it by name when a node mentions a primitive.
+- **[ruver-host](skills/ruver-host/SKILL.md)**: the host contract. Maps `load_skill`, `spawn_worker`, `worktree`, `schedule_wake`, `session_model`, `session_effort`, `session_catalog` and the optional MCP capabilities onto whatever harness you are on. A graph loads it by name when a node mentions a primitive.
 - The bundled primitives (`unslop`, `tdd`, `how`, `why`, `grill-*`, `principle-*`, `before-and-after`, …) reach themselves when the task fits. Origins: [External references](#external-references).
 
 ### Engines

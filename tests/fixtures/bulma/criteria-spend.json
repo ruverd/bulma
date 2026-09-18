@@ -1,0 +1,7 @@
+{
+  "session_model": {
+    "inherit": "Keep the current session model.",
+    "cheap": "Cheapest id in this session catalog (test fixture, not a host id).",
+    "strong": "Strongest id in this session catalog (test fixture, not a host id)."
+  }
+}

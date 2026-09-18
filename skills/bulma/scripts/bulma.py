@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Bulma: ask TypeSafe Jev at ruver graph forks and log every answer.
 
-Stdlib only. Subcommands: catalog, power, tune, model, doctor, ask, outcome,
-report. Never prints TYPESAFE_API_KEY.
+Stdlib only. Subcommands: catalog, power, tune, model, spend, doctor, ask,
+outcome, report. Never prints TYPESAFE_API_KEY.
 
 Exit codes: 0 ok, 2 requirement missing, 3 network or API, 4 bad input.
 """
@@ -24,6 +24,16 @@ from pathlib import Path
 API = "https://api.typesafe.ai/v1"
 DEFAULT_MODEL = "jev-latest"
 LEVELS = {"shadow": None, "cautious": 0.10, "balanced": 0.0, "bold": -0.10}
+EFFORT_LEVELS = ("low", "medium", "high", "max")
+HEURISTIC_BY_TARGET = {
+    "memory": "low",
+    "qa": "medium",
+    "reviewer": "medium",
+    "triage": "medium",
+    "lstm": "medium",
+    "developer": "high",
+    "none": "low",
+}
 FLOOR = 0.50
 CEIL = 0.99
 PER_KEY_CAP = 8000
@@ -189,6 +199,19 @@ def check_level(level):
     if level not in LEVELS:
         raise BulmaError(4, "unknown power level %r; use one of %s" % (level, ", ".join(LEVELS)))
     return level
+
+
+def check_effort(level):
+    if level not in EFFORT_LEVELS:
+        raise BulmaError(4, "unknown effort %r; use one of %s" % (level, ", ".join(EFFORT_LEVELS)))
+    return level
+
+
+def resolve_effort(flag, target):
+    if flag:
+        return check_effort(flag), "flag"
+    heuristic = HEURISTIC_BY_TARGET.get(target or "", "high")
+    return heuristic, "heuristic"
 
 
 def resolve_power(flag, hook, cfg):
@@ -659,6 +682,20 @@ def cmd_tune(args):
     return 0
 
 
+def cmd_spend(args):
+    effort, source = resolve_effort(args.effort, args.target)
+    if args.json:
+        print(json.dumps({
+            "effort": effort,
+            "effort_source": source,
+            "target": args.target or "",
+            "session_model": "inherit",
+        }, indent=2))
+    else:
+        print("effort=%s (%s)" % (effort, source))
+    return 0
+
+
 def cmd_model(args):
     cfg = load_config()
     if args.action == "set":
@@ -788,10 +825,16 @@ def build_parser():
     p.add_argument("act_at")
     p.set_defaults(func=cmd_tune)
 
-    p = sub.add_parser("model", help="print or pin the model id")
+    p = sub.add_parser("model", help="print or pin the Jev model id")
     p.add_argument("action", nargs="?", choices=["set"])
     p.add_argument("model_id", nargs="?")
     p.set_defaults(func=cmd_model)
+
+    p = sub.add_parser("spend", help="heuristic implementer effort for a target")
+    p.add_argument("--target", default="")
+    p.add_argument("--effort", help="run flag; skips the heuristic")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_spend)
     return parser
 
 

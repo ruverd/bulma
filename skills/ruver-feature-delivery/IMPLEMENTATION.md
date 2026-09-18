@@ -57,15 +57,11 @@ Read STATE, git status, logs. Update STATE. Dispatch. Answer `NEEDS_CONTEXT` wit
 
 Edit `src/` or product tests "to get ahead". Collapse N tickets into one coder. Skip review. Run two coders in parallel on the same tree.
 
-## Model hints
+## Session model and effort
 
-| Role | Preference |
-|---|---|
-| Mechanical coder (1–2 files, clear ticket) | mid/fast |
-| Multi-file integration | frontier |
-| Triage / tester | mid |
-| Slice reviewer | mid |
-| Final review / quality | frontier |
+When bulma wrote `session_model` and `effort` on this run, pass them on
+`spawn_worker` ([ruver-host](../ruver-host/SKILL.md)). `inherit` means omit
+`model`. Plain `/developer` (no bulma spend) inherits the current session.
 
 ## STATE
 

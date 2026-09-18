@@ -4,6 +4,9 @@ status: init
 power: ""
 power_source: ""
 model: ""
+effort: ""
+effort_source: ""
+session_model: inherit
 args: ""
 target: ""
 target_args: ""

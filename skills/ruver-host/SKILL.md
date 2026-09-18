@@ -2,10 +2,8 @@
 name: ruver-host
 category: lib
 description: >
-  Host contract: maps the primitives graphs name (load_skill, spawn_worker,
-  worktree, schedule_wake, session_model) onto this harness, with fallbacks for
-  the optional MCP capabilities. Load when a node names a primitive or a new
-  harness needs wiring.
+  Host contract: maps graph primitives (spawn, worktree, wake, session
+  model/effort) onto this harness. Load when a node names a primitive.
 ---
 
 # Host contract
@@ -31,11 +29,13 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `worktree` | Isolated checkout of the same branch | `git worktree add` (JOBS.md) |
 | `schedule_wake` | Resume this graph later without blocking the turn | Ask the user to re-run the slash command when CI moves; do not `gh pr checks --watch` |
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
-| `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files |
+| `session_catalog` | Model ids **this session** may switch to | Empty list (inherit only). Read the spawn/Agent model enum in this session. Never invent an id |
+| `session_model` | Switch this run to a catalog id the user or `entry.spend` named. `inherit` keeps the current session | Keep current. Print the host model command if a named id cannot be applied. Do not pin `grok-*` / `sonnet` / `opus` in graph files |
+| `session_effort` | Apply this run's `low` \| `medium` \| `high` \| `max` if the host has an effort control | Keep current. Print the adapter's command. Still pass `effort:` on `spawn_worker` |
 
 ## spawn_worker
 
-Pass, and nothing else:
+Pass:
 
 - job id
 - worktree path (or “host worktree”)
@@ -43,6 +43,8 @@ Pass, and nothing else:
 - the ticket, finding, or PR this node is for (full text, not “read STATE”)
 - a file/path whitelist, plus 20–40 line excerpts if a snippet is required
 - “do not spawn graph types”, never merge
+- `effort` (`low` \| `medium` \| `high` \| `max`) when the run resolved one
+- `model` only when `session_model` is a **catalog id** (not `inherit`). The user named it or Jev picked it from `session_catalog` this run. Omit `model` to inherit. Never invent an id.
 
 The child loads the node and any skill **that node names**.
 

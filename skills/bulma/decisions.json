@@ -54,6 +54,36 @@
       }
     },
     {
+      "id": "entry.spend",
+      "graph": "bulma",
+      "node": "spend",
+      "stakes": "low",
+      "fallback": "heuristic effort for the target; inherit session model",
+      "state_keys": ["args", "target", "target_args", "ticket_title", "ticket_body", "acceptance_criteria"],
+      "questions": {
+        "effort": {
+          "type": "choice",
+          "field": "effort",
+          "instructions": "How much reasoning effort should the **implementer** (the coding model that will do this ticket, not Jev) use? Judge from `ticket_body`, `ticket_title`, `acceptance_criteria`, `args` and `target`. Independent of which catalog id you pick for `session_model`.",
+          "criteria": {
+            "low": "Copy, rename, docs, config, or a one-line fix. No design and no new behavior.",
+            "medium": "Ordinary review, QA, triage, or a small localized code change.",
+            "high": "New behavior or a real bug fix that needs design or several files.",
+            "max": "Wide, risky, fullstack, or a ticket that needs long reasoning: auth, money, tenant, public contract, or an unclear design."
+          },
+          "act_at": 0.70,
+          "enum_source": "bulma/scripts/bulma.py"
+        },
+        "session_model": {
+          "type": "choice",
+          "field": "session_model",
+          "instructions": "Which coding-session model should implement this ticket? Criteria are **this host's catalog** plus `inherit` (keep the current session model). Pick the cheapest catalog id that can still do `ticket_body` well. A rename, copy or docs ticket should pick the cheapest id. A wide, risky or design-heavy ticket should pick the strongest. Never invent an id that is not in criteria. This is not the Jev model id.",
+          "criteria": "dynamic",
+          "act_at": 0.70
+        }
+      }
+    },
+    {
       "id": "fd.triage",
       "graph": "ruver-feature-delivery",
       "node": "triage",

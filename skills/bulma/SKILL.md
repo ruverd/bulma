@@ -2,7 +2,7 @@
 name: bulma
 category: graph
 description: Jev-gated router and overlay for ruver graphs. Use when /bulma.
-argument-hint: "<empty | ticket | PR url | text | power <level> | report | resume>"
+argument-hint: "<empty | ticket | PR url | text | --effort <level> | --session-model <id> | power <level> | report | resume>"
 ---
 
 # Bulma (graph)
@@ -17,7 +17,8 @@ only picks among options the node already has.
 
 **REQUIRED:** [GRAPH.md](GRAPH.md) · [ARGS.md](ARGS.md) ·
 [STATE.schema.md](STATE.schema.md) · [HOOKS.md](HOOKS.md) ·
-[POWER.md](POWER.md) · [REQUIREMENTS.md](REQUIREMENTS.md) ·
+[POWER.md](POWER.md) · [SPEND.md](SPEND.md) ·
+[REQUIREMENTS.md](REQUIREMENTS.md) ·
 [ruver-host](../ruver-host/SKILL.md) · [DISK.md](../ruver-bus/DISK.md)
 (`.ruver-*` is **global**, never the git root) · `ruver-memory`
 
@@ -38,7 +39,7 @@ Details: [REQUIREMENTS.md](REQUIREMENTS.md).
    from [templates/STATE.md](templates/STATE.md) unless one is live.
 2. Parse args with [ARGS.md](ARGS.md) **before** any Jev call. Local verbs
    (`power`, `tune`, `model`, `report`, `status`, `doctor`) run and stop.
-3. Walk [GRAPH.md](GRAPH.md): **admit → inventory → route → overlay → done**.
+3. Walk [GRAPH.md](GRAPH.md): **admit → inventory → route → spend → overlay → done**.
 
 ## Routing
 
@@ -48,14 +49,20 @@ Jev call. A PR or MR URL, `owner/repo#N`, or free text goes through
 candidates `scripts/world.sh` found. Below threshold, or under `shadow` and
 `cautious`, bulma suggests and waits; it never guesses a graph.
 
+After a target is set, **spend** asks Jev which **implementer** model and
+effort the ticket needs (`entry.spend`). Catalog is this harness (Claude
+ids on Claude), not the Jev id. `--effort` / `--session-model` override.
+[SPEND.md](SPEND.md).
+
 ## Overlay
 
 After `load_graph <target>` follow that graph exactly. When it (or an engine
 it loads) reaches a node in HOOKS.md, ask first, then write the field:
 `act: true` means Jev's value, `act: false` means the graph's own rule.
-Bus switches inside the target keep the overlay. Bulma never appears on
-`STACK.md`. Jev down mid-run means fallback and continue; only `admit`
-stops. Contract: [nodes/overlay.md](nodes/overlay.md).
+`spawn_worker` carries STATE `session_model` and `effort`. Bus switches
+inside the target keep the overlay. Bulma never appears on `STACK.md`.
+Jev down mid-run means fallback and continue; only `admit` stops.
+Contract: [nodes/overlay.md](nodes/overlay.md).
 
 ## Power
 
@@ -69,6 +76,7 @@ calibration loop: [POWER.md](POWER.md).
 ```text
 S: bulma route -> developer (DEV-4772)
 J: target=developer (deterministic: ticket id)
+Spend: effort=low .91 ok · session=inherit .88 ok
 P: developer admit
 ```
 
@@ -84,5 +92,7 @@ One `J:` line per hook while the overlay runs, for example
   `../ruver-feature-delivery/DECISION_POLICY.md`.
 - Send full files to Jev. Caps are in HOOKS.md.
 - Run any hook before `doctor` passed in this run.
+- Pin a host model id in this skill. Catalog comes from `session_catalog`.
+- Treat Jev `model` as the implementer.
 - Write outside `$RUVER_ROOT/.ruver-bulma/` and `$RUVER_HOME/bulma.json`.
 - Print `TYPESAFE_API_KEY`.
