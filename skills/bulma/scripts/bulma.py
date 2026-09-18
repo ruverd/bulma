@@ -1,0 +1,595 @@
+#!/usr/bin/env python3
+"""Bulma: ask TypeSafe Jev at ruver graph forks and log every answer.
+
+Stdlib only. Subcommands: catalog, power, tune, model, doctor, ask, outcome,
+report. Never prints TYPESAFE_API_KEY.
+
+Exit codes: 0 ok, 2 requirement missing, 3 network or API, 4 bad input.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+API = "https://api.typesafe.ai/v1"
+DEFAULT_MODEL = "jev-latest"
+LEVELS = {"shadow": None, "cautious": 0.10, "balanced": 0.0, "bold": -0.10}
+FLOOR = 0.50
+CEIL = 0.99
+PER_KEY_CAP = 8000
+TOTAL_CAP = 90000
+STAKES = ("low", "normal", "high")
+TYPES = ("choice", "noul", "score")
+TSV_COLUMNS = [
+    "ts_iso", "decision_id", "hook", "question", "power", "model", "answer",
+    "confidence", "act_at", "acted", "graph_answer", "outcome", "repo", "pr",
+    "sha", "ticket", "note",
+]
+REDACT = [
+    re.compile(r"ghp_[A-Za-z0-9]{20,}"),
+    re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
+    re.compile(r"sk-[A-Za-z0-9_-]{16,}"),
+    re.compile(r"apikey_[A-Za-z0-9_]{16,}"),
+    re.compile(r"AKIA[A-Z0-9]{12,}"),
+    re.compile(r"Bearer [A-Za-z0-9._~+/=-]{16,}"),
+    re.compile(r"(?i)(password|passwd|secret|token)\s*[=:]\s*\S+"),
+]
+SKILL_DIR = Path(__file__).resolve().parent.parent
+CATALOG_PATH = SKILL_DIR / "decisions.json"
+REQUIREMENT = (
+    "/bulma needs TypeSafe Jev.\n"
+    "  missing: TYPESAFE_API_KEY  (create one at https://console.typesafe.ai)\n"
+    "  python3: {py}\n"
+    "Set the key, then run /bulma again.\n"
+    "Without Jev, run the graph directly: /developer, /qa, /reviewer, /lstm, /ruver-triage."
+)
+
+
+class BulmaError(Exception):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+
+# --- disk -------------------------------------------------------------------
+
+def ruver_home():
+    env = os.environ.get("RUVER_HOME")
+    if env:
+        return Path(env)
+    home = Path.home() / ".ruver"
+    grok = Path.home() / ".grok" / "ruver"
+    if not home.exists() and grok.is_dir():
+        return grok
+    return home
+
+
+def ruver_root(override=None):
+    if override:
+        return Path(override)
+    try:
+        top = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        top = os.getcwd()
+    slug = top.lstrip("/").replace("/", "-")
+    return ruver_home() / slug
+
+
+def config_path():
+    return ruver_home() / "bulma.json"
+
+
+def load_config():
+    path = config_path()
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as err:
+        raise BulmaError(4, "config %s is not valid JSON: %s" % (path, err))
+
+
+def save_config(cfg):
+    path = config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cfg, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def load_json_file(path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise BulmaError(4, "file missing: %s" % path)
+    except json.JSONDecodeError as err:
+        raise BulmaError(4, "%s is not valid JSON: %s" % (path, err))
+
+
+# --- catalog ----------------------------------------------------------------
+
+def validate_catalog(data):
+    errors = []
+    hooks = data.get("hooks") if isinstance(data, dict) else None
+    if not isinstance(hooks, list) or not hooks:
+        return ['top level must be {"hooks": [...]}']
+    seen = set()
+    for hook in hooks:
+        hid = hook.get("id", "<no id>")
+        if hid in seen:
+            errors.append("%s: duplicate id" % hid)
+        seen.add(hid)
+        for key in ("graph", "node", "fallback"):
+            if not isinstance(hook.get(key), str) or not hook[key]:
+                errors.append("%s: %s must be a non-empty string" % (hid, key))
+        if hook.get("stakes") not in STAKES:
+            errors.append("%s: stakes must be one of %s" % (hid, list(STAKES)))
+        if not isinstance(hook.get("state_keys"), list) or not hook["state_keys"]:
+            errors.append("%s: state_keys must be a non-empty list" % hid)
+        questions = hook.get("questions")
+        if not isinstance(questions, dict) or not questions:
+            errors.append("%s: questions must be a non-empty map" % hid)
+            continue
+        for qid, question in questions.items():
+            where = "%s.%s" % (hid, qid)
+            qtype = question.get("type")
+            if qtype not in TYPES:
+                errors.append("%s: type must be one of %s" % (where, list(TYPES)))
+            if not isinstance(question.get("instructions"), str) or not question["instructions"]:
+                errors.append("%s: instructions required" % where)
+            act_at = question.get("act_at")
+            if not isinstance(act_at, (int, float)) or not FLOOR <= act_at <= CEIL:
+                errors.append("%s: act_at must be within [%s, %s]" % (where, FLOOR, CEIL))
+            if question.get("direction", "act") not in ("act", "ask"):
+                errors.append("%s: direction must be act or ask" % where)
+            criteria = question.get("criteria")
+            if qtype == "choice":
+                if criteria == "dynamic":
+                    continue
+                if not isinstance(criteria, dict) or not criteria:
+                    errors.append('%s: choice criteria must be a non-empty map or "dynamic"' % where)
+                elif not isinstance(question.get("enum_source"), str):
+                    errors.append("%s: static choice needs enum_source" % where)
+            elif qtype == "score":
+                if not isinstance(criteria, list) or len(criteria) < 2:
+                    errors.append("%s: score criteria must list at least two levels" % where)
+            elif criteria is not None and (not isinstance(criteria, dict) or set(criteria) - {"true", "false"}):
+                errors.append("%s: noul criteria keys must be true/false" % where)
+    return errors
+
+
+def load_catalog(path=CATALOG_PATH):
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise BulmaError(4, "catalog missing: %s" % path)
+    except json.JSONDecodeError as err:
+        raise BulmaError(4, "catalog is not valid JSON: %s" % err)
+    errors = validate_catalog(data)
+    if errors:
+        raise BulmaError(4, "catalog invalid:\n  " + "\n  ".join(errors))
+    return {hook["id"]: hook for hook in data["hooks"]}
+
+
+# --- power ------------------------------------------------------------------
+
+def check_level(level):
+    if level not in LEVELS:
+        raise BulmaError(4, "unknown power level %r; use one of %s" % (level, ", ".join(LEVELS)))
+    return level
+
+
+def resolve_power(flag, hook, cfg):
+    if flag:
+        return check_level(flag), "flag"
+    env = os.environ.get("BULMA_POWER")
+    if env:
+        return check_level(env), "env"
+    by_hook = cfg.get("power_by_hook", {})
+    if hook and hook in by_hook:
+        return check_level(by_hook[hook]), "hook"
+    if cfg.get("power"):
+        return check_level(cfg["power"]), "config"
+    return "balanced", "default"
+
+
+def effective_act_at(base, power, direction):
+    offset = LEVELS[power]
+    if offset is None:
+        return round(float(base), 2)
+    if direction == "ask":
+        offset = -offset
+    return round(min(CEIL, max(FLOOR, float(base) + offset)), 2)
+
+
+# --- state hygiene ----------------------------------------------------------
+
+def sanitize(value, budget):
+    if isinstance(value, str):
+        text = value
+        for pattern in REDACT:
+            text = pattern.sub("[redacted]", text)
+        cap = min(PER_KEY_CAP, budget["remaining"])
+        if len(text) > cap:
+            text = text[: max(cap - 14, 0)] + "...[truncated]"
+            budget["truncated"] = True
+        budget["remaining"] = max(0, budget["remaining"] - len(text))
+        return text
+    if isinstance(value, dict):
+        return {key: sanitize(item, budget) for key, item in value.items()}
+    if isinstance(value, list):
+        return [sanitize(item, budget) for item in value]
+    return value
+
+
+def missing_keys(state, keys):
+    missing = []
+    for key in keys:
+        node = state
+        found = True
+        for part in key.split("."):
+            if isinstance(node, dict) and part in node:
+                node = node[part]
+            else:
+                found = False
+                break
+        if not found:
+            missing.append(key)
+    return missing
+
+
+# --- request / response -----------------------------------------------------
+
+def build_request(hook, state, model, criteria_override):
+    questions = {}
+    for qid, question in hook["questions"].items():
+        body = {"type": question["type"], "instructions": question["instructions"]}
+        criteria = question.get("criteria")
+        if criteria == "dynamic":
+            if qid not in criteria_override:
+                raise BulmaError(4, "hook %s question %s needs --criteria FILE with key %r" % (hook["id"], qid, qid))
+            criteria = criteria_override[qid]
+        if criteria is not None:
+            body["criteria"] = criteria
+        questions[qid] = body
+    return {"state": state, "model": model, "questions": questions}
+
+
+def api_key():
+    key = os.environ.get("TYPESAFE_API_KEY")
+    if not key:
+        raise BulmaError(2, "TYPESAFE_API_KEY is not set")
+    return key
+
+
+def post_json(path, body, timeout=20):
+    key = api_key()
+    data = json.dumps(body).encode("utf-8")
+    request = urllib.request.Request(
+        API + path, data=data, method="POST",
+        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "ruver-bulma"},
+    )
+    delays = [1, 2, 4]
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as err:
+            if err.code == 429 or err.code >= 500:
+                if attempt == 3:
+                    raise BulmaError(3, "HTTP %s after 3 retries" % err.code)
+                retry_after = err.headers.get("retry-after") if err.headers else None
+                wait = float(retry_after) if retry_after and re.fullmatch(r"\d+(\.\d+)?", retry_after) else delays[attempt]
+                time.sleep(wait)
+                continue
+            detail = err.read().decode("utf-8", errors="replace")[:200]
+            raise BulmaError(3, "HTTP %s: %s" % (err.code, detail))
+        except (urllib.error.URLError, TimeoutError, OSError) as err:
+            if attempt == 3:
+                raise BulmaError(3, "network: %s" % err)
+            time.sleep(delays[attempt])
+    raise BulmaError(3, "unreachable")
+
+
+def judge(question, raw, act_at, power):
+    live = power != "shadow"
+    qtype = question["type"]
+    if qtype == "noul":
+        value = float(raw.get("noul", 0.0))
+        if value >= act_at:
+            decisive = "yes"
+        elif value <= round(1 - act_at, 2):
+            decisive = "no"
+        else:
+            decisive = "undecided"
+        return {"noul": round(value, 3), "act_at": act_at, "decisive": decisive, "act": live and decisive != "undecided"}
+    confidence = float(raw.get("confidence", 0.0))
+    picked = raw.get("choice") if qtype == "choice" else raw.get("score")
+    out = {qtype: picked, "confidence": round(confidence, 3), "act_at": act_at, "act": live and confidence >= act_at}
+    if raw.get("probabilities") is not None:
+        out["probabilities"] = raw["probabilities"]
+    return out
+
+
+def answer_value(judged):
+    for key in ("choice", "score", "noul"):
+        if key in judged:
+            return judged[key]
+    return ""
+
+
+def confidence_value(judged):
+    if "confidence" in judged:
+        return judged["confidence"]
+    return judged.get("noul", "")
+
+
+# --- ledger -----------------------------------------------------------------
+
+def clean(value):
+    return re.sub(r"[\t\r\n]+", " ", "" if value is None else str(value))
+
+
+def ledger_path(root):
+    return Path(root) / ".ruver-bulma" / "DECISIONS.tsv"
+
+
+def append_rows(root, rows):
+    path = ledger_path(root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new = not path.exists()
+    with path.open("a", encoding="utf-8") as handle:
+        if new:
+            handle.write("\t".join(TSV_COLUMNS) + "\n")
+        for row in rows:
+            handle.write("\t".join(clean(row.get(col, "")) for col in TSV_COLUMNS) + "\n")
+    return path
+
+
+def read_rows(path):
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return []
+    rows = []
+    for line in lines[1:]:
+        parts = line.split("\t")
+        if len(parts) != len(TSV_COLUMNS):
+            continue
+        rows.append(dict(zip(TSV_COLUMNS, parts)))
+    return rows
+
+
+def write_rows(path, rows):
+    Path(path).write_text(
+        "\t".join(TSV_COLUMNS) + "\n" + "".join("\t".join(clean(r.get(c, "")) for c in TSV_COLUMNS) + "\n" for r in rows),
+        encoding="utf-8",
+    )
+
+
+def rows_for(doc, hook, thresholds, graph_answers, context, note):
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    rows = []
+    for qid in hook["questions"]:
+        judged = doc["answers"].get(qid, {})
+        rows.append({
+            "ts_iso": ts,
+            "decision_id": doc["decision_id"],
+            "hook": hook["id"],
+            "question": qid,
+            "power": doc["power"],
+            "model": doc["model"],
+            "answer": answer_value(judged),
+            "confidence": confidence_value(judged),
+            "act_at": thresholds[qid],
+            "acted": "true" if judged.get("act") else "false",
+            "graph_answer": graph_answers.get(qid, ""),
+            "outcome": "",
+            "repo": context.get("repo", ""),
+            "pr": context.get("pr", ""),
+            "sha": context.get("sha", ""),
+            "ticket": context.get("ticket", ""),
+            "note": note,
+        })
+    return rows
+
+
+def new_decision_id(hook_id):
+    return "%s-%s-%s" % (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"), hook_id, uuid.uuid4().hex[:4])
+
+
+def parse_kv(items):
+    out = {}
+    for item in items or []:
+        if "=" not in item:
+            raise BulmaError(4, "expected key=value, got %r" % item)
+        key, _, value = item.partition("=")
+        out[key.strip()] = value.strip()
+    return out
+
+
+# --- output -----------------------------------------------------------------
+
+def yaml_scalar(value):
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "null"
+    if isinstance(value, (int, float)):
+        return str(value)
+    text = str(value)
+    if re.fullmatch(r"[A-Za-z0-9_./:-]+", text):
+        return text
+    return json.dumps(text, ensure_ascii=False)
+
+
+def yaml_inline(value):
+    if isinstance(value, dict):
+        return "{ " + ", ".join("%s: %s" % (yaml_scalar(k), yaml_inline(v)) for k, v in value.items()) + " }"
+    if isinstance(value, list):
+        return "[" + ", ".join(yaml_inline(v) for v in value) + "]"
+    return yaml_scalar(value)
+
+
+def to_yaml(doc):
+    lines = []
+    for key, value in doc.items():
+        if key == "answers":
+            lines.append("answers:")
+            for qid, judged in value.items():
+                shown = {k: v for k, v in judged.items() if k != "probabilities"}
+                lines.append("  %s: %s" % (qid, yaml_inline(shown)))
+        elif isinstance(value, (dict, list)):
+            lines.append("%s: %s" % (key, yaml_inline(value)))
+        else:
+            lines.append("%s: %s" % (key, yaml_scalar(value)))
+    return "\n".join(lines) + "\n"
+
+
+def emit(doc, as_json):
+    if as_json:
+        print(json.dumps(doc, indent=2, ensure_ascii=False))
+    else:
+        sys.stdout.write(to_yaml(doc))
+
+
+# --- commands ---------------------------------------------------------------
+
+def cmd_catalog(args):
+    catalog = load_catalog()
+    if args.json:
+        print(json.dumps(sorted(catalog), indent=2))
+    else:
+        print("ok %d hooks: %s" % (len(catalog), ", ".join(sorted(catalog))))
+    return 0
+
+
+def cmd_power(args):
+    cfg = load_config()
+    if args.action == "set":
+        cfg["power"] = check_level(args.level)
+        path = save_config(cfg)
+        print("power=%s written to %s" % (args.level, path))
+        return 0
+    level, source = resolve_power(args.power, args.hook, cfg)
+    print("%s (%s)" % (level, source))
+    return 0
+
+
+def cmd_ask(args):
+    catalog = load_catalog()
+    hook = catalog.get(args.hook)
+    if not hook:
+        raise BulmaError(4, "unknown hook %r; known: %s" % (args.hook, ", ".join(sorted(catalog))))
+    state = load_json_file(args.state)
+    if not isinstance(state, (dict, list, str)):
+        raise BulmaError(4, "state must be a JSON object, array or string")
+    cfg = load_config()
+    power, source = resolve_power(args.power, hook["id"], cfg)
+    model = args.model or cfg.get("model") or DEFAULT_MODEL
+    criteria = load_json_file(args.criteria) if args.criteria else {}
+    budget = {"remaining": TOTAL_CAP, "truncated": False}
+    clean_state = sanitize(state, budget)
+    request = build_request(hook, clean_state, model, criteria)
+    if args.dry_run:
+        print(json.dumps(request, indent=2, ensure_ascii=False))
+        return 0
+
+    overrides = cfg.get("act_at", {})
+    thresholds = {
+        qid: effective_act_at(overrides.get("%s.%s" % (hook["id"], qid), q["act_at"]), power, q.get("direction", "act"))
+        for qid, q in hook["questions"].items()
+    }
+    warnings = ["state missing key: %s" % k for k in missing_keys(state if isinstance(state, dict) else {}, hook["state_keys"])]
+    graph_answers = parse_kv(args.graph_answer)
+    context = parse_kv(args.context)
+    root = ruver_root(args.ruver_root)
+    doc = {
+        "hook": hook["id"], "decision_id": new_decision_id(hook["id"]), "model": model,
+        "power": power, "power_source": source, "truncated": budget["truncated"], "warnings": warnings,
+    }
+    try:
+        response = load_json_file(args.replay) if args.replay else post_json("/systemone", request)
+    except BulmaError as err:
+        if err.code != 3:
+            raise
+        doc["error"] = {"code": 3, "message": str(err)}
+        doc["answers"] = {qid: {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]} for qid in hook["questions"]}
+        append_rows(root, rows_for(doc, hook, thresholds, graph_answers, context, ("error:" + str(err))[:80]))
+        emit(doc, args.json)
+        return 3
+    doc["model"] = response.get("model", model)
+    doc["answers"] = {}
+    for qid, question in hook["questions"].items():
+        raw = (response.get("answers") or {}).get(qid)
+        if raw is None:
+            doc["warnings"].append("no answer for %s" % qid)
+            doc["answers"][qid] = {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]}
+            continue
+        judged = judge(question, raw, thresholds[qid], power)
+        if not judged["act"]:
+            judged["fallback"] = hook["fallback"]
+        doc["answers"][qid] = judged
+    doc["usage"] = response.get("usage", {})
+    append_rows(root, rows_for(doc, hook, thresholds, graph_answers, context, "truncated" if budget["truncated"] else ""))
+    emit(doc, args.json)
+    return 0
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog="bulma.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("catalog", help="validate decisions.json")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_catalog)
+
+    p = sub.add_parser("power", help="print or set the power level")
+    p.add_argument("action", nargs="?", choices=["set"])
+    p.add_argument("level", nargs="?")
+    p.add_argument("--hook")
+    p.add_argument("--power")
+    p.set_defaults(func=cmd_power)
+
+    p = sub.add_parser("ask", help="ask Jev one hook's questions")
+    p.add_argument("hook")
+    p.add_argument("--state", required=True)
+    p.add_argument("--power")
+    p.add_argument("--model")
+    p.add_argument("--criteria")
+    p.add_argument("--graph-answer", action="append", default=[])
+    p.add_argument("--context", action="append", default=[])
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--replay")
+    p.add_argument("--ruver-root")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_ask)
+    return parser
+
+
+def main(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.command == "power" and args.action == "set" and not args.level:
+        parser.error("power set needs a level")
+    try:
+        return args.func(args)
+    except BulmaError as err:
+        print("bulma: %s" % err, file=sys.stderr)
+        return err.code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

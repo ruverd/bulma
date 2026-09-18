@@ -22,7 +22,8 @@
             "memory": "Store a durable preference (chat language, reviewers, a project note). `args` states a preference, not work.",
             "none": "Nothing above fits, or `args` is a question to answer in chat rather than work to run."
           },
-          "act_at": 0.70
+          "act_at": 0.70,
+          "enum_source": "ruver-bus/PROTOCOL.md"
         }
       }
     },
