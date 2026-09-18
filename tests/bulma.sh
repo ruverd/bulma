@@ -245,4 +245,28 @@ ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(op
 [[ ! -e "$FIX/world/.ruver-bulma/world.json" ]] || fail "world.sh wrote into the fixture root despite --out"
 ok world
 
+# --- graph files and text invariants ---
+for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md REQUIREMENTS.md templates/STATE.md \
+         nodes/admit.md nodes/inventory.md nodes/route.md nodes/overlay.md nodes/done.md nodes/power.md nodes/report.md; do
+  need "$SKILL/$f"
+done
+need "$ROOT/commands/bulma.md"
+grep -F -q 'description: Jev-gated router and overlay for ruver graphs. Use when /bulma.' "$SKILL/SKILL.md" || fail "SKILL.md description must match the budgeted text"
+grep -F -q 'category: graph' "$SKILL/SKILL.md" || fail "SKILL.md category"
+grep -F -q 'doctor' "$SKILL/nodes/admit.md" || fail "admit must run doctor"
+grep -F -q 'status: blocked' "$SKILL/nodes/admit.md" || fail "admit must block on doctor failure"
+grep -F -q 'entry.route' "$SKILL/nodes/route.md" || fail "route must name entry.route"
+grep -F -q 'entry.next_step' "$SKILL/nodes/route.md" || fail "route must name entry.next_step"
+grep -F -q 'candidates.json' "$SKILL/nodes/route.md" || fail "route must pass candidates.json as --criteria"
+grep -F -q -- '--graph-answer' "$SKILL/nodes/overlay.md" || fail "overlay must pass graph answers"
+grep -F -q 'J:' "$SKILL/nodes/overlay.md" || fail "overlay must define the J: chat line"
+grep -F -q 'never appears on the stack' "$SKILL/nodes/overlay.md" || fail "overlay must state bulma is not a bus frame"
+grep -F -q 'shadow | cautious | balanced | bold' "$SKILL/POWER.md" || fail "POWER.md levels"
+grep -F -q 'TYPESAFE_API_KEY' "$SKILL/REQUIREMENTS.md" || fail "REQUIREMENTS.md must name the key"
+grep -F -q 'leaves the machine' "$SKILL/REQUIREMENTS.md" || fail "REQUIREMENTS.md must state data handling"
+# shellcheck disable=SC2016  # literal $ARGUMENTS must not appear in the alias
+if grep -F -q '$ARGUMENTS' "$ROOT/commands/bulma.md"; then fail "commands/bulma.md must not use \$ARGUMENTS"; fi
+python3 "$ROOT/tests/lib/check_graphs.py" "$ROOT" || fail "check_graphs (bulma Need)"
+ok graph-files
+
 echo "bulma gate: all green"
