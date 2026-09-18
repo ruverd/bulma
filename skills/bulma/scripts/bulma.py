@@ -548,6 +548,190 @@ def cmd_ask(args):
     return 0
 
 
+def python_ok():
+    return sys.version_info >= (3, 9)
+
+
+def get_models(timeout=5):
+    request = urllib.request.Request(
+        API + "/models", method="GET",
+        headers={"Authorization": "Bearer " + api_key(), "User-Agent": "ruver-bulma"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        raise BulmaError(3, "HTTP %s" % err.code)
+    except (urllib.error.URLError, TimeoutError, OSError) as err:
+        raise BulmaError(3, "network: %s" % err)
+    return [m.get("name", "") for m in data.get("models", [])]
+
+
+def cmd_doctor(args):
+    py = "%d.%d.%d" % sys.version_info[:3]
+    lines = []
+    code = 0
+    lines.append(("python3", ("ok (%s)" % py) if python_ok() else ("too old (%s), need 3.9" % py)))
+    if not python_ok():
+        code = 2
+    has_key = bool(os.environ.get("TYPESAFE_API_KEY"))
+    lines.append(("key", "ok" if has_key else "missing"))
+    if not has_key:
+        code = 2
+    try:
+        catalog = load_catalog()
+        lines.append(("catalog", "ok (%d hooks)" % len(catalog)))
+    except BulmaError as err:
+        lines.append(("catalog", "invalid: %s" % err))
+        code = code or 4
+    try:
+        cfg = load_config()
+        lines.append(("config", ("ok (%s)" % config_path()) if cfg else "none (defaults)"))
+    except BulmaError as err:
+        cfg = {}
+        lines.append(("config", "invalid: %s" % err))
+        code = code or 4
+    try:
+        level, source = resolve_power(None, None, cfg)
+        lines.append(("power", "%s (%s)" % (level, source)))
+    except BulmaError as err:
+        lines.append(("power", "invalid: %s" % err))
+        code = code or 4
+    if has_key and not args.offline:
+        try:
+            names = get_models()
+            lines.append(("jev", "ok (%s)" % ", ".join(names) if names else "ok"))
+        except BulmaError as err:
+            lines.append(("jev", "unreachable: %s" % err))
+            code = code or 3
+    elif has_key:
+        lines.append(("jev", "skipped (--offline)"))
+    else:
+        lines.append(("jev", "skipped (no key)"))
+    if args.json:
+        print(json.dumps({"exit": code, "checks": dict(lines)}, indent=2))
+    else:
+        for name, value in lines:
+            print("%-8s %s" % (name, value))
+        if code == 2:
+            print()
+            print(REQUIREMENT.format(py=("ok (%s)" % py) if python_ok() else ("too old (%s)" % py)))
+        elif code == 3:
+            print()
+            print("Jev unreachable. Check the network and the key, then run /bulma again.")
+    return code
+
+
+def cmd_outcome(args):
+    if args.value not in ("confirmed", "reversed"):
+        raise BulmaError(4, "outcome must be confirmed or reversed")
+    path = ledger_path(ruver_root(args.ruver_root))
+    rows = read_rows(path)
+    hits = [r for r in rows if r["decision_id"] == args.decision_id and r["question"] == args.question]
+    if not hits:
+        raise BulmaError(4, "no row for %s %s in %s" % (args.decision_id, args.question, path))
+    for row in hits:
+        row["outcome"] = args.value
+        if args.note:
+            row["note"] = (row["note"] + " | " if row["note"] else "") + args.note
+    write_rows(path, rows)
+    print("updated %s %s outcome=%s" % (args.decision_id, args.question, args.value))
+    return 0
+
+
+def cmd_tune(args):
+    catalog = load_catalog()
+    hook_id, _, qid = args.question.rpartition(".")
+    if hook_id not in catalog or qid not in catalog[hook_id]["questions"]:
+        raise BulmaError(4, "unknown question %r; use <hook>.<question>" % args.question)
+    try:
+        value = float(args.act_at)
+    except ValueError:
+        raise BulmaError(4, "act_at must be a number")
+    if not FLOOR <= value <= CEIL:
+        raise BulmaError(4, "act_at must be within [%s, %s]" % (FLOOR, CEIL))
+    cfg = load_config()
+    cfg.setdefault("act_at", {})[args.question] = round(value, 2)
+    path = save_config(cfg)
+    print("act_at[%s]=%.2f written to %s" % (args.question, value, path))
+    return 0
+
+
+def cmd_model(args):
+    cfg = load_config()
+    if args.action == "set":
+        if not args.model_id:
+            raise BulmaError(4, "model set needs a model id")
+        cfg["model"] = args.model_id
+        path = save_config(cfg)
+        print("model=%s written to %s" % (args.model_id, path))
+        return 0
+    if cfg.get("model"):
+        print("%s (config)" % cfg["model"])
+    else:
+        print("%s (default)" % DEFAULT_MODEL)
+    return 0
+
+
+def parse_ts(value):
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def suggest_threshold(rows, current):
+    with_graph = [r for r in rows if r["graph_answer"]]
+    if len(with_graph) < 20:
+        return "need >=20"
+    for step in range(10, 20):
+        t = step / 20.0
+        sub = [r for r in with_graph if float(r["confidence"] or 0) >= t]
+        if len(sub) >= 20 and sum(1 for r in sub if r["answer"] == r["graph_answer"]) / len(sub) >= 0.95:
+            return "keep" if abs(t - current) < 0.001 else "%.2f" % t
+    return "keep"
+
+
+def cmd_report(args):
+    root = ruver_root(args.ruver_root)
+    paths = [ledger_path(root)] if args.repo_only else sorted(ruver_home().glob("*/.ruver-bulma/DECISIONS.tsv"))
+    rows = []
+    for path in paths:
+        rows.extend(read_rows(path))
+    if args.since:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=int(args.since))
+        rows = [r for r in rows if (parse_ts(r["ts_iso"]) or cutoff) >= cutoff]
+    if args.hook:
+        rows = [r for r in rows if r["hook"] == args.hook]
+    if not rows:
+        print("no decisions found under %s" % (root if args.repo_only else ruver_home()))
+        return 0
+    groups = {}
+    for row in rows:
+        groups.setdefault((row["hook"], row["question"]), []).append(row)
+    print("| hook.question | n | acted% | conf | agree% | reversed | act_at | suggest |")
+    print("|---|---|---|---|---|---|---|---|")
+    for (hook, question), items in sorted(groups.items()):
+        n = len(items)
+        acted = sum(1 for r in items if r["acted"] == "true")
+        confs = [float(r["confidence"]) for r in items if r["confidence"] not in ("", None)]
+        mean = sum(confs) / len(confs) if confs else 0.0
+        with_graph = [r for r in items if r["graph_answer"]]
+        agree = ("%d%%" % round(100 * sum(1 for r in with_graph if r["answer"] == r["graph_answer"]) / len(with_graph))) if with_graph else "-"
+        reversed_count = sum(1 for r in items if r["outcome"] == "reversed")
+        current = float(items[-1]["act_at"] or 0)
+        print("| %s.%s | %d | %d%% | %.2f | %s | %d | %.2f | %s |" % (
+            hook, question, n, round(100 * acted / n), mean, agree, reversed_count, current, suggest_threshold(items, current)))
+    models = sorted({r["model"] for r in rows if r["model"]})
+    if len(models) > 1:
+        print()
+        print("note: %d model ids in these rows (%s). Pin one with `bulma.py model set <id>` once thresholds are tuned." % (len(models), ", ".join(models)))
+    shadow = sum(1 for r in rows if r["power"] == "shadow")
+    if shadow and shadow * 2 > len(rows):
+        print("note: %d of %d rows ran under shadow; agree%% is the only live signal there." % (shadow, len(rows)))
+    return 0
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="bulma.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -576,6 +760,36 @@ def build_parser():
     p.add_argument("--ruver-root")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_ask)
+
+    p = sub.add_parser("doctor", help="check python, key, catalog, config, and the Jev endpoint")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--offline", action="store_true", help="skip the network check")
+    p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser("outcome", help="mark a logged decision confirmed or reversed")
+    p.add_argument("decision_id")
+    p.add_argument("question")
+    p.add_argument("value")
+    p.add_argument("--note", default="")
+    p.add_argument("--ruver-root")
+    p.set_defaults(func=cmd_outcome)
+
+    p = sub.add_parser("report", help="calibration table from DECISIONS.tsv")
+    p.add_argument("--hook")
+    p.add_argument("--since", type=int)
+    p.add_argument("--repo-only", action="store_true")
+    p.add_argument("--ruver-root")
+    p.set_defaults(func=cmd_report)
+
+    p = sub.add_parser("tune", help="override act_at for one question")
+    p.add_argument("question", help="<hook>.<question>")
+    p.add_argument("act_at")
+    p.set_defaults(func=cmd_tune)
+
+    p = sub.add_parser("model", help="print or pin the model id")
+    p.add_argument("action", nargs="?", choices=["set"])
+    p.add_argument("model_id", nargs="?")
+    p.set_defaults(func=cmd_model)
     return parser
 
 

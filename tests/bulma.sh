@@ -145,4 +145,79 @@ assert len(big) == 4, len(big)
 PY
 ok ledger
 
+# --- doctor without key: exit 2, names the variable, never leaks a key ---
+set +e
+out="$(env -u TYPESAFE_API_KEY python3 "$BULMA" doctor 2>&1)"; code=$?
+set -e
+[[ "$code" -eq 2 ]] || fail "doctor without key must exit 2, got $code"
+grep -F -q 'TYPESAFE_API_KEY' <<<"$out" || fail "doctor must name TYPESAFE_API_KEY"
+grep -F -q '/developer, /qa, /reviewer, /lstm, /ruver-triage' <<<"$out" || fail "doctor must point at the plain graphs"
+set +e
+out="$(TYPESAFE_API_KEY=apikey_testtesttesttesttest python3 "$BULMA" doctor --offline 2>&1)"; code=$?
+set -e
+[[ "$code" -eq 0 ]] || fail "doctor --offline with a key must exit 0, got $code: $out"
+if grep -F -q 'apikey_testtesttesttesttest' <<<"$out"; then fail "doctor printed the key"; fi
+grep -F -q 'catalog  ok (9 hooks)' <<<"$out" || fail "doctor catalog line: $out"
+ok doctor
+
+# --- tune and model write config; ask reads the override ---
+python3 "$BULMA" tune fd.triage.path 0.60 >/dev/null || fail "tune exit"
+if python3 "$BULMA" tune fd.triage.path 0.30 >/dev/null 2>&1; then fail "tune accepted 0.30"; fi
+if python3 "$BULMA" tune nope.path 0.60 >/dev/null 2>&1; then fail "tune accepted an unknown question"; fi
+python3 "$BULMA" model set jev-1.13.0 >/dev/null || fail "model set exit"
+out="$(python3 "$BULMA" model)"
+[[ "$out" == "jev-1.13.0 (config)" ]] || fail "model read: $out"
+python3 "$BULMA" ask fd.triage --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-fd-triage.json" \
+  --power cautious --ruver-root "$RR" --json >"$J" || fail "ask with tune exit"
+[[ "$(jget "$J" answers.path.act_at)" == "0.7" ]] || fail "tuned .60 + cautious .10 must be .70, got $(jget "$J" answers.path.act_at)"
+python3 "$BULMA" ask fd.triage --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-fd-triage.json" \
+  --ruver-root "$RR" --dry-run >"$J" || fail "dry-run model exit"
+grep -F -q '"jev-1.13.0"' "$J" || fail "pinned model not in request"
+rm -f "$RUVER_HOME/bulma.json"
+ok tune-model
+
+# --- outcome rewrites one row ---
+DID="$(python3 - "$TSV" <<'PY'
+import sys
+rows = [l.split("\t") for l in open(sys.argv[1], encoding="utf-8").read().splitlines()[1:]]
+print(rows[0][1])
+PY
+)"
+python3 "$BULMA" outcome "$DID" work_kind reversed --note "was a feature" --ruver-root "$RR" >/dev/null || fail "outcome exit"
+if python3 "$BULMA" outcome "$DID" nope reversed --ruver-root "$RR" >/dev/null 2>&1; then fail "outcome accepted an unknown question"; fi
+python3 - "$TSV" "$DID" <<'PY'
+import sys
+rows = [l.split("\t") for l in open(sys.argv[1], encoding="utf-8").read().splitlines()[1:]]
+hit = [r for r in rows if r[1] == sys.argv[2] and r[3] == "work_kind"]
+assert len(hit) == 1 and hit[0][11] == "reversed" and "was a feature" in hit[0][16], hit
+assert sum(1 for r in rows if r[11] == "reversed") == 1
+PY
+ok outcome
+
+# --- report: agree%, suggest, need >=20 ---
+REP="$TMP/rep"
+mkdir -p "$REP/.ruver-bulma"
+python3 - "$REP/.ruver-bulma/DECISIONS.tsv" <<'PY'
+import sys
+cols = "ts_iso decision_id hook question power model answer confidence act_at acted graph_answer outcome repo pr sha ticket note".split()
+rows = []
+for i in range(24):
+    conf = 0.55 + i * 0.018
+    agree = i not in (0, 1)
+    rows.append(["2026-09-%02dT10:00:00Z" % (1 + i % 28), "id%02d" % i, "fd.triage", "path", "balanced", "jev-1.13.0",
+                 "debug_fix", "%.3f" % conf, "0.75", "true" if conf >= 0.75 else "false",
+                 "debug_fix" if agree else "full_feature", "", "o/r", "", "", "", ""])
+for i in range(5):
+    rows.append(["2026-09-10T10:00:00Z", "q%d" % i, "qa.gate", "violates_pr_ac", "balanced", "jev-1.13.0", "0.9", "0.9", "0.85", "true", "", "", "o/r", "", "", "", ""])
+open(sys.argv[1], "w").write("\t".join(cols) + "\n" + "".join("\t".join(r) + "\n" for r in rows))
+PY
+out="$(python3 "$BULMA" report --repo-only --ruver-root "$REP")"
+grep -E -q '^\| fd\.triage\.path +\| 24 ' <<<"$out" || fail "report row for fd.triage.path: $out"
+grep -E -q 'fd\.triage\.path .* 92% ' <<<"$out" || fail "agree% should be 92% (22/24): $out"
+grep -E -q 'fd\.triage\.path .* 0\.6[05] ' <<<"$out" || fail "suggest should land at 0.60 or 0.65: $out"
+grep -E -q 'qa\.gate\.violates_pr_ac .* need >=20' <<<"$out" || fail "short sample must say need >=20: $out"
+ok report
+
+# --- world.sh placeholder for Task 4 ---
+
 echo "bulma gate: all green"
