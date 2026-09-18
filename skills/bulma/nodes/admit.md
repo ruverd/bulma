@@ -14,7 +14,8 @@
      `status: blocked`, end the turn. Do not load any graph.
    - exit 4 → same, quoting the catalog or config error.
 4. `python3 scripts/bulma.py power` → `power`, `power_source`. A `--power`
-   flag in args wins for this run; pass it to every `ask`.
+   flag in args wins for this run; pass it to every `ask`. `--effort` and
+   `--session-model` are run flags for **spend**, not Jev.
 5. Init `.ruver-bulma/STATE.md` from `../templates/STATE.md` unless a live
    one exists (then keep `decision_ids` and counts). Write `args`, `power`,
    `power_source`, `model` (`bulma.py model`), `updated_at`.

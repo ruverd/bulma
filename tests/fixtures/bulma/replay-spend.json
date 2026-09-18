@@ -1,0 +1,8 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "effort": {"type": "choice", "choice": "low", "confidence": 0.91, "probabilities": {"low": 0.91, "medium": 0.07, "high": 0.02, "max": 0.00}},
+    "session_model": {"type": "choice", "choice": "cheap", "confidence": 0.88, "probabilities": {"cheap": 0.88, "inherit": 0.10, "strong": 0.02}}
+  },
+  "usage": {"input_tokens": 400, "output_tokens": 0}
+}

@@ -1,6 +1,6 @@
 ---
 description: Route the request to the right ruver graph and gate its forks with Jev decisions
-argument-hint: "<empty | ticket | PR url | text | power <level> | report | resume>"
+argument-hint: "<empty | ticket | PR url | text | --effort <level> | --session-model <id> | power <level> | report | resume>"
 ---
 
 # /bulma

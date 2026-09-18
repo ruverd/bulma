@@ -5,8 +5,10 @@
 
 ## Contract
 
-1. `load_graph <target>` (skill `ruver-<target>`, or `ruver-memory` for
-   `memory`). Follow its SKILL.md and GRAPH.md exactly. Bulma stays loaded.
+1. Spend already wrote `effort` and `session_model`. `load_graph <target>`
+   (skill `ruver-<target>`, or `ruver-memory` for `memory`). Follow its
+   SKILL.md and GRAPH.md exactly. Bulma stays loaded. Every `spawn_worker`
+   on this run passes that pair ([ruver-host](../../ruver-host/SKILL.md)).
 2. When the target, or an engine it loads (`ruver-feature-delivery`,
    `ruver-code-review`), enters a node listed in `../HOOKS.md`, and before
    writing the hooked field(s):

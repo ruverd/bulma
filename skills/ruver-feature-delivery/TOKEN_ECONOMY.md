@@ -29,6 +29,8 @@ for the end (CI green / handoff).
 - `plan_critic` is a table. Spawn only when `risk=elevated`. Skip on debug_fix, light_change, and `risk=low`.
 
 ### implement (subagents)
+Bulma overlay `entry.spend` picks implementer effort and session model
+from the ticket before spawn ([SPEND.md](../bulma/SPEND.md)).
 Coder prompt **at most ~1–2 screens**:
 
 ```

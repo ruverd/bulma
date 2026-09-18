@@ -51,6 +51,22 @@ if python3 "$BULMA" power set loud >/dev/null 2>&1; then fail "power set accepte
 rm -f "$RUVER_HOME/bulma.json"
 ok power-precedence
 
+# --- spend heuristic: target table, flag wins, unknown effort rejected ---
+out="$(python3 "$BULMA" spend --target developer)"
+[[ "$out" == "effort=high (heuristic)" ]] || fail "developer spend: $out"
+out="$(python3 "$BULMA" spend --target qa)"
+[[ "$out" == "effort=medium (heuristic)" ]] || fail "qa spend: $out"
+out="$(python3 "$BULMA" spend --target memory)"
+[[ "$out" == "effort=low (heuristic)" ]] || fail "memory spend: $out"
+out="$(python3 "$BULMA" spend --target developer --effort low)"
+[[ "$out" == "effort=low (flag)" ]] || fail "flag spend: $out"
+python3 "$BULMA" spend --target reviewer --json >"$TMP/spend.json" || fail "spend json exit"
+[[ "$(jget "$TMP/spend.json" effort)" == "medium" ]] || fail "spend json effort"
+[[ "$(jget "$TMP/spend.json" effort_source)" == "heuristic" ]] || fail "spend json source"
+[[ "$(jget "$TMP/spend.json" session_model)" == "inherit" ]] || fail "spend json inherit"
+if python3 "$BULMA" spend --effort loud >/dev/null 2>&1; then fail "spend accepted unknown effort"; fi
+ok spend-heuristic
+
 # --- ask --replay: balanced acts on .88, falls back on .61 ---
 J="$TMP/ask.json"
 python3 "$BULMA" ask fd.triage --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-fd-triage.json" \
@@ -157,7 +173,7 @@ out="$(TYPESAFE_API_KEY=apikey_testtesttesttesttest python3 "$BULMA" doctor --of
 set -e
 [[ "$code" -eq 0 ]] || fail "doctor --offline with a key must exit 0, got $code: $out"
 if grep -F -q 'apikey_testtesttesttesttest' <<<"$out"; then fail "doctor printed the key"; fi
-grep -F -q 'catalog  ok (9 hooks)' <<<"$out" || fail "doctor catalog line: $out"
+grep -F -q 'catalog  ok (10 hooks)' <<<"$out" || fail "doctor catalog line: $out"
 ok doctor
 
 # --- tune and model write config; ask reads the override ---
@@ -246,8 +262,8 @@ ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(op
 ok world
 
 # --- graph files and text invariants ---
-for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md REQUIREMENTS.md templates/STATE.md \
-         nodes/admit.md nodes/inventory.md nodes/route.md nodes/overlay.md nodes/done.md nodes/power.md nodes/report.md; do
+for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md SPEND.md REQUIREMENTS.md templates/STATE.md \
+         nodes/admit.md nodes/inventory.md nodes/route.md nodes/spend.md nodes/overlay.md nodes/done.md nodes/power.md nodes/report.md; do
   need "$SKILL/$f"
 done
 need "$ROOT/commands/bulma.md"
@@ -257,6 +273,10 @@ grep -F -q 'doctor' "$SKILL/nodes/admit.md" || fail "admit must run doctor"
 grep -F -q 'status: blocked' "$SKILL/nodes/admit.md" || fail "admit must block on doctor failure"
 grep -F -q 'entry.route' "$SKILL/nodes/route.md" || fail "route must name entry.route"
 grep -F -q 'entry.next_step' "$SKILL/nodes/route.md" || fail "route must name entry.next_step"
+grep -F -q 'go to **spend**' "$SKILL/nodes/route.md" || fail "route must go to spend"
+grep -F -q 'session_catalog' "$SKILL/nodes/spend.md" || fail "spend must list session_catalog"
+grep -F -q 'entry.spend' "$SKILL/nodes/spend.md" || fail "spend must name entry.spend"
+grep -F -q 'implementer' "$SKILL/SPEND.md" || fail "SPEND.md must say implementer"
 grep -F -q 'candidates.json' "$SKILL/nodes/route.md" || fail "route must pass candidates.json as --criteria"
 grep -F -q -- '--graph-answer' "$SKILL/nodes/overlay.md" || fail "overlay must pass graph answers"
 grep -F -q 'J:' "$SKILL/nodes/overlay.md" || fail "overlay must define the J: chat line"
@@ -281,5 +301,24 @@ python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --repla
   --criteria "$FIX/criteria-next-step.json" --power shadow --ruver-root "$RR" --json >"$J" || fail "ask entry shadow exit"
 [[ "$(jget "$J" answers.candidate.act)" == "false" ]] || fail "shadow must not auto-route entry.next_step"
 ok ask-entry-no-autoroute
+
+# --- entry.spend: copy ticket acts on low + catalog id; dynamic criteria ---
+if python3 "$BULMA" ask entry.spend --state "$FIX/state-spend.json" --replay "$FIX/replay-spend.json" --ruver-root "$RR" --json >/dev/null 2>&1; then
+  fail "entry.spend without --criteria must exit 4"
+fi
+python3 "$BULMA" ask entry.spend --state "$FIX/state-spend.json" --replay "$FIX/replay-spend.json" \
+  --criteria "$FIX/criteria-spend.json" --graph-answer effort=high --graph-answer session_model=inherit \
+  --ruver-root "$RR" --json >"$J" || fail "ask entry.spend exit"
+[[ "$(jget "$J" answers.effort.choice)" == "low" ]] || fail "spend effort choice"
+[[ "$(jget "$J" answers.effort.act)" == "true" ]] || fail "balanced should act on effort .91"
+[[ "$(jget "$J" answers.session_model.choice)" == "cheap" ]] || fail "spend session_model choice"
+[[ "$(jget "$J" answers.session_model.act)" == "true" ]] || fail "balanced should act on session_model .88"
+python3 "$BULMA" ask entry.spend --state "$FIX/state-spend.json" --replay "$FIX/replay-spend.json" \
+  --criteria "$FIX/criteria-spend.json" --power cautious --ruver-root "$RR" --json >"$J" || fail "ask spend cautious exit"
+[[ "$(jget "$J" answers.effort.act)" == "false" ]] || fail "cautious must not act on entry.spend"
+python3 "$BULMA" ask entry.spend --state "$FIX/state-spend.json" --criteria "$FIX/criteria-spend.json" --dry-run --ruver-root "$RR" >"$J" || fail "spend dry-run exit"
+grep -F -q '"cheap"' "$J" || fail "dry-run request lacks catalog id"
+grep -F -q '"inherit"' "$J" || fail "dry-run request lacks inherit"
+ok ask-spend
 
 echo "bulma gate: all green"

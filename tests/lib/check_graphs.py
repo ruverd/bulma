@@ -55,6 +55,13 @@ NEEDS = [
         before="overlay",
         extra_files=("scripts/bulma.py", "decisions.json", "HOOKS.md"),
     ),
+    Need(
+        skill="bulma",
+        node="spend",
+        after="route",
+        before="overlay",
+        extra_files=("SPEND.md",),
+    ),
 ]
 
 BOLD = re.compile(r"\*\*([A-Za-z][A-Za-z0-9_]*)\*\*")

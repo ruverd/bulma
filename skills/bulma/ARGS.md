@@ -17,10 +17,18 @@ this table **before** any Jev call. Trim, then match in order.
 | PR or MR URL, or `owner/repo#N` | **inventory** with PR facts → `entry.route` |
 | free text | **inventory** → `entry.route` |
 | `--power <level>` anywhere | override for this run only |
+| `--effort <low\|medium\|high\|max>` anywhere | implementer effort for this run; skip that Jev question |
+| `--session-model <id>` anywhere | implementer model id from **this host catalog**, or `inherit`; skip that Jev question |
+
+`--effort` and `--session-model` are the coding session that will do
+the work, not Jev (`model` above). Both set → skip `entry.spend`.
+Details: [SPEND.md](SPEND.md).
 
 When STATE has `waiting_user` and args are not a verb, args are the answer
-to the pending question: a candidate id (`lstm:pr-805`), a target name, or
-the user's own words. Log it, clear `waiting_user`, continue at **route**.
+to the pending question: a candidate id (`lstm:pr-805`), a target name,
+an effort level, `ok`, `inherit`, a catalog model id, or the user's own
+words. Log it, clear `waiting_user`, continue at **route** (or **spend**
+when that was the question).
 
 Examples:
 
@@ -33,4 +41,6 @@ Examples:
 /bulma tune fd.triage.path 0.70
 /bulma report --hook lstm.verify
 /bulma --power bold
+/bulma --effort low DEV-4772
+/bulma --session-model inherit --effort medium review the pagination PR
 ```

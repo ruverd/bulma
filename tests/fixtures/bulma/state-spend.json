@@ -1,0 +1,8 @@
+{
+  "args": "DEV-4772 rename the submit button label",
+  "target": "developer",
+  "target_args": "DEV-4772",
+  "ticket_title": "Rename submit button",
+  "ticket_body": "Change the label from Send to Submit. Copy only. No behavior change.",
+  "acceptance_criteria": ["the button label is Submit"]
+}
