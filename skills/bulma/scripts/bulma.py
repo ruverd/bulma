@@ -303,8 +303,10 @@ def post_json(path, body, timeout=20):
     raise BulmaError(3, "unreachable")
 
 
-def judge(question, raw, act_at, power):
+def judge(question, raw, act_at, power, hook_id=""):
     live = power != "shadow"
+    if str(hook_id).startswith("entry.") and power in ("cautious", "shadow"):
+        live = False
     qtype = question["type"]
     if qtype == "noul":
         value = float(raw.get("noul", 0.0))
@@ -538,7 +540,7 @@ def cmd_ask(args):
             doc["warnings"].append("no answer for %s" % qid)
             doc["answers"][qid] = {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]}
             continue
-        judged = judge(question, raw, thresholds[qid], power)
+        judged = judge(question, raw, thresholds[qid], power, hook["id"])
         if not judged["act"]:
             judged["fallback"] = hook["fallback"]
         doc["answers"][qid] = judged

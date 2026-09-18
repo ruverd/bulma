@@ -1,0 +1,8 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "candidate": {"type": "choice", "choice": "resume:dev-4772", "confidence": 0.95, "probabilities": {"resume:dev-4772": 0.95, "lstm:pr-805": 0.04, "nothing": 0.01}},
+    "user_blocked": {"type": "noul", "noul": 0.94}
+  },
+  "usage": {"input_tokens": 500, "output_tokens": 0}
+}

@@ -23,11 +23,14 @@ Deterministic first, Jev second. Never guess a graph.
 4. Read the answer:
    - `user_blocked` decisive-yes → print each `states[].waiting_user`
      question first, in the chat language.
+   - choice `none` → answer the user in chat; `status: done`.
+   - power `shadow` or `cautious` → list the top three
+     options from `probabilities` with their numbers, ask one question,
+     `status: waiting_user`, end the turn.
    - `act: true` → `target` = the choice (for `entry.next_step`, the
      candidate's `target` and `args`). Write the Route block with
      `why: <decision_id> <confidence>`. Go to **overlay**.
-   - choice `none` → answer the user in chat; `status: done`.
-   - `act: false`, or power `shadow` or `cautious` → list the top three
+   - remaining `act: false` → list the top three
      options from `probabilities` with their numbers, ask one question,
      `status: waiting_user`, end the turn.
 5. Append the `decision_id` to STATE `decision_ids`. One `J:` line.

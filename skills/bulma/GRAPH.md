@@ -23,9 +23,10 @@
 | admit | ok | **inventory** |
 | inventory | always | **route** |
 | route | deterministic target (tracker id or tracker URL) | **overlay** |
-| route | Jev acted (`act: true`) | **overlay** |
-| route | Jev did not act, or power is `shadow` or `cautious` on `entry.*` | **stop** (`waiting_user`, ranked candidates, one question) |
 | route | `entry.route` = `none` | **stop** (answer in chat, no graph) |
+| route | power is `shadow` or `cautious` on `entry.*` | **stop** (`waiting_user`, ranked candidates, one question) |
+| route | Jev acted (`act: true`) | **overlay** |
+| route | Jev did not act (`act: false`) | **stop** (`waiting_user`, ranked candidates, one question) |
 | overlay | target graph terminal, `waiting_user`, `escalated`, `blocked`, or the turn ends | **done** |
 | done | always | stop |
 | any | user answers a `waiting_user` question via `/bulma <answer>` | **route** (the answer is the pick) |

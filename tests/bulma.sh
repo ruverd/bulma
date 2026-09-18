@@ -269,4 +269,17 @@ if grep -F -q '$ARGUMENTS' "$ROOT/commands/bulma.md"; then fail "commands/bulma.
 python3 "$ROOT/tests/lib/check_graphs.py" "$ROOT" || fail "check_graphs (bulma Need)"
 ok graph-files
 
+# --- entry.* under cautious/shadow never auto-routes, even above act_at ---
+# 0.95 beats cautious act_at 0.85 (base 0.75 + 0.10). Without the entry.*
+# judge gate this would act. Replay only.
+python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-next-step-095.json" \
+  --criteria "$FIX/criteria-next-step.json" --power cautious --ruver-root "$RR" --json >"$J" || fail "ask entry cautious exit"
+[[ "$(jget "$J" answers.candidate.act)" == "false" ]] || fail "cautious must not auto-route entry.next_step at .95"
+[[ "$(jget "$J" answers.candidate.act_at)" == "0.85" ]] || fail "cautious entry act_at: $(jget "$J" answers.candidate.act_at)"
+[[ "$(jget "$J" answers.user_blocked.decisive)" == "yes" ]] || fail "user_blocked decisive must stay yes under cautious"
+python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-next-step-095.json" \
+  --criteria "$FIX/criteria-next-step.json" --power shadow --ruver-root "$RR" --json >"$J" || fail "ask entry shadow exit"
+[[ "$(jget "$J" answers.candidate.act)" == "false" ]] || fail "shadow must not auto-route entry.next_step"
+ok ask-entry-no-autoroute
+
 echo "bulma gate: all green"
