@@ -100,9 +100,13 @@ def main():
                 continue
             keys = sorted(criteria)
             if hid == "entry.route":
-                allowed = set(BACKTICK.findall(
-                    [l for l in read(root, PROTOCOL).splitlines() if l.startswith("Allowed names:")][0]
-                )) | ROUTE_EXTRA
+                try:
+                    allowed = set(BACKTICK.findall(
+                        [l for l in read(root, PROTOCOL).splitlines() if l.startswith("Allowed names:")][0]
+                    )) | ROUTE_EXTRA
+                except (OSError, IndexError):
+                    errors.append("%s.%s: PROTOCOL.md missing or has no \"Allowed names:\" line" % (hid, qid))
+                    continue
                 extra = set(keys) - allowed
                 if extra:
                     errors.append("%s.%s: targets not allowed by PROTOCOL.md: %s" % (hid, qid, sorted(extra)))
