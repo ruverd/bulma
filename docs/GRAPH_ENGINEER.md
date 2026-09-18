@@ -72,3 +72,11 @@ Never spawn another **graph** as a child (`ruver_qa`, `ruver_developer`,
 
 Then `ruver setup` (or `./install.sh setup`) and a commit. Slash names stay the skill folder
 name (`/ruver-developer`) because the directory is already flat.
+
+## Jev hooks
+
+Graphs stay Jev-free. When a node has a fork worth a calibrated answer, add
+a row to `skills/bulma/HOOKS.md` and an entry to
+`skills/bulma/decisions.json` with the node's exact enum;
+`tests/lib/check_bulma.py` fails when the two drift. The node file itself
+does not change.

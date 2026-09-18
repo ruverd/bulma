@@ -17,6 +17,10 @@
             "description": "Find what a change could break somewhere else before it ships, beyond the diff."
           },
           {
+            "name": "bulma",
+            "description": "Jev-gated router and overlay for ruver graphs. Use when /bulma."
+          },
+          {
             "name": "diagnose",
             "description": "Disciplined diagnosis loop for hard bugs and performance regressions."
           },
@@ -216,6 +220,10 @@
           }
         ],
         "commands": [
+          {
+            "name": "bulma",
+            "description": "Route the request to the right ruver graph and gate its forks with Jev decisions"
+          },
           {
             "name": "developer",
             "description": "Alias /developer — same as /ruver-developer"

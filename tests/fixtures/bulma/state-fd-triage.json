@@ -1,0 +1,9 @@
+{
+  "goal": "DEV-4772",
+  "ticket_title": "Notification inbox does not mark items read",
+  "ticket_body": "Clicking a notification opens the target but the badge count never decreases. Started after the inbox refactor. Expected: count drops when the item is opened.",
+  "acceptance_criteria": ["Opening a notification marks it read", "Badge count matches unread items"],
+  "topology": {"repos": ["empath-ui", "empath-api-v2"], "this_repo": "empath-api-v2"},
+  "files_mentioned": ["src/notifications/inbox.service.ts"],
+  "labels": ["bug"]
+}

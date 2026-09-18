@@ -15,6 +15,7 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `/bulma`: one entry point that picks the graph (developer / qa / reviewer / lstm / triage / memory) from args and a `world.sh` inventory, then asks TypeSafe Jev at nine forks (`fd.triage`, `policy.ask`, `qa.gate`, `triage.classify`, `lstm.verify`, `reviewer.failure_class`, `review.risk`, plus the two entry decisions). Acts when confidence clears a threshold set by `shadow | cautious | balanced | bold` power and per-question `act_at` in `~/.ruver/bulma.json`; else the graph's own rule. Every answer logged to `.ruver-bulma/DECISIONS.tsv`; `bulma.py report` suggests thresholds. Existing graphs unchanged. Optional: needs `TYPESAFE_API_KEY`.
 - `/ruver-lstm` verify binds each comment to HEAD (`claim_true`,
   `fix_ok_here`, `risk`) and skip must cite a path or test. After a
   should-fix patch, **prove** runs the fd reviewer (`spec_verdict` =

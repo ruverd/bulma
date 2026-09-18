@@ -1,0 +1,8 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "important": {"type": "noul", "noul": 0.72},
+    "uncertain": {"type": "noul", "noul": 0.40}
+  },
+  "usage": {"input_tokens": 300, "output_tokens": 0}
+}

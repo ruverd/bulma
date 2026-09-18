@@ -20,6 +20,7 @@ implement product code.
 | `/ruver-reviewer` | `/reviewer` | Review a PR / diagnose CI | [ruver-reviewer](ruver-reviewer.md) |
 | `/ruver-lstm` | `/lstm` | Incoming review comments | [ruver-lstm](ruver-lstm.md) |
 | `/ruver-goal` | — | Keep going until QA evidence | [ruver-goal](ruver-goal.md) |
+| `/bulma` | — | Pick the graph, gate its forks with Jev (needs `TYPESAFE_API_KEY`) | [bulma](bulma.md) |
 | `/ruver-memory` | `/memory` | Durable prefs outside git | [memory](memory.md) |
 
 ## Protocol

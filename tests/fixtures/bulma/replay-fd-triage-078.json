@@ -1,0 +1,10 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "work_kind": {"type": "choice", "choice": "bug", "confidence": 0.91, "probabilities": {"feature": 0.03, "bug": 0.91, "regression": 0.04, "chore": 0.01, "spike": 0.01}},
+    "path": {"type": "choice", "choice": "debug_fix", "confidence": 0.78, "probabilities": {"full_feature": 0.19, "debug_fix": 0.78, "light_change": 0.03}},
+    "risk": {"type": "choice", "choice": "elevated", "confidence": 0.68, "probabilities": {"low": 0.05, "normal": 0.27, "elevated": 0.68}},
+    "scope": {"type": "choice", "choice": "backend_only", "confidence": 0.79, "probabilities": {"frontend_only": 0.10, "backend_only": 0.79, "mono": 0.06, "fullstack": 0.05}}
+  },
+  "usage": {"input_tokens": 1412, "output_tokens": 0}
+}

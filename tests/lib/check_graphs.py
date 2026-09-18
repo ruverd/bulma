@@ -48,6 +48,13 @@ NEEDS = [
         before="publish",
         extra_files=("scripts/bind-findings.py", "scripts/classify-risk.py"),
     ),
+    Need(
+        skill="bulma",
+        node="route",
+        after="inventory",
+        before="overlay",
+        extra_files=("scripts/bulma.py", "decisions.json", "HOOKS.md"),
+    ),
 ]
 
 BOLD = re.compile(r"\*\*([A-Za-z][A-Za-z0-9_]*)\*\*")

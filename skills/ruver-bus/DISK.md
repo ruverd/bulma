@@ -3,7 +3,7 @@
 **Never** create `.ruver-*` at a git root, worktree, or anywhere inside a
 repo. That includes `.ruver-bus/`, `.ruver-developer/`, `.ruver-qa/`,
 `.ruver-triage/`, `.ruver-reviewer/`, `.ruver-lstm/`,
-`.ruver-code-review/`, `.ruver-feature-delivery/`, `.ruver-goal/`,
+`.ruver-bulma/`, `.ruver-code-review/`, `.ruver-feature-delivery/`, `.ruver-goal/`,
 and `.ruver/`.
 
 ## Home
@@ -40,6 +40,7 @@ $RUVER_HOME/
     .ruver-code-review/
     .ruver-feature-delivery/
     .ruver-goal/
+    .ruver-bulma/
 ```
 
 `.ruver-bus/ENVELOPE.md` means `$RUVER_ROOT/.ruver-bus/ENVELOPE.md`.

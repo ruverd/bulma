@@ -1,0 +1,7 @@
+{
+  "fork": "Store read state per user or per tenant",
+  "options": ["A. per user (matches inbox.service.ts neighbor)", "B. per tenant (new table)"],
+  "evidence": "Neighbor pattern in notifications uses per-user rows; ticket AC says badge is per user",
+  "recommendation": "A",
+  "acceptance_criteria": ["Badge count matches unread items for the signed-in user"]
+}

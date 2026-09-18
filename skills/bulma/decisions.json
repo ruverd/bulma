@@ -1,0 +1,299 @@
+{
+  "schema": 1,
+  "hooks": [
+    {
+      "id": "entry.route",
+      "graph": "bulma",
+      "node": "route",
+      "stakes": "low",
+      "fallback": "suggest the top candidates and wait for the user",
+      "state_keys": ["args", "world", "user_login"],
+      "questions": {
+        "target": {
+          "type": "choice",
+          "field": "target",
+          "instructions": "The user typed `args` in a coding session. `world` describes the current state of this repository's delivery work (bus stack, jobs, waiting states, and pull request facts when a URL was given). Which graph should run now?",
+          "criteria": {
+            "developer": "Deliver a tracker ticket or a free-text goal as a new draft PR, or fix the user's own PR after a QA FAIL. `args` names a ticket, new behavior, or a bug to fix.",
+            "qa": "Exercise an existing PR in the browser or over HTTP and post evidence. The PR is CI-green and mergeable with no QA comment on its head SHA, or `args` asks to test, validate or QA it.",
+            "reviewer": "Review a PR or diagnose why its CI is red, then report. `args` asks for a review, an opinion, or a CI diagnosis.",
+            "lstm": "Handle incoming review comments on the user's own PR: verify, patch on the same branch, reply. The PR has unresolved review threads or CHANGES_REQUESTED, or `args` points at a review or comment URL.",
+            "triage": "Classify a QA finding on a PR. `args` describes a failure found while testing a PR and asks whether it is this PR's bug.",
+            "memory": "Store a durable preference (chat language, reviewers, a project note). `args` states a preference, not work.",
+            "none": "Nothing above fits, or `args` is a question to answer in chat rather than work to run."
+          },
+          "act_at": 0.70,
+          "enum_source": "ruver-bus/PROTOCOL.md"
+        }
+      }
+    },
+    {
+      "id": "entry.next_step",
+      "graph": "bulma",
+      "node": "route",
+      "stakes": "low",
+      "fallback": "list the candidates ranked by world.sh order and wait for the user",
+      "state_keys": ["args", "candidates", "world"],
+      "questions": {
+        "candidate": {
+          "type": "choice",
+          "field": "candidate",
+          "instructions": "`candidates` are open items the tooling found in this repository's delivery work; `args` is what the user typed, if anything. Which candidate should the session work on next? Prefer items blocked on the user, then items that unblock delivery (red CI, review comments), then verification (QA), then new work.",
+          "criteria": "dynamic",
+          "act_at": 0.75
+        },
+        "user_blocked": {
+          "type": "noul",
+          "instructions": "Is at least one candidate waiting on an answer only the user can give: an ASK, an escalation, or a missing credential?",
+          "criteria": {
+            "true": "Some candidate is stopped on a question, escalation or credential that only the user can resolve.",
+            "false": "Every candidate can proceed without the user."
+          },
+          "act_at": 0.70
+        }
+      }
+    },
+    {
+      "id": "fd.triage",
+      "graph": "ruver-feature-delivery",
+      "node": "triage",
+      "stakes": "normal",
+      "fallback": "ROUTING.md heuristic",
+      "state_keys": ["goal", "ticket_title", "ticket_body", "acceptance_criteria", "topology", "files_mentioned", "labels"],
+      "questions": {
+        "work_kind": {
+          "type": "choice",
+          "field": "work_kind",
+          "instructions": "What kind of work does `ticket_body` (with `ticket_title` and `acceptance_criteria`) ask for?",
+          "criteria": {
+            "feature": "Adds new behavior, screen, rule or integration that does not exist yet.",
+            "bug": "Existing behavior is wrong, broken or erroring; the ticket describes a defect.",
+            "regression": "Behavior that used to work stopped working after a change.",
+            "chore": "Rename, config, dependency, copy, docs or cleanup with no product behavior change.",
+            "spike": "Investigation or question only; no code is expected to ship."
+          },
+          "act_at": 0.70,
+          "enum_source": "ruver-feature-delivery/ROUTING.md"
+        },
+        "path": {
+          "type": "choice",
+          "field": "path",
+          "instructions": "Which delivery path fits this ticket? Judge by what `acceptance_criteria` ask for, not by how dangerous the area sounds.",
+          "criteria": {
+            "full_feature": "New behavior, UX or rule that needs product decisions settled first (grill), even when it also fixes something.",
+            "debug_fix": "A defect to diagnose and fix; the acceptance criteria restore behavior rather than add it.",
+            "light_change": "Chore, rename, config, copy, or one or two obvious files with no product fork and no design decision."
+          },
+          "act_at": 0.75,
+          "enum_source": "ruver-feature-delivery/ROUTING.md"
+        },
+        "risk": {
+          "type": "choice",
+          "field": "risk",
+          "instructions": "How risky is the change this ticket asks for, judged from its text?",
+          "criteria": {
+            "low": "Docs, rename, copy, CSS with no behavior change.",
+            "normal": "Ordinary product behavior; no security, money, tenant, data-loss or public-contract surface.",
+            "elevated": "Touches auth, session, tenant, billing, payment, PII, secrets, RBAC, migrations, webhooks, or a public API or contract."
+          },
+          "act_at": 0.80,
+          "enum_source": "ruver-feature-delivery/ROUTING.md"
+        },
+        "scope": {
+          "type": "choice",
+          "field": "scope",
+          "instructions": "Which part of the codebase must change, given `topology` (which repositories exist and what each holds)?",
+          "criteria": {
+            "frontend_only": "Only UI or client code; the API contract already exists.",
+            "backend_only": "Only API, server or database code; no UI change.",
+            "mono": "Frontend and backend live in this one repository and both change.",
+            "fullstack": "Frontend and backend live in different repositories and both change."
+          },
+          "act_at": 0.70,
+          "enum_source": "ruver-feature-delivery/ROUTING.md"
+        }
+      }
+    },
+    {
+      "id": "policy.ask",
+      "graph": "ruver-feature-delivery",
+      "node": "grill",
+      "stakes": "normal",
+      "fallback": "DECISION_POLICY.md as written",
+      "state_keys": ["fork", "options", "evidence", "recommendation", "acceptance_criteria"],
+      "questions": {
+        "important": {
+          "type": "noul",
+          "instructions": "Would getting `fork` wrong be hard to reverse, or change product behavior, security, money, tenant isolation, or a public API in a way `acceptance_criteria` does not already settle?",
+          "criteria": {
+            "true": "Hard to reverse, or changes product, security, money, tenant or public API beyond what the ticket settles.",
+            "false": "Local, reversible, or already settled by the ticket, an existing pattern, or repo rules."
+          },
+          "act_at": 0.65,
+          "direction": "ask"
+        },
+        "uncertain": {
+          "type": "noul",
+          "instructions": "After `evidence`, do two or more of `options` still have similar force, so that `recommendation` cannot be defended?",
+          "criteria": {
+            "true": "No option is clearly better; a senior engineer would stop to ask.",
+            "false": "One option follows from the ticket, a neighbor pattern, YAGNI, or repo rules."
+          },
+          "act_at": 0.65,
+          "direction": "ask"
+        }
+      }
+    },
+    {
+      "id": "qa.gate",
+      "graph": "ruver-qa",
+      "node": "execute",
+      "stakes": "high",
+      "fallback": "hand every finding to triage (VERDICTS.md)",
+      "state_keys": ["finding", "pr.acceptance_criteria", "pr.description", "pr.files", "env_notes"],
+      "questions": {
+        "violates_pr_ac": {
+          "type": "noul",
+          "instructions": "Does `finding.actual` contradict an acceptance criterion or the stated expected behavior of this PR (`pr.acceptance_criteria`, `pr.description`)?",
+          "criteria": {
+            "true": "The observed behavior breaks something this PR promises.",
+            "false": "Outside this PR's promises, or matches them."
+          },
+          "act_at": 0.85
+        },
+        "in_changed_code": {
+          "type": "noul",
+          "instructions": "Does the failing surface in `finding` plausibly live in code this PR changed (`pr.files`) or in a test it added?",
+          "criteria": {
+            "true": "The surface maps to changed files or added tests.",
+            "false": "The surface lives elsewhere."
+          },
+          "act_at": 0.85
+        },
+        "env_or_flake": {
+          "type": "noul",
+          "instructions": "Is `finding` better explained by environment, auth, fixture data, or timing than by product code?",
+          "criteria": {
+            "true": "Login walls, missing env, seed data, network, timing.",
+            "false": "Deterministic product behavior."
+          },
+          "act_at": 0.85
+        }
+      }
+    },
+    {
+      "id": "triage.classify",
+      "graph": "ruver-triage",
+      "node": "classify",
+      "stakes": "high",
+      "fallback": "orchestrator classification per classify.md",
+      "state_keys": ["finding", "reproducible", "pr.files", "pr.hunks", "pr.description", "open_issues", "env_notes"],
+      "questions": {
+        "class": {
+          "type": "choice",
+          "field": "class",
+          "instructions": "Classify `finding` for this PR. `reproducible` says whether triage could reproduce it. `pr.files` and `pr.hunks` describe what the PR changed. `open_issues` lists tracker issues whose text matches.",
+          "criteria": {
+            "PR_BUG": "The PR introduced or exposed the defect; the failure lives in or depends on its diff.",
+            "EXISTING_BUG": "A real defect that predates the PR and is already tracked in `open_issues`.",
+            "NEW_BUG": "A real defect that predates the PR, not caused by it, and not tracked yet.",
+            "NOT_A_BUG": "Expected behavior, a test or environment artifact, or a misunderstanding; nothing to fix in the product.",
+            "BLOCKED": "Cannot be judged: environment, auth, or missing data prevents reproduction and inspection."
+          },
+          "act_at": 0.80,
+          "enum_source": "ruver-triage/STATE.schema.md"
+        }
+      }
+    },
+    {
+      "id": "lstm.verify",
+      "graph": "ruver-lstm",
+      "node": "verify",
+      "stakes": "normal",
+      "fallback": "verify.md judgment by the orchestrator",
+      "state_keys": ["comment", "bound_path", "bound_code", "neighbor_pattern", "spec_bullet"],
+      "questions": {
+        "claim_true": {
+          "type": "noul",
+          "instructions": "Does the defect described in `comment` exist at HEAD in `bound_code` (`bound_path`)?",
+          "criteria": {
+            "true": "The code at HEAD still has the problem the reviewer describes.",
+            "false": "The claim is wrong, already fixed, or refers to code that no longer exists."
+          },
+          "act_at": 0.80
+        },
+        "fix_ok_here": {
+          "type": "choice",
+          "field": "fix_ok_here",
+          "instructions": "Is the change `comment` suggests right for this codebase, given `neighbor_pattern` and `spec_bullet`?",
+          "criteria": {
+            "yes": "Fits the neighbor pattern, small, would not break callers.",
+            "no": "Violates the neighbor pattern, YAGNI, out of scope, or would break behavior.",
+            "na": "The comment proposes no concrete change."
+          },
+          "act_at": 0.75,
+          "enum_source": "ruver-lstm/nodes/verify.md"
+        },
+        "risk": {
+          "type": "choice",
+          "field": "risk",
+          "instructions": "How risky is the code `comment` points at (`bound_path`, `bound_code`)?",
+          "criteria": {
+            "low": "Docs, rename, copy, CSS with no behavior change.",
+            "normal": "Ordinary product behavior; no security, money, tenant, data-loss or public-contract surface.",
+            "elevated": "Touches auth, session, tenant, billing, payment, PII, secrets, RBAC, migrations, webhooks, or a public API or contract."
+          },
+          "act_at": 0.75,
+          "enum_source": "ruver-lstm/nodes/verify.md"
+        }
+      }
+    },
+    {
+      "id": "reviewer.failure_class",
+      "graph": "ruver-reviewer",
+      "node": "diagnose",
+      "stakes": "normal",
+      "fallback": "manual diagnosis per FAILURES.md",
+      "state_keys": ["check_name", "log_tail", "pr.files", "same_fail_on_base", "mergeable"],
+      "questions": {
+        "class": {
+          "type": "choice",
+          "field": "failure_class",
+          "instructions": "Which single class explains the failing check `check_name`, given `log_tail`, the files this PR changed (`pr.files`), `same_fail_on_base` and `mergeable`?",
+          "criteria": {
+            "PR FAILURE": "The PR's diff introduced or exposed the failure: logic, types, contract, missing behavior.",
+            "TEST FAILURE": "Fixture, mock, expectation, or flaky test; product code is correct.",
+            "INFRASTRUCTURE FAILURE": "Runner, registry, network, CI provider, or external outage.",
+            "ENVIRONMENT FAILURE": "Missing env var, service, credential, or database in the CI environment.",
+            "BRANCH FAILURE": "Merge conflict, stale head, wrong base, or integration with the base branch.",
+            "UNRELATED FAILURE": "The same failure happens on the base branch or in untouched code; it predates the PR.",
+            "HUMAN INTERVENTION REQUIRED": "Ambiguous product question, security, missing credentials, destructive action, or architecture call."
+          },
+          "act_at": 0.75,
+          "enum_source": "ruver-reviewer/references/FAILURES.md"
+        }
+      }
+    },
+    {
+      "id": "review.risk",
+      "graph": "ruver-code-review",
+      "node": "critic",
+      "stakes": "normal",
+      "fallback": "classify-risk.py output",
+      "state_keys": ["pr_title", "pr_body", "files", "changed_files", "churn"],
+      "questions": {
+        "risk": {
+          "type": "choice",
+          "field": "risk",
+          "instructions": "Judge the risk of this pull request from `pr_title`, `pr_body` and `files` (changed paths only, with `changed_files` and `churn` counts). A mistake in a high-risk PR affects security, money, tenants, data, or a public contract, or the PR is too wide to review with confidence.",
+          "criteria": {
+            "high": "Touches auth, session, tenant, billing, payment, PII, secrets, RBAC, migrations, webhooks, concurrency primitives, a public API or a data contract, or is wide (25 or more files, or 2,500 or more changed lines).",
+            "low": "Ordinary product code with none of those surfaces and modest size."
+          },
+          "act_at": 0.75,
+          "enum_source": "ruver-code-review/scripts/classify-risk.py"
+        }
+      }
+    }
+  ]
+}
