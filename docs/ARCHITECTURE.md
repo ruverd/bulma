@@ -113,6 +113,16 @@ CI-green, MERGEABLE, and has a QA comment with evidence on the head
 SHA. CI is often longer than a tool timeout, so the loop polls
 instead of `gh pr checks --watch`.
 
+## Bulma overlay
+
+`/bulma` is not a sixth bus graph. It runs before a graph (pick the target
+from args and `world.sh`) and around it (Jev at the forks in
+`skills/bulma/HOOKS.md`). The target still owns its edges, envelopes and
+loop caps; bulma never appears on `STACK.md`. Every Jev answer is logged to
+`$RUVER_ROOT/.ruver-bulma/DECISIONS.tsv` with the graph's own answer, and
+`bulma.py report` turns that into thresholds. Without `TYPESAFE_API_KEY`
+`/bulma` stops; the graphs run as before.
+
 ## Invariants
 
 - Never merge. Mark the PR ready only after QA PASS.

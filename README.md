@@ -28,11 +28,15 @@ TDD on behavior change. ASK the user only as a last resort.
 | `/goal` | Keep going until QA evidence lands on the head SHA |
 | `/ruver-triage` | Classify a QA finding. Not a ticket bot |
 | `/memory` | Durable prefs outside git (chat language, reviewers) |
+| `/bulma` | Pick the graph for you and gate its forks with Jev. Optional; needs `TYPESAFE_API_KEY` |
 
 Short slashes (`/developer`, `/qa`, `/reviewer`, `/lstm`, `/goal`,
 `/memory`) are
 aliases of `/ruver-*`. Skill ids stay `ruver-*`. This repo is those
 graphs, not a dump of every third-party skill on a machine.
+
+`/bulma` needs a TypeSafe Jev key (`TYPESAFE_API_KEY`). Nothing else does.
+Without it `/bulma` prints the requirement and stops.
 
 ## Installation
 

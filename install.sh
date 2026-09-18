@@ -243,6 +243,14 @@ ensure_agent_browser() {
   fi
 }
 
+hint_jev() {
+  if [[ -n "${TYPESAFE_API_KEY:-}" ]]; then
+    echo "ok     jev (TYPESAFE_API_KEY set; /bulma available)"
+  else
+    echo "skip   jev (optional; /bulma needs TYPESAFE_API_KEY from https://console.typesafe.ai)"
+  fi
+}
+
 ensure_path_snippet() {
   local line='# ruver PATH'
   local block rc
@@ -361,6 +369,7 @@ cmd_setup() {
   ensure_bin
   ensure_path_snippet
   ensure_agent_browser
+  hint_jev
   echo
   echo "done. restart the agent session"
   echo "  Codex: \$ruver-developer or /skills"
@@ -482,6 +491,11 @@ cmd_status() {
     echo "browser  $(command -v agent-browser)"
   else
     echo "browser  agent-browser missing (ruver setup)"
+  fi
+  if [[ -n "${TYPESAFE_API_KEY:-}" ]]; then
+    echo "jev      ok (TYPESAFE_API_KEY set; /bulma available)"
+  else
+    echo "jev      missing (optional; /bulma needs TYPESAFE_API_KEY)"
   fi
   for dest in \
     "$HOME/.agents/skills/unslop" \

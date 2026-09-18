@@ -29,6 +29,7 @@ jobs:
       - run: bash tests/ruver-code-review.sh
       - run: bash tests/ruver-developer.sh
       - run: bash tests/ruver-lstm.sh
+      - run: bash tests/bulma.sh
 
   cli:
     name: cli (${{ matrix.os }})
