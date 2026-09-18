@@ -218,6 +218,31 @@ grep -E -q 'fd\.triage\.path .* 0\.6[05] ' <<<"$out" || fail "suggest should lan
 grep -E -q 'qa\.gate\.violates_pr_ac .* need >=20' <<<"$out" || fail "short sample must say need >=20: $out"
 ok report
 
-# --- world.sh placeholder for Task 4 ---
+# --- world.sh: candidates in rule order, gh stubbed on PATH ---
+WORLD="$SKILL/scripts/world.sh"
+need "$WORLD"
+W="$TMP/world.json"
+PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh exit"
+[[ "$(jget "$W" stack_top)" == "qa" ]] || fail "stack_top"
+[[ "$(jget "$W" jobs.qa_active)" == "qa-pr-812" ]] || fail "qa_active"
+[[ "$(jget "$W" user)" == "ruverd" ]] || fail "user login"
+[[ "$(jget "$W" prs.0.unresolved_threads)" == "3" ]] || fail "unresolved threads for 805"
+[[ "$(jget "$W" prs.1.qa_marker_on_head)" == "false" ]] || fail "qa marker for 812"
+[[ "$(jget "$W" prs.2.ci)" == "red" ]] || fail "ci red for 799"
+ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(open(sys.argv[1]))["candidates"]))' "$W")"
+[[ "$ids" == "resume:dev-4772 lstm:pr-805 reviewer:pr-799 qa:pr-812 qa:qa-pr-790 nothing" ]] || fail "candidates order: $ids"
+grep -F -q 'per user or per tenant' "$W" || fail "waiting_user question missing from candidate why"
+need "$(dirname "$W")/candidates.json"
+[[ "$(jget "$(dirname "$W")/candidates.json" candidate.nothing)" == "no open item, or start new work" ]] || fail "candidates.json shape"
+PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --pr https://github.com/o/r/pull/805 --out "$W" >/dev/null || fail "world.sh --pr exit"
+[[ "$(jget "$W" pr.author_is_user)" == "true" ]] || fail "pr.author_is_user"
+[[ "$(jget "$W" pr.review_decision)" == "CHANGES_REQUESTED" ]] || fail "pr.review_decision"
+PATH="$FIX/bin-broken:$(dirname "$(command -v python3)"):/usr/bin:/bin" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh without gh must still exit 0"
+[[ "$(jget "$W" prs)" == "None" ]] || fail "prs must be null without gh"
+grep -F -q 'gh not found' "$W" || fail "warning about gh missing"
+ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(open(sys.argv[1]))["candidates"]))' "$W")"
+[[ "$ids" == "resume:dev-4772 qa:qa-pr-790 nothing" ]] || fail "state-only candidates: $ids"
+[[ ! -e "$FIX/world/.ruver-bulma/world.json" ]] || fail "world.sh wrote into the fixture root despite --out"
+ok world
 
 echo "bulma gate: all green"

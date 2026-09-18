@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# gh stub for tests/bulma.sh. Answers only what world.sh asks.
+set -euo pipefail
+case "$1 ${2:-}" in
+  "--version ") echo "gh version 2.99.0 (stub)" ;;
+  "auth status") exit 0 ;;
+  "api user") echo "ruverd" ;;
+  "pr list") cat <<'JSON'
+[
+ {"number": 805, "url": "https://github.com/o/r/pull/805", "title": "feat: inbox", "isDraft": true, "headRefOid": "aaa111",
+  "mergeable": "MERGEABLE", "reviewDecision": "CHANGES_REQUESTED", "author": {"login": "ruverd"},
+  "statusCheckRollup": [{"conclusion": "SUCCESS"}]},
+ {"number": 812, "url": "https://github.com/o/r/pull/812", "title": "fix: badge", "isDraft": true, "headRefOid": "bbb222",
+  "mergeable": "MERGEABLE", "reviewDecision": "", "author": {"login": "ruverd"},
+  "statusCheckRollup": [{"conclusion": "SUCCESS"}, {"conclusion": "SUCCESS"}]},
+ {"number": 799, "url": "https://github.com/o/r/pull/799", "title": "chore: deps", "isDraft": false, "headRefOid": "ccc333",
+  "mergeable": "MERGEABLE", "reviewDecision": "", "author": {"login": "ruverd"},
+  "statusCheckRollup": [{"conclusion": "FAILURE"}]}
+]
+JSON
+  ;;
+  "pr view") cat <<'JSON'
+{"number": 805, "url": "https://github.com/o/r/pull/805", "title": "feat: inbox", "isDraft": true, "headRefOid": "aaa111",
+ "mergeable": "MERGEABLE", "reviewDecision": "CHANGES_REQUESTED", "author": {"login": "ruverd"},
+ "statusCheckRollup": [{"conclusion": "SUCCESS"}]}
+JSON
+  ;;
+  "api graphql")
+    if printf '%s\n' "$@" | grep -q '^n=805$'; then
+      echo '{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"isResolved":false},{"isResolved":false},{"isResolved":false}]}}}}}'
+    else
+      echo '{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]}}}}}'
+    fi ;;
+  api\ repos/*) exit 0 ;;
+  *) echo "stub gh: unexpected args: $*" >&2; exit 1 ;;
+esac
