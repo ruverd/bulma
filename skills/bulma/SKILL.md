@@ -18,6 +18,7 @@ only picks among options the node already has.
 **REQUIRED:** [GRAPH.md](GRAPH.md) · [ARGS.md](ARGS.md) ·
 [STATE.schema.md](STATE.schema.md) · [HOOKS.md](HOOKS.md) ·
 [POWER.md](POWER.md) · [SPEND.md](SPEND.md) ·
+[BROWSE.md](BROWSE.md) · [VERDICT.md](VERDICT.md) ·
 [REQUIREMENTS.md](REQUIREMENTS.md) ·
 [ruver-host](../ruver-host/SKILL.md) · [DISK.md](../ruver-bus/DISK.md)
 (`.ruver-*` is **global**, never the git root) · `ruver-memory`
@@ -63,6 +64,15 @@ it loads) reaches a node in HOOKS.md, ask first, then write the field:
 inside the target keep the overlay. Bulma never appears on `STACK.md`.
 Jev down mid-run means fallback and continue; only `admit` stops.
 Contract: [nodes/overlay.md](nodes/overlay.md).
+
+Two hooks run a loop rather than a single question. In `ruver-qa` execute,
+`qa.browse` picks the operation and the element for every agent-browser
+observation, so a screen step walks in one request per cycle instead of a
+read-think-click pass — [BROWSE.md](BROWSE.md). In `ruver-code-review`
+verdict, `review.severity` tiers each surviving finding and `review.verdict`
+judges coverage and leftover uncertainty, which together decide whether the
+run may approve — [VERDICT.md](VERDICT.md). Neither can manufacture a PASS
+or an APPROVE; both can only tighten or step aside.
 
 ## Power
 

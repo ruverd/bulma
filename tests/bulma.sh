@@ -173,7 +173,7 @@ out="$(TYPESAFE_API_KEY=apikey_testtesttesttesttest python3 "$BULMA" doctor --of
 set -e
 [[ "$code" -eq 0 ]] || fail "doctor --offline with a key must exit 0, got $code: $out"
 if grep -F -q 'apikey_testtesttesttesttest' <<<"$out"; then fail "doctor printed the key"; fi
-grep -F -q 'catalog  ok (10 hooks)' <<<"$out" || fail "doctor catalog line: $out"
+grep -F -q 'catalog  ok (13 hooks)' <<<"$out" || fail "doctor catalog line: $out"
 ok doctor
 
 # --- tune and model write config; ask reads the override ---
@@ -262,7 +262,8 @@ ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(op
 ok world
 
 # --- graph files and text invariants ---
-for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md SPEND.md REQUIREMENTS.md templates/STATE.md \
+for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md SPEND.md BROWSE.md VERDICT.md REQUIREMENTS.md templates/STATE.md \
+         scripts/browse.py \
          nodes/admit.md nodes/inventory.md nodes/route.md nodes/spend.md nodes/overlay.md nodes/done.md nodes/power.md nodes/report.md; do
   need "$SKILL/$f"
 done
@@ -279,6 +280,10 @@ grep -F -q 'entry.spend' "$SKILL/nodes/spend.md" || fail "spend must name entry.
 grep -F -q 'implementer' "$SKILL/SPEND.md" || fail "SPEND.md must say implementer"
 grep -F -q 'candidates.json' "$SKILL/nodes/route.md" || fail "route must pass candidates.json as --criteria"
 grep -F -q -- '--graph-answer' "$SKILL/nodes/overlay.md" || fail "overlay must pass graph answers"
+grep -F -q 'qa.browse' "$SKILL/nodes/overlay.md" || fail "overlay must name qa.browse"
+grep -F -q 'review.severity' "$SKILL/nodes/overlay.md" || fail "overlay must name review.severity"
+grep -F -q 'DONE' "$SKILL/BROWSE.md" || fail "BROWSE.md must state what DONE does not prove"
+grep -F -q 'never produces an APPROVE' "$SKILL/VERDICT.md" || fail "VERDICT.md must state Jev cannot approve alone"
 grep -F -q 'J:' "$SKILL/nodes/overlay.md" || fail "overlay must define the J: chat line"
 grep -F -q 'never appears on the stack' "$SKILL/nodes/overlay.md" || fail "overlay must state bulma is not a bus frame"
 grep -F -q 'shadow | cautious | balanced | bold' "$SKILL/POWER.md" || fail "POWER.md levels"
@@ -320,5 +325,142 @@ python3 "$BULMA" ask entry.spend --state "$FIX/state-spend.json" --criteria "$FI
 grep -F -q '"cheap"' "$J" || fail "dry-run request lacks catalog id"
 grep -F -q '"inherit"' "$J" || fail "dry-run request lacks inherit"
 ok ask-spend
+
+# --- browse.py state: element table, one head per operation, no impossible target ---
+BROWSE="$SKILL/scripts/browse.py"
+need "$BROWSE"
+BS="$TMP/browse-state.json"
+BC="$TMP/browse-criteria.json"
+python3 "$BROWSE" state --snapshot "$FIX/snapshot-login.json" \
+  --goal "log in and reach the dashboard" --step "S1 happy: submit the form" \
+  --pass-if "the dashboard shell is visible" --url "https://app.example.com/login" \
+  --out "$BS" --criteria "$BC" >/dev/null || fail "browse.py state exit"
+python3 - "$BS" "$BC" <<'PY'
+import json, sys
+state = json.load(open(sys.argv[1])); crit = json.load(open(sys.argv[2]))
+assert state["url"] == "https://app.example.com/login", state["url"]
+rows = state["elements"].splitlines()
+assert len(rows) == 8, rows
+assert rows[0].startswith("[e1] heading"), rows[0]
+assert "[e5] combobox  (unnamed) · Free" in rows, rows
+# a heading is context, never a target
+assert "e1" not in crit["click_target"], crit["click_target"]
+assert "e6" in crit["click_target"] and "e6" not in crit["type_text_target"], crit
+assert set(crit["select_target"]) == {"e7", "e8", "none"}, crit["select_target"]
+assert all("none" in head for head in crit.values()), crit
+assert set(state["available"]) == {
+    "BLOCKED", "CLICK", "DONE", "SCROLL_DOWN", "SCROLL_UP", "SELECT", "TYPE_TEXT", "WAIT"
+}, state["available"]
+PY
+if python3 "$BROWSE" state --snapshot "$FIX/state-spend.json" --out "$BS" --criteria "$BC" >/dev/null 2>&1; then
+  fail "browse.py state accepted a file with no refs"
+fi
+ok browse-state
+
+# --- qa.browse: one request answers the operation and all three heads ---
+python3 "$BULMA" ask qa.browse --state "$BS" --replay "$FIX/replay-qa-browse.json" \
+  --ruver-root "$RR" --json >/dev/null 2>&1 && fail "qa.browse without --criteria must exit 4"
+A="$TMP/browse-answer.json"
+python3 "$BULMA" ask qa.browse --state "$BS" --criteria "$BC" --replay "$FIX/replay-qa-browse.json" \
+  --context repo=o/r --context pr=812 --ruver-root "$RR" --json >"$A" || fail "ask qa.browse exit"
+[[ "$(jget "$A" answers.operation.choice)" == "CLICK" ]] || fail "qa.browse operation"
+[[ "$(jget "$A" answers.operation.act)" == "true" ]] || fail "balanced should act on operation .91"
+[[ "$(jget "$A" answers.click_target.act)" == "true" ]] || fail "balanced should act on click_target .94"
+[[ "$(jget "$A" answers.type_text_target.act)" == "false" ]] || fail "speculative head .62 must not act"
+python3 "$BULMA" ask qa.browse --state "$BS" --criteria "$BC" --dry-run --ruver-root "$RR" >"$J" || fail "qa.browse dry-run exit"
+grep -F -q '"[e6] button  Continue · empty"' "$J" || fail "dry-run request lacks the observed click target"
+grep -F -q '"TYPE_TEXT"' "$J" || fail "dry-run request lacks the operation vocabulary"
+ok ask-qa-browse
+
+# --- resolve: the operation picks the head; a ref off the snapshot never runs ---
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$A" --session qa-1)" \
+  || fail "browse.py resolve exit"
+python3 - <<PY
+import json
+out = json.loads('''$out''')
+assert out["operation"] == "CLICK" and out["ref"] == "e6", out
+assert out["argv"] == ["agent-browser", "--session", "qa-1", "click", "@e6"], out["argv"]
+assert out["verify"] is False, out
+PY
+python3 "$BULMA" ask qa.browse --state "$BS" --criteria "$BC" --replay "$FIX/replay-qa-browse-type.json" \
+  --ruver-root "$RR" --json >"$A" || fail "ask qa.browse type exit"
+set +e
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$A" 2>&1)"; code=$?
+set -e
+[[ "$code" -eq 4 ]] || fail "TYPE_TEXT without --text must exit 4, got $code: $out"
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$A" --text 'qa@example.com')" \
+  || fail "resolve with text exit"
+grep -F -q '"fill"' <<<"$out" || fail "TYPE_TEXT must fill: $out"
+grep -F -q '"@e3"' <<<"$out" || fail "TYPE_TEXT must target the observed field: $out"
+python3 "$BULMA" ask qa.browse --state "$BS" --criteria "$BC" --replay "$FIX/replay-qa-browse-low.json" \
+  --ruver-root "$RR" --json >"$A" || fail "ask qa.browse low exit"
+set +e
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$A" 2>&1)"; code=$?
+set -e
+[[ "$code" -eq 5 ]] || fail "below act_at must exit 5 (drive by hand), got $code: $out"
+printf '%s' '{"answers":{"operation":{"choice":"CLICK","act":true},"click_target":{"choice":"e99","act":true}}}' >"$TMP/forged.json"
+set +e
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$TMP/forged.json" 2>&1)"; code=$?
+set -e
+[[ "$code" -eq 4 ]] || fail "a ref off the snapshot must exit 4, got $code: $out"
+printf '%s' '{"answers":{"operation":{"choice":"CLICK","act":true},"click_target":{"choice":"e1","act":true}}}' >"$TMP/forged.json"
+set +e
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$TMP/forged.json" 2>&1)"; code=$?
+set -e
+[[ "$code" -eq 4 ]] || fail "clicking a heading must exit 4, got $code: $out"
+printf '%s' '{"answers":{"operation":{"choice":"SELECT","act":true},"select_target":{"choice":"e8","act":true}}}' >"$TMP/forged.json"
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$TMP/forged.json")" \
+  || fail "resolve select exit"
+grep -F -q '"@e5"' <<<"$out" || fail "SELECT must execute on the owning combobox: $out"
+grep -F -q '"Pro"' <<<"$out" || fail "SELECT must name the observed option: $out"
+printf '%s' '{"answers":{"operation":{"choice":"DONE","act":true}}}' >"$TMP/forged.json"
+out="$(python3 "$BROWSE" resolve --snapshot "$FIX/snapshot-login.json" --answer "$TMP/forged.json")" \
+  || fail "resolve done exit"
+grep -F -q '"verify": true' <<<"$out" || fail "DONE must ask for independent verification: $out"
+grep -F -q '"argv": []' <<<"$out" || fail "DONE must run no command: $out"
+ok browse-resolve
+
+# --- review.severity: downgrade needs a confident tier AND a decisive pre-existing call ---
+python3 "$BULMA" ask review.severity --state "$FIX/state-review-severity.json" \
+  --replay "$FIX/replay-review-severity.json" --graph-answer severity=major \
+  --context repo=o/r --context pr=805 --ruver-root "$RR" --json >"$J" || fail "ask review.severity exit"
+[[ "$(jget "$J" answers.severity.choice)" == "nit" ]] || fail "severity choice"
+[[ "$(jget "$J" answers.severity.act)" == "true" ]] || fail "balanced should act on severity .86 (act_at .80)"
+[[ "$(jget "$J" answers.introduced_by_pr.decisive)" == "no" ]] || fail "pre-existing must be decisive-no at .08"
+python3 "$BULMA" ask review.severity --state "$FIX/state-review-severity.json" \
+  --replay "$FIX/replay-review-severity-touch.json" --ruver-root "$RR" --json >"$J" || fail "ask severity touch exit"
+[[ "$(jget "$J" answers.introduced_by_pr.decisive)" == "undecided" ]] || fail "noul .50 must be undecided, so the reviewer's tier stands"
+python3 "$BULMA" ask review.severity --state "$FIX/state-review-severity.json" \
+  --replay "$FIX/replay-review-severity.json" --power shadow --ruver-root "$RR" --json >"$J" || fail "ask severity shadow exit"
+[[ "$(jget "$J" answers.severity.act)" == "false" ]] || fail "shadow must never re-tier a finding"
+ok ask-review-severity
+
+# --- review.verdict: coverage and leftover uncertainty, never an approve of its own ---
+python3 "$BULMA" ask review.verdict --state "$FIX/state-review-verdict.json" \
+  --replay "$FIX/replay-review-verdict.json" --context repo=o/r --context pr=805 --ruver-root "$RR" --json >"$J" \
+  || fail "ask review.verdict exit"
+[[ "$(jget "$J" answers.coverage_complete.decisive)" == "yes" ]] || fail "coverage decisive-yes at .93"
+[[ "$(jget "$J" answers.blocking_uncertainty.decisive)" == "no" ]] || fail "uncertainty decisive-no at .05"
+python3 "$BULMA" ask review.verdict --state "$FIX/state-review-verdict.json" \
+  --replay "$FIX/replay-review-verdict-coverage.json" --ruver-root "$RR" --json >"$J" \
+  || fail "ask review.verdict coverage exit"
+[[ "$(jget "$J" answers.coverage_complete.decisive)" == "no" ]] || fail "coverage .10 must be decisive-no -> DEFER reason=coverage"
+[[ "$(jget "$J" answers.blocking_uncertainty.decisive)" == "undecided" ]] || fail "uncertainty .42 must be undecided"
+ok ask-review-verdict
+
+# --- the three new hooks reached the ledger with their own questions ---
+python3 - "$TSV" <<'PY'
+import sys
+rows = [l.split("\t") for l in open(sys.argv[1], encoding="utf-8").read().splitlines()[1:]]
+seen = {(r[2], r[3]) for r in rows}
+for want in [("qa.browse", "operation"), ("qa.browse", "click_target"),
+             ("qa.browse", "select_target"), ("review.severity", "severity"),
+             ("review.severity", "introduced_by_pr"), ("review.verdict", "coverage_complete"),
+             ("review.verdict", "blocking_uncertainty")]:
+    assert want in seen, (want, sorted(seen))
+graph = [r for r in rows if r[2] == "review.severity" and r[3] == "severity" and r[10]]
+assert graph and graph[0][10] == "major", graph
+PY
+ok ledger-new-hooks
 
 echo "bulma gate: all green"

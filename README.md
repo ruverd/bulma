@@ -38,6 +38,16 @@ graphs, not a dump of every third-party skill on a machine.
 `/bulma` needs a TypeSafe Jev key (`TYPESAFE_API_KEY`). Nothing else does.
 Without it `/bulma` prints the requirement and stops.
 
+Two of its hooks run inside a loop rather than at a single fork. In `/qa`, a
+screen step asks Jev for the next browser operation and its target on every
+agent-browser observation, so the walk costs one request per cycle instead of
+a full model turn — the
+[jev-ultrafast](https://github.com/browser-use/jev-ultrafast) pattern, with
+agent-browser as the executor. In `/reviewer`, Jev tiers each surviving
+finding and judges whether the coverage rows cover the diff, which is what
+decides whether the run may approve. Neither can manufacture a PASS or an
+APPROVE: both can only tighten a verdict or step aside.
+
 ## Installation
 
 ```bash

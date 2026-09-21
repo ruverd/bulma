@@ -15,7 +15,7 @@ Deterministic first, Jev second. Never guess a graph.
    `../HOOKS.md` (trim `world` to `stack_top`, `jobs`, `states[]` with graph,
    status, waiting_user). Write it to
    `.ruver-bulma/state/entry.route-<UTC ts>.json`. Run
-   `python3 scripts/bulma.py ask entry.route --state <file> --context repo=<owner/repo> pr=<n> --json`.
+   `python3 scripts/bulma.py ask entry.route --state <file> --context repo=<owner/repo> --context pr=<n> --json`.
 3. Empty or `resume` → state `{args, candidates, world}` and
    `python3 scripts/bulma.py ask entry.next_step --state <file> --criteria .ruver-bulma/candidates.json --json`.
    For `resume`, first drop every non-`resume:*` id from a copy of

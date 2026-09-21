@@ -14,13 +14,20 @@
    writing the hooked field(s):
    - build the state JSON from the recipe column, with its caps;
    - write it to `.ruver-bulma/state/<hook>-<UTC ts>.json`;
-   - run `python3 scripts/bulma.py ask <hook> --state <file> --context repo=… pr=… sha=… ticket=…`
+   - run `python3 scripts/bulma.py ask <hook> --state <file> --context repo=… --context pr=… --context sha=… --context ticket=…`
      plus `--graph-answer <q>=<v>` for every question whose graph rule you
      already evaluated (always under `shadow`), and `--power <level>` when
      the run carries a flag;
    - per question: `act: true` → write Jev's value; `act: false` → apply the
      graph's own rule. Follow the `apply` column for composite rules
-     (`qa.gate`, `lstm.verify` disposition, `review.risk` critic).
+     (`qa.gate`, `lstm.verify` disposition, `review.risk` critic,
+     `review.severity` downgrade, `review.verdict` defer).
+2b. Two hooks fire in a loop, once per observation or per finding, and have
+    their own scripts and contracts: `qa.browse`
+    (`scripts/browse.py`, [../BROWSE.md](../BROWSE.md)) and
+    `review.severity` / `review.verdict` ([../VERDICT.md](../VERDICT.md)).
+    `browse.py resolve` exit 5 is the ordinary fallback: drive that cycle by
+    hand and keep walking. Do not pin the loop on a Jev answer.
 3. One chat line per hook, VOICE style:
    `J: path=debug_fix .88 ok · risk=elevated .61 -> ROUTING · work_kind=bug .91 ok`
    Under `shadow`: `J(shadow): path=debug_fix .88 (graph: debug_fix)`.
@@ -41,6 +48,10 @@
 - Skip a gate, invent an edge, or change the target graph's loop caps.
 - ASK the user because Jev was undecided.
 - Turn a QA finding into PASS from a Jev answer.
+- Post an APPROVE that the review's own tables would not have posted, or take
+  a `DONE` from `qa.browse` as proof that a step's `pass_if` holds.
+- Run a selector, coordinate or script that came out of a Jev answer. Only
+  `browse.py resolve` turns an answer into a browser command.
 - Send full files; the caps in HOOKS.md are the budget.
 
 ## Output

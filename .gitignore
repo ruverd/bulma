@@ -9,3 +9,4 @@
 .cursor/
 node_modules/
 .worktrees/
+__pycache__/

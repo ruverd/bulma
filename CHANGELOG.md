@@ -15,12 +15,30 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `/bulma` `qa.browse`: a screen step now walks in one Jev request per
+  observation instead of a read-think-click model turn. `browse.py state`
+  turns one `agent-browser snapshot -i --json` into an element table plus one
+  criteria head per operation that takes a target; the request answers
+  `operation` and all three heads at once; `browse.py resolve` keeps the head
+  the operation names and prints the single `agent-browser` command. A ref
+  that was not in that snapshot never resolves, `TYPE_TEXT` takes its string
+  from the session model, and `DONE` proves nothing — `pass_if`, the clips and
+  VERDICTS.md still decide. Pattern from
+  [jev-ultrafast](https://github.com/browser-use/jev-ultrafast).
+  `skills/bulma/BROWSE.md`.
+- `/bulma` `review.severity` and `review.verdict`: Jev now answers the two
+  judgment calls the code-review verdict table reads — which tier a surviving
+  finding belongs to, and whether the coverage rows cover the diff with no
+  blocker-level question left open. Severity is asymmetric: raising a tier
+  needs a confident answer, lowering the reviewer's tier also needs
+  `introduced_by_pr` decisive-no (the pre-existing clause). Jev never produces
+  an APPROVE; it can only defer one. `skills/bulma/VERDICT.md`, ADR 0004.
 - `/bulma` `entry.spend`: after a target is set, Jev reads the ticket and
   picks implementer `effort` (`low | medium | high | max`) and
   `session_model` from **this host's** catalog (Claude ids on Claude),
   not the Jev id. `--effort` / `--session-model` override. Workers get
   the same pair. Heuristic in `bulma.py spend` is the graph-answer.
-- `/bulma`: one entry point that picks the graph (developer / qa / reviewer / lstm / triage / memory) from args and a `world.sh` inventory, then asks TypeSafe Jev at ten forks (`entry.spend`, `fd.triage`, `policy.ask`, `qa.gate`, `triage.classify`, `lstm.verify`, `reviewer.failure_class`, `review.risk`, plus the two entry route decisions). Acts when confidence clears a threshold set by `shadow | cautious | balanced | bold` power and per-question `act_at` in `~/.ruver/bulma.json`; else the graph's own rule. Every answer logged to `.ruver-bulma/DECISIONS.tsv`; `bulma.py report` suggests thresholds. Existing graphs unchanged. Optional: needs `TYPESAFE_API_KEY`.
+- `/bulma`: one entry point that picks the graph (developer / qa / reviewer / lstm / triage / memory) from args and a `world.sh` inventory, then asks TypeSafe Jev at thirteen forks (`entry.spend`, `fd.triage`, `policy.ask`, `qa.gate`, `qa.browse`, `triage.classify`, `lstm.verify`, `reviewer.failure_class`, `review.risk`, `review.severity`, `review.verdict`, plus the two entry route decisions). Acts when confidence clears a threshold set by `shadow | cautious | balanced | bold` power and per-question `act_at` in `~/.ruver/bulma.json`; else the graph's own rule. Every answer logged to `.ruver-bulma/DECISIONS.tsv`; `bulma.py report` suggests thresholds. Existing graphs unchanged. Optional: needs `TYPESAFE_API_KEY`.
 - `/ruver-lstm` verify binds each comment to HEAD (`claim_true`,
   `fix_ok_here`, `risk`) and skip must cite a path or test. After a
   should-fix patch, **prove** runs the fd reviewer (`spec_verdict` =
