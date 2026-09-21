@@ -39,6 +39,20 @@ def table_row_backticks(text, field):
     return None
 
 
+def bold_tiers(text):
+    """`| **blocker** | ... |` — how the review contract spells its severity table.
+
+    Anchored at the line start on purpose: the verdict table further down the
+    same file carries its bold cell second (`| ... | **APPROVE** |`).
+    """
+    out = set()
+    for line in text.splitlines():
+        match = re.match(r"^\|\s*\*\*([a-z][a-z ]*)\*\*\s*\|", line)
+        if match:
+            out.add(match.group(1).strip())
+    return out or None
+
+
 def failures_classes(text):
     out = set()
     for line in text.splitlines():
@@ -68,6 +82,8 @@ def expected_enum(root, source, question_id, field, keys):
         return yaml_enum(text, field or question_id)
     if source.endswith("ruver-triage/STATE.schema.md"):
         return table_row_backticks(text, "classification")
+    if source.endswith("ruver-code-review/nodes/verdict.md"):
+        return bold_tiers(text)
     if base == "FAILURES.md":
         return failures_classes(text)
     if base == "verify.md":

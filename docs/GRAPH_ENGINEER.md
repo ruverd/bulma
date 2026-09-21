@@ -80,3 +80,11 @@ a row to `skills/bulma/HOOKS.md` and an entry to
 `skills/bulma/decisions.json` with the node's exact enum;
 `tests/lib/check_bulma.py` fails when the two drift. The node file itself
 does not change.
+
+A hook that fires in a loop rather than once — per browser observation, per
+finding — keeps its own script and reference page under `skills/bulma/`, never
+in the target graph: `qa.browse` ships `scripts/browse.py` and `BROWSE.md`,
+the two review hooks ship `VERDICT.md`. Build the state with a script when the
+recipe is mechanical, and make that script the one thing that turns an answer
+back into an action, so an answer can never become a selector or a command on
+its own.

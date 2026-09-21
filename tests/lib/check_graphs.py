@@ -62,6 +62,13 @@ NEEDS = [
         before="overlay",
         extra_files=("SPEND.md",),
     ),
+    Need(
+        skill="bulma",
+        node="overlay",
+        after="spend",
+        before="done",
+        extra_files=("scripts/browse.py", "BROWSE.md", "VERDICT.md"),
+    ),
 ]
 
 BOLD = re.compile(r"\*\*([A-Za-z][A-Za-z0-9_]*)\*\*")

@@ -212,6 +212,54 @@
       }
     },
     {
+      "id": "qa.browse",
+      "graph": "ruver-qa",
+      "node": "execute",
+      "stakes": "low",
+      "fallback": "read the snapshot and drive agent-browser by hand",
+      "state_keys": ["goal", "step", "pass_if", "url", "elements", "available", "history"],
+      "questions": {
+        "operation": {
+          "type": "choice",
+          "field": "operation",
+          "instructions": "You are walking one QA step in a browser. `elements` is the accessibility snapshot of the page as it is right now, one line per element: `[ref] role  name · value`. `step` and `pass_if` say what this step has to reach, `goal` is the wider pass, `history` lists what was already executed. `available` lists the operations that have at least one compatible element on this observation. Which single operation moves the step forward? Pick the operation only; the target questions are answered in the same request and the one matching your operation is the one that executes.",
+          "criteria": {
+            "CLICK": "A button, link, tab, checkbox or option on the page advances the step when clicked.",
+            "TYPE_TEXT": "A field needs a value before the step can advance. The string itself is written by the session model, not here.",
+            "SELECT": "A native dropdown choice has to be made. Targets are observed option refs; the command names the option on the combobox that owns it.",
+            "SCROLL_UP": "What the step needs is above the visible region.",
+            "SCROLL_DOWN": "What the step needs is below the visible region.",
+            "WAIT": "The page is mid-transition and the next control is not in this snapshot yet. A short settle, not a sleep.",
+            "DONE": "The page already shows what `step` was walking toward. This ends the navigation loop only; it is not proof that `pass_if` holds.",
+            "BLOCKED": "No operation here can advance the step: a login wall, an error page, or a control this snapshot cannot reach. This is not the QA `BLOCKED` verdict."
+          },
+          "act_at": 0.70,
+          "enum_source": "bulma/scripts/browse.py"
+        },
+        "click_target": {
+          "type": "choice",
+          "field": "click_target",
+          "instructions": "Which element should be clicked, if the operation is `CLICK`? Answer even when you picked another operation: this question is speculative and is discarded unless the operation is `CLICK`. Criteria are the clickable refs this snapshot observed. `none` when no listed element is the right click.",
+          "criteria": "dynamic",
+          "act_at": 0.70
+        },
+        "type_text_target": {
+          "type": "choice",
+          "field": "type_text_target",
+          "instructions": "Which field should receive text, if the operation is `TYPE_TEXT`? Speculative in the same way: discarded unless the operation is `TYPE_TEXT`. Criteria are the refs this snapshot observed that accept text. `none` when no field should be typed into.",
+          "criteria": "dynamic",
+          "act_at": 0.70
+        },
+        "select_target": {
+          "type": "choice",
+          "field": "select_target",
+          "instructions": "Which dropdown option should be chosen, if the operation is `SELECT`? Speculative in the same way. Criteria are observed option refs; the command targets the combobox that owns the option. `none` when no option applies.",
+          "criteria": "dynamic",
+          "act_at": 0.70
+        }
+      }
+    },
+    {
       "id": "triage.classify",
       "graph": "ruver-triage",
       "node": "classify",
@@ -322,6 +370,65 @@
           },
           "act_at": 0.75,
           "enum_source": "ruver-code-review/scripts/classify-risk.py"
+        }
+      }
+    },
+    {
+      "id": "review.severity",
+      "graph": "ruver-code-review",
+      "node": "verdict",
+      "stakes": "high",
+      "fallback": "the severity table in nodes/verdict.md as the reviewer read it",
+      "state_keys": ["finding", "diff_hunk", "pr.description", "pr.acceptance_criteria", "repo_rules", "neighbor_pattern"],
+      "questions": {
+        "severity": {
+          "type": "choice",
+          "field": "severity",
+          "instructions": "Which tier does `finding` belong to? `diff_hunk` is the changed code it is anchored to, `repo_rules` quotes any documented rule it cites, `neighbor_pattern` says how nearby code already does the same thing. `major` is a closed list: anything outside it that is not a proven defect is a `nit`.",
+          "criteria": {
+            "blocker": "A proven defect, security flaw, broken contract or data loss, or a request body written into a role, tenant, price, flag or permission.",
+            "major": "On the closed major list: new logic without a test; a swallowed error, silent catch or masking fallback; a missing error or loading state on a new data flow; an `any` or cast that erases a real check; a documented repo rule broken; a contract change that leaves callers unhandled; a new special case bolted onto an unrelated flow; user input concatenated into SQL, HTML, shell or href; a broad catch, or an `?.` that skips a required operation.",
+            "nit": "Everything else, including reviewer preferences, and any problem this PR did not introduce or worsen."
+          },
+          "act_at": 0.80,
+          "enum_source": "ruver-code-review/nodes/verdict.md"
+        },
+        "introduced_by_pr": {
+          "type": "noul",
+          "instructions": "Did this PR introduce or worsen the problem in `finding`, at a path its own diff changed?",
+          "criteria": {
+            "true": "The diff introduced it, or made an existing problem worse, at a changed path.",
+            "false": "It predates the diff, or the PR only touches the code around it."
+          },
+          "act_at": 0.85
+        }
+      }
+    },
+    {
+      "id": "review.verdict",
+      "graph": "ruver-code-review",
+      "node": "verdict",
+      "stakes": "high",
+      "fallback": "the verdict table in nodes/verdict.md as written",
+      "state_keys": ["coverage_rows", "findings", "pr.description", "pr.acceptance_criteria", "changed_files", "ci"],
+      "questions": {
+        "coverage_complete": {
+          "type": "noul",
+          "instructions": "Does `coverage_rows` say, for every path in `changed_files`, what was actually verified? Silence about a file, a row left to a cap, or a row that only restates the filename is not coverage.",
+          "criteria": {
+            "true": "Every changed path has a row that names what was verified.",
+            "false": "At least one changed path is unverified, was dropped to a cap, or has a row that says nothing."
+          },
+          "act_at": 0.85
+        },
+        "blocking_uncertainty": {
+          "type": "noul",
+          "instructions": "Is there a blocker-level question this review could not settle from the diff: behavior it could not read, a contract it could not check, a risk it could only guess at?",
+          "criteria": {
+            "true": "Something blocker-level stayed open, and a wrong call there would ship a defect.",
+            "false": "Everything blocker-level was settled by reading the diff and its neighbors."
+          },
+          "act_at": 0.85
         }
       }
     }
