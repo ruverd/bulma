@@ -22,7 +22,7 @@
 | admit | args are `report`, `status`, `doctor` | **report** (no doctor needed), then stop |
 | admit | ok | **inventory** |
 | inventory | always | **route** |
-| route | deterministic target (tracker id or tracker URL) | **overlay** |
+| route | deterministic target (tracker id or tracker URL; bare PR refs by author) | **overlay** |
 | route | `entry.route` = `none` | **stop** (answer in chat, no graph) |
 | route | power is `shadow` or `cautious` on `entry.*` | **stop** (`waiting_user`, ranked candidates, one question) |
 | route | Jev acted (`act: true`) | **overlay** |

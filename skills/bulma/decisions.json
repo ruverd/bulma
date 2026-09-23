@@ -15,8 +15,8 @@
           "instructions": "The user typed `args` in a coding session. `world` describes the current state of this repository's delivery work (bus stack, jobs, waiting states, and pull request facts when a URL was given). Which graph should run now?",
           "criteria": {
             "developer": "Deliver a tracker ticket or a free-text goal as a new draft PR, or fix the user's own PR after a QA FAIL. `args` names a ticket, new behavior, or a bug to fix.",
-            "qa": "Exercise an existing PR in the browser or over HTTP and post evidence. The PR is CI-green and mergeable with no QA comment on its head SHA, or `args` asks to test, validate or QA it.",
-            "reviewer": "Review a PR or diagnose why its CI is red, then report. `args` asks for a review, an opinion, or a CI diagnosis.",
+            "qa": "Exercise an existing PR in the browser or over HTTP and post evidence. The PR is CI-green and mergeable with no QA comment on its head SHA, or `args` asks to test, validate or QA it, whoever authored the PR.",
+            "reviewer": "Review a PR or diagnose why its CI is red, then report. `args` asks for a review, an opinion, or a CI diagnosis, whoever authored the PR.",
             "lstm": "Handle incoming review comments on the user's own PR: verify, patch on the same branch, reply. The PR has unresolved review threads or CHANGES_REQUESTED, or `args` points at a review or comment URL.",
             "triage": "Classify a QA finding on a PR. `args` describes a failure found while testing a PR and asks whether it is this PR's bug.",
             "memory": "Store a durable preference (chat language, reviewers, a project note). `args` states a preference, not work.",

@@ -44,8 +44,9 @@ Details: [REQUIREMENTS.md](REQUIREMENTS.md).
 ## Routing
 
 Deterministic first: a tracker id or tracker URL goes to `developer` with no
-Jev call. A PR or MR URL, `owner/repo#N`, or free text goes through
-`entry.route`. Empty args or `resume` go through `entry.next_step` over the
+Jev call. Bare PR or MR refs go by author with no Jev call: the user's own PR
+goes to `qa`, anyone else's to `reviewer`. A PR ref with other words, or free
+text, goes through `entry.route`. Empty args or `resume` go through `entry.next_step` over the
 candidates `scripts/world.sh` found. Below threshold, or under `shadow` and
 `cautious`, bulma suggests and waits; it never guesses a graph.
 

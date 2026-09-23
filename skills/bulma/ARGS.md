@@ -15,7 +15,8 @@ this table **before** any Jev call. Trim, then match in order.
 | `doctor` | run doctor and print; stop |
 | `resume` | **inventory** → `entry.next_step` restricted to `resume:*` candidates |
 | tracker id `[A-Z][A-Z0-9]+-\d+` or tracker issue URL | **developer** directly, no Jev |
-| PR or MR URL, or `owner/repo#N` | **inventory** with PR facts → `entry.route` |
+| only PR or MR URLs, or `owner/repo#N` (one or more) | **inventory** per PR → **qa** when `pr.author_is_user`, else **reviewer**; no Jev |
+| PR or MR URL plus other words | **inventory** with PR facts → `entry.route` |
 | free text | **inventory** → `entry.route` |
 | `--power <level>` anywhere | override for this run only |
 
