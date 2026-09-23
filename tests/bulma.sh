@@ -226,6 +226,7 @@ python3 "$BULMA" dispatch map claude light model=haiku >/dev/null
 python3 "$BULMA" dispatch map claude standard model=sonnet >/dev/null
 if python3 "$BULMA" dispatch map claude heavy model=opus >/dev/null 2>&1; then fail "heavy must not be mappable"; fi
 if python3 "$BULMA" dispatch map claude light effort=low >/dev/null 2>&1; then fail "claude has no per-spawn effort"; fi
+if python3 "$BULMA" dispatch map grok light model=grok-4.5 >/dev/null 2>&1; then fail "grok has no per-spawn model"; fi
 python3 "$BULMA" dispatch map codex light model=gpt-6-luna effort=low >/dev/null || fail "codex takes model and effort per spawn"
 out="$(python3 "$BULMA" dispatch map codex)"
 grep -F -q 'codex light: effort=low model=gpt-6-luna' <<<"$out" || fail "codex map print: $out"

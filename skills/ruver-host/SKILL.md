@@ -73,7 +73,7 @@ overlay may run a worker on another model or effort
 | `claude` (Claude Code) | `model`: `haiku`, `sonnet`, `opus`, `fable` or a full id | `effort` (`low` to `max`) in agent frontmatter only | `model`, `agent` |
 | `codex` | `model` and reasoning effort in the spawn request | `model`, `model_reasoning_effort` in `.codex/agents/*.toml` | `model`, `effort`, `agent` |
 | `cursor` | Task `model`: only `fast` works per call (open bug) | `model: fast` or an id in `.cursor/agents/*.md` | `model`, `agent` |
-| `grok` (Grok Build) | none; `spawn_subagent` takes only a type | persona `model` and reasoning effort | `agent` |
+| `grok` (Grok Build) | none; `spawn_subagent` takes only a type, and personas come from role config, not the spawn | persona `model` and reasoning effort | none: workers always inherit |
 
 Never `spawn_worker` with types `ruver_developer` / `ruver_qa` /
 `ruver_triage` / `ruver_reviewer` / `ruver_lstm`. Those are

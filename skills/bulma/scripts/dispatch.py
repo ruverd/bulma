@@ -41,7 +41,8 @@ HOST_KEYS = {
     "claude": ("model", "agent"),
     "codex": ("model", "effort", "agent"),
     "cursor": ("model", "agent"),
-    "grok": ("agent",),
+    # Grok Build picks personas by role config, never per spawn: no tiers.
+    "grok": (),
 }
 # Promotion gate defaults; override in bulma.json "dispatch_gate".
 GATE_UNITS = 30
@@ -446,6 +447,8 @@ def cmd_dispatch_map(args):
     else:
         pairs = core.parse_kv(args.pairs)
         allowed = HOST_KEYS.get(args.host, SPAWN_KEYS)
+        if not allowed:
+            raise core.BulmaError(4, "%s cannot set a model or effort per spawn; its workers always inherit (see DISPATCH.md Hosts)" % args.host)
         bad = sorted(set(pairs) - set(allowed))
         if bad:
             raise core.BulmaError(4, "%s cannot take %s per spawn; allowed: %s (see DISPATCH.md Hosts)" % (
