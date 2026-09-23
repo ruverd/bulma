@@ -210,6 +210,89 @@ set +e; python3 "$BULMA" ask-many --batch "$TMP/bad.json" --ruver-root "$MR" >/d
 [[ "$(wc -l <"$MR/.ruver-bulma/DECISIONS.tsv")" == "$before" ]] || fail "bad batch must not log anything"
 ok ask-many
 
+# --- dispatch.tier: shadow default, clamp, unmapped, escalate, reverse, gate ---
+DR="$TMP/droot"
+DT="$FIX/TICKETS-dispatch.md"
+out="$(python3 "$BULMA" power --hook dispatch.tier)"
+[[ "$out" == "shadow (hook default)" ]] || fail "dispatch.tier must default to shadow: $out"
+python3 "$BULMA" dispatch plan --tickets "$DT" --risk normal --path full_feature --host claude \
+  --replay "$FIX/replay-dispatch-light.json" --context repo=o/r --context pr=9 --ruver-root "$DR" --json >"$J" || fail "dispatch plan shadow exit"
+[[ "$(jget "$J" 0.tier)" == "heavy" && "$(jget "$J" 0.clamp)" == "shadow" ]] || fail "shadow must run heavy"
+[[ "$(jget "$J" 0.spawn)" == "inherit" ]] || fail "shadow spawn must inherit"
+python3 "$BULMA" dispatch plan --tickets "$DT" --ticket 1 --risk normal --host claude --power balanced \
+  --replay "$FIX/replay-dispatch-light.json" --ruver-root "$DR" --json >"$J" || fail "dispatch plan unmapped exit"
+[[ "$(jget "$J" 0.tier)" == "heavy" && "$(jget "$J" 0.clamp)" == "unmapped" ]] || fail "unmapped tier must log heavy"
+python3 "$BULMA" dispatch map claude light model=haiku >/dev/null
+python3 "$BULMA" dispatch map claude standard model=sonnet >/dev/null
+if python3 "$BULMA" dispatch map claude heavy model=opus >/dev/null 2>&1; then fail "heavy must not be mappable"; fi
+if python3 "$BULMA" dispatch map claude light effort=low >/dev/null 2>&1; then fail "claude has no per-spawn effort"; fi
+python3 "$BULMA" dispatch map codex light model=gpt-6-luna effort=low >/dev/null || fail "codex takes model and effort per spawn"
+out="$(python3 "$BULMA" dispatch map codex)"
+grep -F -q 'codex light: effort=low model=gpt-6-luna' <<<"$out" || fail "codex map print: $out"
+python3 "$BULMA" dispatch plan --tickets "$DT" --risk normal --path full_feature --host claude --power balanced \
+  --files src/inbox/Empty.tsx --replay "$FIX/replay-dispatch-light.json" --context pr=9 --ruver-root "$DR" --json >"$J" || fail "dispatch plan live exit"
+[[ "$(jget "$J" 0.tier)" == "light" && "$(jget "$J" 0.spawn)" == "model=haiku" ]] || fail "ticket 1 light on haiku"
+[[ "$(jget "$J" 1.tier)" == "standard" && "$(jget "$J" 1.clamp)" == "risk" ]] || fail "auth/session path must clamp light to standard"
+[[ "$(jget "$J" 2.tier)" == "light" ]] || fail "ticket 3 light with --files fallback"
+U1="$(jget "$J" 0.unit_id)"
+python3 "$BULMA" dispatch plan --tickets "$DT" --ticket 3 --risk elevated --host claude --power balanced \
+  --replay "$FIX/replay-dispatch-light.json" --ruver-root "$DR" --json >"$TMP/elev.json" || fail "dispatch plan elevated exit"
+[[ "$(jget "$TMP/elev.json" 0.tier)" == "standard" ]] || fail "risk=elevated must clamp light"
+python3 "$BULMA" dispatch plan --tickets "$DT" --ticket 3 --host claude --power balanced \
+  --replay "$FIX/replay-dispatch-unsure.json" --ruver-root "$DR" --json >"$TMP/unsure.json" || fail "dispatch plan unsure exit"
+[[ "$(jget "$TMP/unsure.json" 0.tier)" == "heavy" && "$(jget "$TMP/unsure.json" 0.clamp)" == "undecided" ]] || fail ".62 < .80 must run heavy"
+if python3 "$BULMA" dispatch plan --tickets "$DT" --ticket 9 --ruver-root "$DR" >/dev/null 2>&1; then fail "unknown ticket id accepted"; fi
+out="$(python3 "$BULMA" dispatch role tester --host claude)"
+[[ "$out" == "role tester tier=heavy spawn=inherit" ]] || fail "role under shadow: $out"
+out="$(python3 "$BULMA" dispatch role tester --host claude --power balanced)"
+[[ "$out" == "role tester tier=light spawn=model=haiku" ]] || fail "tester light: $out"
+out="$(python3 "$BULMA" dispatch role reviewer --host claude --power bold)"
+[[ "$out" == "role reviewer tier=heavy spawn=inherit" ]] || fail "gates stay heavy: $out"
+out="$(python3 "$BULMA" dispatch result "$U1" fail --stage test --tokens 12000 --host claude --ruver-root "$DR")"
+grep -F -q 'tier=standard spawn=model=sonnet loops=1' <<<"$out" || fail "fail must escalate light->standard: $out"
+out="$(python3 "$BULMA" dispatch result "$U1" fail --stage review --host claude --ruver-root "$DR")"
+grep -F -q 'tier=heavy spawn=inherit loops=2' <<<"$out" || fail "second fail must escalate to heavy: $out"
+python3 "$BULMA" dispatch result "$U1" pass --tokens 3000 --ruver-root "$DR" >/dev/null || fail "dispatch result pass"
+python3 "$BULMA" dispatch reverse --file src/auth/session.ts --pr 9 --source qa --ruver-root "$DR" >"$TMP/rev.out" || fail "dispatch reverse"
+grep -F -q 'reversed 2 unit(s) from qa' "$TMP/rev.out" || fail "reverse by file+pr: $(cat "$TMP/rev.out")"
+python3 - "$DR/.ruver-bulma/DISPATCH.tsv" "$DR/.ruver-bulma/DECISIONS.tsv" "$U1" <<'PY'
+import sys
+units = [dict(zip(open(sys.argv[1]).readline().rstrip("\n").split("\t"), l.split("\t"))) for l in open(sys.argv[1]).read().splitlines()[1:]]
+u = [r for r in units if r["unit_id"] == sys.argv[3]][0]
+assert u["first_pass"] == "no" and u["loops_used"] == "2" and u["escalated_to"] == "heavy", u
+assert u["worker_tokens"] == "15000" and u["outcome"] == "reversed", u
+assert u["criteria_version"] == "1" and u["state"].endswith(".json"), u
+shadow_auth = [r for r in units if r["power"] == "shadow" and r["ticket"] == "2"]
+assert shadow_auth and shadow_auth[0]["outcome"] == "reversed", shadow_auth
+decisions = [l.split("\t") for l in open(sys.argv[2]).read().splitlines()[1:]]
+rev = [r for r in decisions if r[11] == "reversed"]
+# U1 escalation + live ticket 2 late reverse; the shadow unit never touches DECISIONS outcome
+assert len(rev) == 2 and all(r[2] == "dispatch.tier" and r[10] == "heavy" for r in rev), rev
+PY
+out="$(python3 "$BULMA" dispatch report --repo-only --ruver-root "$DR")"
+grep -E -q '^\| 1 \| live \| light \| ' <<<"$out" || fail "report light row: $out"
+grep -F -q 'clamped light->standard on risk: 2' <<<"$out" || fail "report clamp count: $out"
+grep -F -q 'gate: live, 2/30 light units; keep collecting' <<<"$out" || fail "report gate: $out"
+out="$(python3 "$BULMA" dispatch review --repo-only --ruver-root "$DR")"
+grep -F -q "$U1" <<<"$out" || fail "review must list the escalated unit"
+# gate math on a synthetic shadow ledger: 30 labelled, light passes as often as heavy
+GR="$TMP/groot"; mkdir -p "$GR/.ruver-bulma"
+PYTHONDONTWRITEBYTECODE=1 python3 - "$GR/.ruver-bulma/DISPATCH.tsv" "$SKILL/scripts" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[2]); import dispatch
+rows = []
+for i in range(40):
+    tier = "light" if i < 30 else "heavy"
+    rows.append({"ts_iso": "2026-09-20T10:00:00Z", "unit_id": "g%d" % i, "tier_jev": tier, "tier_run": "heavy",
+                 "power": "shadow", "first_pass": "yes" if i % 10 else "no", "loops_used": "0", "criteria_version": "1"})
+import bulma
+bulma.write_rows(sys.argv[1], rows, dispatch.COLUMNS)
+PY
+out="$(python3 "$BULMA" dispatch report --repo-only --ruver-root "$GR")"
+grep -F -q 'gate: ready for cautious (Jev-light first pass 90% >= heavy 90%)' <<<"$out" || fail "shadow gate ready: $out"
+rm -f "$RUVER_HOME/bulma.json"
+ok dispatch-tier
+
 # --- doctor without key: exit 2, names the variable, never leaks a key ---
 set +e
 out="$(env -u TYPESAFE_API_KEY python3 "$BULMA" doctor 2>&1)"; code=$?
@@ -222,7 +305,7 @@ out="$(TYPESAFE_API_KEY=apikey_testtesttesttesttest python3 "$BULMA" doctor --of
 set -e
 [[ "$code" -eq 0 ]] || fail "doctor --offline with a key must exit 0, got $code: $out"
 if grep -F -q 'apikey_testtesttesttesttest' <<<"$out"; then fail "doctor printed the key"; fi
-grep -F -q 'catalog  ok (9 hooks)' <<<"$out" || fail "doctor catalog line: $out"
+grep -F -q 'catalog  ok (10 hooks)' <<<"$out" || fail "doctor catalog line: $out"
 ok doctor
 
 # --- tune and model write config; ask reads the override ---
@@ -336,7 +419,7 @@ if python3 "$BULMA" ask review.risk --build --state "$FIX/state-fd-triage.json" 
 ok state-builders
 
 # --- graph files and text invariants ---
-for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md REQUIREMENTS.md templates/STATE.md \
+for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md DISPATCH.md REQUIREMENTS.md templates/STATE.md \
          nodes/admit.md nodes/inventory.md nodes/route.md nodes/overlay.md nodes/done.md nodes/power.md nodes/report.md; do
   need "$SKILL/$f"
 done

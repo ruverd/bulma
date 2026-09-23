@@ -294,6 +294,29 @@
           "enum_source": "ruver-code-review/scripts/classify-risk.py"
         }
       }
+    },
+    {
+      "id": "dispatch.tier",
+      "graph": "ruver-feature-delivery",
+      "node": "implement",
+      "stakes": "normal",
+      "fallback": "heavy (session model)",
+      "state_keys": ["unit_kind", "ticket_text", "acceptance", "files", "files_count", "seam", "ui", "risk", "path", "prior_failures"],
+      "questions": {
+        "tier": {
+          "type": "choice",
+          "field": "tier",
+          "criteria_version": 1,
+          "instructions": "Which worker tier can implement this unit with no loss of quality? Judge only from `ticket_text`, `acceptance`, `files` and `seam`: how much the worker must decide on its own, not how important the product area sounds. When the ticket leaves a design choice open, it is not light.",
+          "criteria": {
+            "light": "One or two files, and the ticket spells out the exact change: copy, color, token, config value, rename, one-line guard or prop. An existing test in the same area can be copied. No new behavior branch, no new component or abstraction.",
+            "standard": "Ordinary slice: new behavior inside one module or screen that follows a pattern the repo already has, a few files, acceptance criteria concrete enough to test directly.",
+            "heavy": "Crosses modules or layers, adds an abstraction, touches concurrency, a data contract or shared state, needs a design choice the ticket leaves open, or the files are not known yet."
+          },
+          "act_at": 0.8,
+          "enum_source": "bulma/scripts/dispatch.py"
+        }
+      }
     }
   ]
 }
