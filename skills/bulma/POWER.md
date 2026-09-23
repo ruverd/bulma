@@ -32,11 +32,16 @@ graph, outside git, shared by every repo on the machine:
 ```json
 {
   "power": "balanced",
-  "power_by_hook": { "qa.gate": "shadow" },
+  "power_by_hook": { "qa.gate": "shadow", "dispatch.tier": "shadow" },
   "act_at": { "fd.triage.path": 0.70 },
-  "model": "jev-1.13.0"
+  "model": "jev-1.13.0",
+  "tiers": { "claude": { "light": { "model": "haiku" } } }
 }
 ```
+
+`tiers` maps worker tiers to host spawn args (`bulma.py dispatch map`);
+`model` is only the Jev model. Start `dispatch.tier` under `shadow`:
+[DISPATCH.md](DISPATCH.md).
 
 Precedence, highest first: `--power` flag > env `BULMA_POWER` >
 `power_by_hook[hook]` > `power` > `balanced`. `act_at[hook.question]`
@@ -47,6 +52,7 @@ Commands (all offline, no key needed):
 ```text
 /bulma power                  # print level and where it came from
 /bulma power cautious         # set the global level
+/bulma power cautious dispatch.tier   # set one hook only
 /bulma tune fd.triage.path 0.70
 /bulma model jev-1.13.0       # pin once thresholds are tuned
 /bulma report                 # calibration table

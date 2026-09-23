@@ -31,7 +31,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `worktree` | Isolated checkout of the same branch | `git worktree add` (JOBS.md) |
 | `schedule_wake` | Resume this graph later without blocking the turn | Ask the user to re-run the slash command when CI moves; do not `gh pr checks --watch` |
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
-| `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files |
+| `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
 
 ## spawn_worker
 
@@ -59,6 +59,21 @@ Prefer host isolation `worktree` when the spawn API has it. Then do
 | Claude Code | `Agent` / `Task` with `general-purpose` (or the fd agent name for implement/test/review) |
 | Codex | child agent spawn; isolation if the CLI exposes a worktree |
 | Cursor | `Task` general-purpose |
+
+### Worker tier
+
+`session_model` is the default for every worker. Only the `/bulma`
+overlay may run a worker on another model or effort
+([../bulma/DISPATCH.md](../bulma/DISPATCH.md)); the user maps the tiers in
+`$RUVER_HOME/bulma.json`. What each host can apply per call (checked
+2026-09):
+
+| host | per spawn | fixed per worker definition | keys |
+|---|---|---|---|
+| `claude` (Claude Code) | `model`: `haiku`, `sonnet`, `opus`, `fable` or a full id | `effort` (`low` to `max`) in agent frontmatter only | `model`, `agent` |
+| `codex` | `model` and reasoning effort in the spawn request | `model`, `model_reasoning_effort` in `.codex/agents/*.toml` | `model`, `effort`, `agent` |
+| `cursor` | Task `model`: only `fast` works per call (open bug) | `model: fast` or an id in `.cursor/agents/*.md` | `model`, `agent` |
+| `grok` (Grok Build) | none; `spawn_subagent` takes only a type, and personas come from role config, not the spawn | persona `model` and reasoning effort | none: workers always inherit |
 
 Never `spawn_worker` with types `ruver_developer` / `ruver_qa` /
 `ruver_triage` / `ruver_reviewer` / `ruver_lstm`. Those are

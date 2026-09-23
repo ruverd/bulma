@@ -2,7 +2,7 @@
 """Bulma: ask TypeSafe Jev at ruver graph forks and log every answer.
 
 Stdlib only. Subcommands: catalog, power, tune, model, doctor, state, ask,
-ask-many, outcome, report. Never prints TYPESAFE_API_KEY.
+ask-many, outcome, report, dispatch. Never prints TYPESAFE_API_KEY.
 
 Exit codes: 0 ok, 2 requirement missing, 3 network or API, 4 bad input.
 """
@@ -22,11 +22,17 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+# Skills install as plain folders: keep __pycache__ out of them.
+sys.dont_write_bytecode = True
+import dispatch  # noqa: E402  (sibling module, after the bytecode switch)
+
 API = "https://api.typesafe.ai/v1"
 # Pinned, not the alias: catalog act_at values were set against this version
 # and `jev-latest` moves when a release ships. Migrate with `model set`.
 DEFAULT_MODEL = "jev-1.13.0"
 LEVELS = {"shadow": None, "cautious": 0.10, "balanced": 0.0, "bold": -0.10}
+# Hooks that stay under this level until power_by_hook, env or flag names one.
+HOOK_DEFAULT_POWER = {"dispatch.tier": "shadow"}
 FLOOR = 0.50
 CEIL = 0.99
 PER_KEY_CAP = 8000
@@ -205,6 +211,8 @@ def resolve_power(flag, hook, cfg):
     by_hook = cfg.get("power_by_hook", {})
     if hook and hook in by_hook:
         return check_level(by_hook[hook]), "hook"
+    if hook in HOOK_DEFAULT_POWER:
+        return HOOK_DEFAULT_POWER[hook], "hook default"
     if cfg.get("power"):
         return check_level(cfg["power"]), "config"
     return "balanced", "default"
@@ -353,25 +361,25 @@ def ledger_path(root):
     return Path(root) / ".ruver-bulma" / "DECISIONS.tsv"
 
 
-def append_rows(root, rows):
-    path = ledger_path(root)
+def append_rows(root, rows, path=None, columns=TSV_COLUMNS):
+    path = path or ledger_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         with path.open(encoding="utf-8") as handle:
             header = handle.readline().rstrip("\n").split("\t")
-        if header != TSV_COLUMNS:
+        if header != columns:
             # Ledger from an older column set: rewrite once under the current header.
-            write_rows(path, read_rows(path))
+            write_rows(path, read_rows(path, columns), columns)
     new = not path.exists()
     with path.open("a", encoding="utf-8") as handle:
         if new:
-            handle.write("\t".join(TSV_COLUMNS) + "\n")
+            handle.write("\t".join(columns) + "\n")
         for row in rows:
-            handle.write("\t".join(clean(row.get(col, "")) for col in TSV_COLUMNS) + "\n")
+            handle.write("\t".join(clean(row.get(col, "")) for col in columns) + "\n")
     return path
 
 
-def read_rows(path):
+def read_rows(path, columns=TSV_COLUMNS):
     """Rows keyed by the file's own header, so older ledgers stay readable."""
     try:
         lines = Path(path).read_text(encoding="utf-8").splitlines()
@@ -385,15 +393,15 @@ def read_rows(path):
         parts = line.split("\t")
         if len(parts) != len(header):
             continue
-        row = dict.fromkeys(TSV_COLUMNS, "")
+        row = dict.fromkeys(columns, "")
         row.update(zip(header, parts))
         rows.append(row)
     return rows
 
 
-def write_rows(path, rows):
+def write_rows(path, rows, columns=TSV_COLUMNS):
     Path(path).write_text(
-        "\t".join(TSV_COLUMNS) + "\n" + "".join("\t".join(clean(r.get(c, "")) for c in TSV_COLUMNS) + "\n" for r in rows),
+        "\t".join(columns) + "\n" + "".join("\t".join(clean(r.get(c, "")) for c in columns) + "\n" for r in rows),
         encoding="utf-8",
     )
 
@@ -527,7 +535,14 @@ def cmd_catalog(args):
 def cmd_power(args):
     cfg = load_config()
     if args.action == "set":
-        cfg["power"] = check_level(args.level)
+        check_level(args.level)
+        if args.hook:
+            find_hook(load_catalog(), args.hook)
+            cfg.setdefault("power_by_hook", {})[args.hook] = args.level
+            path = save_config(cfg)
+            print("power_by_hook[%s]=%s written to %s" % (args.hook, args.level, path))
+            return 0
+        cfg["power"] = args.level
         path = save_config(cfg)
         print("power=%s written to %s" % (args.level, path))
         return 0
@@ -872,19 +887,23 @@ def cmd_doctor(args):
     return code
 
 
-def cmd_outcome(args):
-    if args.value not in ("confirmed", "reversed"):
+def set_outcome(root, decision_id, question, value, note=""):
+    if value not in ("confirmed", "reversed"):
         raise BulmaError(4, "outcome must be confirmed or reversed")
-    path = ledger_path(ruver_root(args.ruver_root))
+    path = ledger_path(root)
     rows = read_rows(path)
-    hits = [r for r in rows if r["decision_id"] == args.decision_id and r["question"] == args.question]
+    hits = [r for r in rows if r["decision_id"] == decision_id and r["question"] == question]
     if not hits:
-        raise BulmaError(4, "no row for %s %s in %s" % (args.decision_id, args.question, path))
+        raise BulmaError(4, "no row for %s %s in %s" % (decision_id, question, path))
     for row in hits:
-        row["outcome"] = args.value
-        if args.note:
-            row["note"] = (row["note"] + " | " if row["note"] else "") + args.note
+        row["outcome"] = value
+        if note:
+            row["note"] = (row["note"] + " | " if row["note"] else "") + note
     write_rows(path, rows)
+
+
+def cmd_outcome(args):
+    set_outcome(ruver_root(args.ruver_root), args.decision_id, args.question, args.value, args.note)
     print("updated %s %s outcome=%s" % (args.decision_id, args.question, args.value))
     return 0
 
@@ -1014,7 +1033,7 @@ def build_parser():
     p = sub.add_parser("power", help="print or set the power level")
     p.add_argument("action", nargs="?", choices=["set"])
     p.add_argument("level", nargs="?")
-    p.add_argument("--hook")
+    p.add_argument("--hook", help="print, or with set write, one hook's level (power_by_hook)")
     p.add_argument("--power")
     p.set_defaults(func=cmd_power)
 
@@ -1080,6 +1099,8 @@ def build_parser():
     p.add_argument("action", nargs="?", choices=["set"])
     p.add_argument("model_id", nargs="?")
     p.set_defaults(func=cmd_model)
+
+    dispatch.register(sub, sys.modules[__name__])
     return parser
 
 

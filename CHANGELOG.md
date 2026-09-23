@@ -21,6 +21,16 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `/bulma` hook `dispatch.tier`: Jev picks `light | standard | heavy` for
+  each coder worker (every TICKETS.md slice, CI fix, lstm patch) so simple
+  units can run on a cheaper model. Code clamps it: gates always run on the
+  session model, `light` is refused on elevated risk or high-risk paths, a
+  fail escalates one tier inside the existing loop caps. Starts under
+  `shadow`. `bulma.py dispatch plan | role | result | reverse | report |
+  review | map`; units logged to `.ruver-bulma/DISPATCH.tsv` with first
+  pass, loops, reversals and worker tokens. Model names live only in the
+  `tiers` map in `~/.ruver/bulma.json`. ADR 0004.
+
 - `bulma.py ask-many --batch FILE`: per-item hooks (QA findings, review
   comments) in one call. Items are validated first, sent in parallel and
   logged once, with one `J:` line each.

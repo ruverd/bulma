@@ -17,7 +17,8 @@ only picks among options the node already has.
 
 **REQUIRED:** [GRAPH.md](GRAPH.md) · [ARGS.md](ARGS.md) ·
 [STATE.schema.md](STATE.schema.md) · [HOOKS.md](HOOKS.md) ·
-[POWER.md](POWER.md) · [REQUIREMENTS.md](REQUIREMENTS.md) ·
+[POWER.md](POWER.md) · [DISPATCH.md](DISPATCH.md) ·
+[REQUIREMENTS.md](REQUIREMENTS.md) ·
 [ruver-host](../ruver-host/SKILL.md) · [DISK.md](../ruver-bus/DISK.md)
 (`.ruver-*` is **global**, never the git root) · `ruver-memory`
 
@@ -56,6 +57,10 @@ it loads) reaches a node in HOOKS.md, ask first, then write the field:
 Bus switches inside the target keep the overlay. Bulma never appears on
 `STACK.md`. Jev down mid-run means fallback and continue; only `admit`
 stops. Contract: [nodes/overlay.md](nodes/overlay.md).
+
+Workers: the overlay also picks the tier each coder worker runs on
+(`dispatch.tier`), escalates it on a fail, and never lowers a gate.
+[DISPATCH.md](DISPATCH.md).
 
 ## Power
 

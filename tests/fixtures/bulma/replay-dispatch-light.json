@@ -1,0 +1,7 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "tier": {"type": "choice", "choice": "light", "confidence": 0.91, "probabilities": {"light": 0.91, "standard": 0.07, "heavy": 0.02}}
+  },
+  "usage": {"input_tokens": 640, "output_tokens": 0}
+}

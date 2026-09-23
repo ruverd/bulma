@@ -24,6 +24,11 @@
    - per question: `act: true` → write Jev's value; `act: false` → apply the
      graph's own rule. Follow the `apply` column for composite rules
      (`qa.gate`, `lstm.verify` disposition, `review.risk` critic).
+   - worker spawns: before a coder `spawn_worker` (fd implement, `ci_watch`
+     fix, lstm patch), take the tier from `dispatch plan` and pass its
+     `spawn=` args; testers and shippers from `dispatch role`. After review,
+     tests and CI, report `dispatch result`. Contract:
+     [../DISPATCH.md](../DISPATCH.md).
 3. One chat line per hook (`--line` prints it; drop the `[decision_id]`
    suffix in chat), VOICE style:
    `J: path=debug_fix .88 ok · risk=elevated .61 -> ROUTING · work_kind=bug .91 ok`
@@ -46,6 +51,10 @@
 - ASK the user because Jev was undecided.
 - Turn a QA finding into PASS from a Jev answer.
 - Send full files; the caps in HOOKS.md are the budget.
+- Pass a model, effort or worker type on a worker spawn other than the
+  `spawn=` that `dispatch plan`, `dispatch role` or `dispatch result`
+  printed. `spawn=inherit` means pass none. A tier picked by feel skips the
+  clamp rules and leaves `DISPATCH.tsv` measuring the wrong run.
 
 ## Output
 
