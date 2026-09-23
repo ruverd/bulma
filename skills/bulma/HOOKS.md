@@ -24,6 +24,17 @@ what to do with `act: true`; `act: false` always means the graph's own rule.
 
 Write state JSON to `$RUVER_ROOT/.ruver-bulma/state/<hook>-<UTC ts>.json` and pass it with `--state`. Keep the file; humans read it if a decision looks wrong. Never put full files in it; observe caps and budgets.
 
+Code builds four recipes, so do not write them by hand. `bulma.py ask <hook> --build` writes the state file and asks in one command; `bulma.py state <hook>` only writes it and prints the path.
+
+- `entry.route`: `--args "<raw args>"` (reads `.ruver-bulma/world.json`, or `--world`)
+- `entry.next_step`: `--args "<raw args>"`, plus `--resume` for `resume` (also writes the `--criteria` file)
+- `review.risk`: `--pr <n or url>` (runs `gh pr view`), or `--pr-json FILE`
+- `reviewer.failure_class`: `--pr`, `--check-name`, `--log-file` (last 200 lines sent), `--same-fail-on-base yes|no|unknown`
+
+## Many items
+
+Per-item hooks (`qa.gate` and `triage.classify` per finding, `lstm.verify` per comment) go through one `bulma.py ask-many --batch FILE` call, not one `ask` per item. The batch is a JSON list, or `{"context": {...}, "items": [...]}`; each item is `{"id", "hook", "state", "criteria"?, "graph_answer"?, "context"?}` where `state` and `criteria` are a file path or inline JSON. Every item is validated before any call (exit 4 sends nothing), then all are sent in parallel and logged once. Output is one line per item: `<id> J: …`. Keep one state per item. Do not merge items into one state: unrelated detail lowers Jev accuracy.
+
 ## Context
 
 Always pass `--context repo=<owner/repo> pr=<number> sha=<head> ticket=<id>` with what is known. Empty is fine.

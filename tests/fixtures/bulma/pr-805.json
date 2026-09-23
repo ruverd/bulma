@@ -1,0 +1,9 @@
+{
+  "title": "feat: inbox",
+  "body": "Adds the inbox list and read state.",
+  "files": [{"path": "web/inbox/List.tsx"}, {"path": "api/inbox.py"}],
+  "changedFiles": 2,
+  "additions": 120,
+  "deletions": 20,
+  "mergeable": "MERGEABLE"
+}

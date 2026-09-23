@@ -10,16 +10,15 @@ Deterministic first, Jev second. Never guess a graph.
 1. `../ARGS.md` already classified the args. Tracker id or tracker URL →
    `target: developer`, `target_args: <id or URL>`, no Jev call, write the
    Route block with `why: deterministic: ticket id`, go to **overlay**.
-2. PR or MR URL, `owner/repo#N`, or free text → state JSON
-   `{args, world, pr, user_login}` per the `entry.route` recipe in
-   `../HOOKS.md` (trim `world` to `stack_top`, `jobs`, `states[]` with graph,
-   status, waiting_user). Write it to
-   `.ruver-bulma/state/entry.route-<UTC ts>.json`. Run
-   `python3 scripts/bulma.py ask entry.route --state <file> --context repo=<owner/repo> pr=<n> --json`.
-3. Empty or `resume` → state `{args, candidates, world}` and
-   `python3 scripts/bulma.py ask entry.next_step --state <file> --criteria .ruver-bulma/candidates.json --json`.
-   For `resume`, first drop every non-`resume:*` id from a copy of
-   `candidates.json` and pass that copy.
+2. PR or MR URL, `owner/repo#N`, or free text →
+   `python3 scripts/bulma.py ask entry.route --build --args "<args>" --context repo=<owner/repo> --context pr=<n> --json`.
+   `--build` writes the `entry.route` state from `world.json` (recipe in
+   `../HOOKS.md`) to `.ruver-bulma/state/`. Do not write it by hand.
+3. Empty or `resume` →
+   `python3 scripts/bulma.py ask entry.next_step --build --args "<args>" --json`
+   (add `--resume` for `resume`: the builder keeps only `resume:*`
+   candidates). The builder writes the dynamic criteria from
+   `candidates.json`; do not pass `--criteria`.
 4. Read the answer:
    - `user_blocked` decisive-yes → print each `states[].waiting_user`
      question first, in the chat language.
