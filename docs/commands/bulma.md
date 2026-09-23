@@ -26,11 +26,12 @@ command keeps working without Jev.
 | ticket id or tracker URL | [developer](ruver-developer.md), no Jev call for routing |
 | PR or MR URL, free text | Jev picks developer / qa / reviewer / lstm / triage / memory, or `none` |
 
-While the chosen graph runs, nine hooks fire
+While the chosen graph runs, ten hooks fire
 ([HOOKS.md](../../skills/bulma/HOOKS.md)): fd triage path and risk, ASK vs
 DECIDE at grill forks, the QA unambiguous-FAIL gate, triage class per
-finding, lstm claim and fix checks per comment, reviewer failure class, and
-the code-review high-risk critic. Jev picks among the node's own options;
+finding, lstm claim and fix checks per comment, reviewer failure class, the
+code-review high-risk critic, and the worker tier per coder spawn
+([DISPATCH.md](../../skills/bulma/DISPATCH.md)). Jev picks among the node's own options;
 edges, loop caps and verdicts stay in the graphs. The review verdict is
 never a Jev call.
 

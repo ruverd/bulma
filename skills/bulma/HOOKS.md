@@ -19,17 +19,19 @@ what to do with `act: true`; `act: false` always means the graph's own rule.
 | `lstm.verify` | ruver-lstm / verify | per in-scope comment, after binding `path:line` at HEAD | `comment` (body, cap 3000), `bound_path`, `bound_code` (+/- 20 lines), `neighbor_pattern` (one paragraph), `spec_bullet` | the orchestrator's own `claim_true` / `fix_ok_here` / `risk` | disposition derived in code: `fix` when `claim_true` yes and `fix_ok_here` in {yes, na}; `skip` when `claim_true` no or `fix_ok_here` no; else `unclear` (then `policy.ask`). Undecided Jev field -> orchestrator judgment for that field | lstm `prove` fails after a `fix` disposition -> `outcome <id> claim_true reversed` |
 | `reviewer.failure_class` | ruver-reviewer / diagnose | a required check is red | `check_name`, `log_tail` (<= 200 lines, redacted), `pr.files`, `same_fail_on_base` (yes/no/unknown), `mergeable` | the orchestrator's own class | acted -> that class in `failure_class` and the report status | user corrects the class in chat -> `outcome <id> class reversed` |
 | `review.risk` | ruver-code-review / critic | the engine runs `scripts/classify-risk.py` | `pr_title`, `pr_body` (cap 3000), `files` (paths), `changed_files`, `churn` | the script's `high` / `low` | spawn the high-risk critic when the script says `high` OR Jev says `high` and acted. Jev `low` changes nothing. Verdict phases untouched | none |
+| `dispatch.tier` | ruver-feature-delivery / implement (also `ci_watch` fix, ruver-lstm patch) | before each coder `spawn_worker`; all TICKETS.md slices at once after `tickets` | built in code by `bulma.py dispatch plan` (see [DISPATCH.md](DISPATCH.md)): `unit_kind`, `ticket_text` (cap 3000), `acceptance`, `files`, `files_count`, `seam`, `ui`, `risk`, `path`, `prior_failures` | always `heavy` (today: every worker inherits) | spawn the coder with the `spawn=` args `dispatch plan` prints. Rules in code, not in the orchestrator: `shadow` or undecided -> `heavy`; `light` with `risk=elevated` or a high-risk path -> `standard`. Review, test or CI fail -> `dispatch result <unit> fail`, re-dispatch with the tier it prints | `dispatch result` escalation, `dispatch reverse` on later CI / QA `PR_BUG` / lstm should-fix touching the unit's files |
 
 ## State file
 
 Write state JSON to `$RUVER_ROOT/.ruver-bulma/state/<hook>-<UTC ts>.json` and pass it with `--state`. Keep the file; humans read it if a decision looks wrong. Never put full files in it; observe caps and budgets.
 
-Code builds four recipes, so do not write them by hand. `bulma.py ask <hook> --build` writes the state file and asks in one command; `bulma.py state <hook>` only writes it and prints the path.
+Code builds five recipes, so do not write them by hand. `bulma.py ask <hook> --build` writes the state file and asks in one command; `bulma.py state <hook>` only writes it and prints the path.
 
 - `entry.route`: `--args "<raw args>"` (reads `.ruver-bulma/world.json`, or `--world`)
 - `entry.next_step`: `--args "<raw args>"`, plus `--resume` for `resume` (also writes the `--criteria` file)
 - `review.risk`: `--pr <n or url>` (runs `gh pr view`), or `--pr-json FILE`
 - `reviewer.failure_class`: `--pr`, `--check-name`, `--log-file` (last 200 lines sent), `--same-fail-on-base yes|no|unknown`
+- `dispatch.tier`: not through `ask`; `bulma.py dispatch plan --tickets TICKETS.md --risk <risk> --path <path> --host <host>` builds one state per slice, asks all in parallel and logs both ledgers
 
 ## Many items
 
