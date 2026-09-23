@@ -535,7 +535,14 @@ def cmd_catalog(args):
 def cmd_power(args):
     cfg = load_config()
     if args.action == "set":
-        cfg["power"] = check_level(args.level)
+        check_level(args.level)
+        if args.hook:
+            find_hook(load_catalog(), args.hook)
+            cfg.setdefault("power_by_hook", {})[args.hook] = args.level
+            path = save_config(cfg)
+            print("power_by_hook[%s]=%s written to %s" % (args.hook, args.level, path))
+            return 0
+        cfg["power"] = args.level
         path = save_config(cfg)
         print("power=%s written to %s" % (args.level, path))
         return 0
@@ -1026,7 +1033,7 @@ def build_parser():
     p = sub.add_parser("power", help="print or set the power level")
     p.add_argument("action", nargs="?", choices=["set"])
     p.add_argument("level", nargs="?")
-    p.add_argument("--hook")
+    p.add_argument("--hook", help="print, or with set write, one hook's level (power_by_hook)")
     p.add_argument("--power")
     p.set_defaults(func=cmd_power)
 

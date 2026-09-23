@@ -6,6 +6,7 @@
 |---|---|
 | `power` | `python3 scripts/bulma.py power` |
 | `power <level>` | `python3 scripts/bulma.py power set <level>` |
+| `power <level> <hook>` | `python3 scripts/bulma.py power set <level> --hook <hook>` |
 | `tune <hook.question> <act_at>` | `python3 scripts/bulma.py tune <hook.question> <act_at>` |
 | `model` / `model <id>` | `python3 scripts/bulma.py model [set <id>]` |
 

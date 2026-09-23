@@ -215,6 +215,11 @@ DR="$TMP/droot"
 DT="$FIX/TICKETS-dispatch.md"
 out="$(python3 "$BULMA" power --hook dispatch.tier)"
 [[ "$out" == "shadow (hook default)" ]] || fail "dispatch.tier must default to shadow: $out"
+python3 "$BULMA" power set cautious --hook dispatch.tier >/dev/null || fail "power set --hook exit"
+[[ "$(python3 "$BULMA" power --hook dispatch.tier)" == "cautious (hook)" ]] || fail "power set --hook must write power_by_hook"
+[[ "$(python3 "$BULMA" power)" == "balanced (default)" ]] || fail "power set --hook must not touch global power"
+if python3 "$BULMA" power set cautious --hook nope.hook >/dev/null 2>&1; then fail "power set accepted unknown hook"; fi
+python3 "$BULMA" power set shadow --hook dispatch.tier >/dev/null
 python3 "$BULMA" dispatch plan --tickets "$DT" --risk normal --path full_feature --host claude \
   --replay "$FIX/replay-dispatch-light.json" --context repo=o/r --context pr=9 --ruver-root "$DR" --json >"$J" || fail "dispatch plan shadow exit"
 [[ "$(jget "$J" 0.tier)" == "heavy" && "$(jget "$J" 0.clamp)" == "shadow" ]] || fail "shadow must run heavy"
@@ -433,6 +438,7 @@ grep -F -q 'entry.route' "$SKILL/nodes/route.md" || fail "route must name entry.
 grep -F -q 'entry.next_step' "$SKILL/nodes/route.md" || fail "route must name entry.next_step"
 grep -F -q 'candidates.json' "$SKILL/nodes/route.md" || fail "route must pass candidates.json as --criteria"
 grep -F -q -- '--graph-answer' "$SKILL/nodes/overlay.md" || fail "overlay must pass graph answers"
+grep -F -q 'spawn=inherit' "$SKILL/nodes/overlay.md" || fail "overlay must forbid model picks outside dispatch"
 grep -F -q 'J:' "$SKILL/nodes/overlay.md" || fail "overlay must define the J: chat line"
 grep -F -q 'never appears on the stack' "$SKILL/nodes/overlay.md" || fail "overlay must state bulma is not a bus frame"
 grep -F -q 'shadow | cautious | balanced | bold' "$SKILL/POWER.md" || fail "POWER.md levels"

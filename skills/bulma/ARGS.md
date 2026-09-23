@@ -7,6 +7,7 @@ this table **before** any Jev call. Trim, then match in order.
 |---|---|
 | empty | **inventory** → `entry.next_step` |
 | `power [shadow\|cautious\|balanced\|bold]` | print or set the global level; stop |
+| `power <level> <hook>` | set one hook's level (`power_by_hook`); stop |
 | `tune <hook.question> <0.50-0.99>` | per-question `act_at`; stop |
 | `model [<id>]` | print or pin the model; stop |
 | `report [--hook H] [--since D] [--repo-only]` | calibration table; stop |

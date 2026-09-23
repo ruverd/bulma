@@ -51,6 +51,10 @@
 - ASK the user because Jev was undecided.
 - Turn a QA finding into PASS from a Jev answer.
 - Send full files; the caps in HOOKS.md are the budget.
+- Pass a model, effort or worker type on a worker spawn other than the
+  `spawn=` that `dispatch plan`, `dispatch role` or `dispatch result`
+  printed. `spawn=inherit` means pass none. A tier picked by feel skips the
+  clamp rules and leaves `DISPATCH.tsv` measuring the wrong run.
 
 ## Output
 

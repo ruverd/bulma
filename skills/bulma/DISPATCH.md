@@ -34,6 +34,8 @@ Gates never get a weaker model. Under `shadow` every role prints `heavy`.
    prints the next tier (light -> standard -> heavy). The re-dispatch uses
    it. Loop caps stay as they are: escalation spends a loop, never adds one.
 4. Never ASK the user for a tier.
+5. The orchestrator passes only the printed `spawn=` args: no model,
+   effort or worker type of its own choosing on any worker spawn.
 
 ## Commands
 
@@ -102,6 +104,9 @@ Cost: `worker_tokens` summed per tier, retries included. Pass `--tokens`
 when the host reports worker usage; leave it out otherwise.
 
 ## Promotion gate
+
+Promote with `bulma.py power set cautious --hook dispatch.tier`
+(`/bulma power cautious dispatch.tier`); demote with `shadow`.
 
 `dispatch report` ends with one `gate:` line:
 

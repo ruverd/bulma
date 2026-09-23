@@ -52,6 +52,7 @@ Commands (all offline, no key needed):
 ```text
 /bulma power                  # print level and where it came from
 /bulma power cautious         # set the global level
+/bulma power cautious dispatch.tier   # set one hook only
 /bulma tune fd.triage.path 0.70
 /bulma model jev-1.13.0       # pin once thresholds are tuned
 /bulma report                 # calibration table
