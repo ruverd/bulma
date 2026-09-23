@@ -10,16 +10,22 @@
 2. When the target, or an engine it loads (`ruver-feature-delivery`,
    `ruver-code-review`), enters a node listed in `../HOOKS.md`, and before
    writing the hooked field(s):
-   - build the state JSON from the recipe column, with its caps;
-   - write it to `.ruver-bulma/state/<hook>-<UTC ts>.json`;
-   - run `python3 scripts/bulma.py ask <hook> --state <file> --context repo=… pr=… sha=… ticket=…`
+   - `review.risk` and `reviewer.failure_class`: use `ask <hook> --build`
+     with the flags in HOOKS.md §State file. Otherwise build the state
+     JSON from the recipe column, with its caps, and write it to
+     `.ruver-bulma/state/<hook>-<UTC ts>.json`;
+   - run `python3 scripts/bulma.py ask <hook> --state <file> --line --context repo=… --context pr=… --context sha=… --context ticket=…`
      plus `--graph-answer <q>=<v>` for every question whose graph rule you
      already evaluated (always under `shadow`), and `--power <level>` when
-     the run carries a flag;
+     the run carries a flag. `--line` prints the `J:` line for step 3;
+     add `--json` only when you need `probabilities`;
+   - per-item hooks (several findings or comments): write one batch file
+     and run `ask-many` once (HOOKS.md §Many items), not one `ask` per item;
    - per question: `act: true` → write Jev's value; `act: false` → apply the
      graph's own rule. Follow the `apply` column for composite rules
      (`qa.gate`, `lstm.verify` disposition, `review.risk` critic).
-3. One chat line per hook, VOICE style:
+3. One chat line per hook (`--line` prints it; drop the `[decision_id]`
+   suffix in chat), VOICE style:
    `J: path=debug_fix .88 ok · risk=elevated .61 -> ROUTING · work_kind=bug .91 ok`
    Under `shadow`: `J(shadow): path=debug_fix .88 (graph: debug_fix)`.
 4. Append `decision_id` to STATE `decision_ids`; bump `hooks_fired` or

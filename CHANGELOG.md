@@ -8,6 +8,12 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- `/bulma` pins `jev-1.13.0` by default instead of the moving
+  `jev-latest` alias, since the catalog thresholds were tuned against it.
+  `DECISIONS.tsv` gains `input_tokens` and `latency_ms`. Older ledgers are
+  read by header and migrated on the next write. `bulma.py report` prints
+  calls, input tokens and p50 latency.
+
 - `/qa` on a backend PR still plans and executes. Endpoint proof is
   an attached HTTP still (`scripts/http-proof.sh`) or the FE screens
   that call those endpoints. Missing UI is not a skip. API-only
@@ -15,6 +21,13 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `bulma.py ask-many --batch FILE`: per-item hooks (QA findings, review
+  comments) in one call. Items are validated first, sent in parallel and
+  logged once, with one `J:` line each.
+- `bulma.py state <hook>` and `ask <hook> --build` build the `entry.route`,
+  `entry.next_step`, `review.risk` and `reviewer.failure_class` state in
+  code (from `world.json` and `gh`), so the orchestrator stops writing it by
+  hand. `ask --line` prints the overlay `J:` line.
 - `/bulma`: one entry point that picks the graph (developer / qa / reviewer / lstm / triage / memory) from args and a `world.sh` inventory, then asks TypeSafe Jev at nine forks (`fd.triage`, `policy.ask`, `qa.gate`, `triage.classify`, `lstm.verify`, `reviewer.failure_class`, `review.risk`, plus the two entry decisions). Acts when confidence clears a threshold set by `shadow | cautious | balanced | bold` power and per-question `act_at` in `~/.ruver/bulma.json`; else the graph's own rule. Every answer logged to `.ruver-bulma/DECISIONS.tsv`; `bulma.py report` suggests thresholds. Existing graphs unchanged. Optional: needs `TYPESAFE_API_KEY`.
 - `/ruver-lstm` verify binds each comment to HEAD (`claim_true`,
   `fix_ok_here`, `risk`) and skip must cite a path or test. After a

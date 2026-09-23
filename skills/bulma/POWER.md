@@ -34,7 +34,7 @@ graph, outside git, shared by every repo on the machine:
   "power": "balanced",
   "power_by_hook": { "qa.gate": "shadow" },
   "act_at": { "fd.triage.path": 0.70 },
-  "model": "jev-latest"
+  "model": "jev-1.13.0"
 }
 ```
 
@@ -59,14 +59,17 @@ Commands (all offline, no key needed):
    own answer when the orchestrator passed `--graph-answer`.
 2. After 20 or more decisions on a question, `/bulma report` prints
    `agree%` (Jev vs graph rule), `reversed` (outcomes marked wrong later),
+   a `calls` line with input tokens and p50 latency per call,
    and `suggest`: the lowest threshold where at least 20 rows agree 95% or
    more. `need >=20` means keep collecting. `keep` means the current value
    already holds.
 3. Apply with `/bulma tune <hook.question> <value>`. Raise when `reversed`
    grows; lower when `suggest` is below the current value and `reversed` is
    zero.
-4. When the report notes more than one model id, pin the one you tuned
-   against: `/bulma model <id>`. An alias moving under you changes answers.
+4. The default is pinned (`jev-1.13.0`), not `jev-latest`: an alias moving
+   under you changes answers. When a new version ships, run it under
+   `shadow` with `/bulma model <id>`, compare with `/bulma report` (it notes
+   more than one model id), then keep it or go back.
 5. Mark wrong calls when a later node proves them wrong
    (`bulma.py outcome <decision_id> <question> reversed`); the outcome hooks
    in [HOOKS.md](HOOKS.md) name the moments.

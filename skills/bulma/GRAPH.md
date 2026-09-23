@@ -40,7 +40,7 @@
 
 ```yaml
 power: balanced          # $RUVER_HOME/bulma.json overrides
-model: jev-latest        # pin with `bulma.py model set <id>` once tuned
+model: jev-1.13.0        # pinned; migrate with `bulma.py model set <id>`
 never_merge: true
 enter_bus_stack: false
 product_code_on_main: false
