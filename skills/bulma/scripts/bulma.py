@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Bulma: ask TypeSafe Jev at ruver graph forks and log every answer.
 
-Stdlib only. Subcommands: catalog, power, tune, model, doctor, ask, outcome,
-report. Never prints TYPESAFE_API_KEY.
+Stdlib only. Subcommands: catalog, power, tune, model, doctor, state, ask,
+ask-many, outcome, report. Never prints TYPESAFE_API_KEY.
 
 Exit codes: 0 ok, 2 requirement missing, 3 network or API, 4 bad input.
 """
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import re
@@ -22,7 +23,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 API = "https://api.typesafe.ai/v1"
-DEFAULT_MODEL = "jev-latest"
+# Pinned, not the alias: catalog act_at values were set against this version
+# and `jev-latest` moves when a release ships. Migrate with `model set`.
+DEFAULT_MODEL = "jev-1.13.0"
 LEVELS = {"shadow": None, "cautious": 0.10, "balanced": 0.0, "bold": -0.10}
 FLOOR = 0.50
 CEIL = 0.99
@@ -33,8 +36,10 @@ TYPES = ("choice", "noul", "score")
 TSV_COLUMNS = [
     "ts_iso", "decision_id", "hook", "question", "power", "model", "answer",
     "confidence", "act_at", "acted", "graph_answer", "outcome", "repo", "pr",
-    "sha", "ticket", "note",
+    "sha", "ticket", "note", "input_tokens", "latency_ms",
 ]
+LOG_TAIL_LINES = 200
+PR_BODY_CAP = 3000
 REDACT = [
     re.compile(r"ghp_[A-Za-z0-9]{20,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
@@ -351,6 +356,12 @@ def ledger_path(root):
 def append_rows(root, rows):
     path = ledger_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        with path.open(encoding="utf-8") as handle:
+            header = handle.readline().rstrip("\n").split("\t")
+        if header != TSV_COLUMNS:
+            # Ledger from an older column set: rewrite once under the current header.
+            write_rows(path, read_rows(path))
     new = not path.exists()
     with path.open("a", encoding="utf-8") as handle:
         if new:
@@ -361,16 +372,22 @@ def append_rows(root, rows):
 
 
 def read_rows(path):
+    """Rows keyed by the file's own header, so older ledgers stay readable."""
     try:
         lines = Path(path).read_text(encoding="utf-8").splitlines()
     except FileNotFoundError:
         return []
+    if not lines:
+        return []
+    header = lines[0].split("\t")
     rows = []
     for line in lines[1:]:
         parts = line.split("\t")
-        if len(parts) != len(TSV_COLUMNS):
+        if len(parts) != len(header):
             continue
-        rows.append(dict(zip(TSV_COLUMNS, parts)))
+        row = dict.fromkeys(TSV_COLUMNS, "")
+        row.update(zip(header, parts))
+        rows.append(row)
     return rows
 
 
@@ -383,6 +400,7 @@ def write_rows(path, rows):
 
 def rows_for(doc, hook, thresholds, graph_answers, context, note):
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    input_tokens = (doc.get("usage") or {}).get("input_tokens", "")
     rows = []
     for qid in hook["questions"]:
         judged = doc["answers"].get(qid, {})
@@ -404,6 +422,8 @@ def rows_for(doc, hook, thresholds, graph_answers, context, note):
             "sha": context.get("sha", ""),
             "ticket": context.get("ticket", ""),
             "note": note,
+            "input_tokens": input_tokens,
+            "latency_ms": doc.get("latency_ms", ""),
         })
     return rows
 
@@ -460,11 +480,37 @@ def to_yaml(doc):
     return "\n".join(lines) + "\n"
 
 
-def emit(doc, as_json):
-    if as_json:
+def j_line(doc):
+    """One overlay chat line, e.g. `J: path=debug_fix .88 ok · risk=elevated .61 -> fallback`."""
+    if doc.get("error"):
+        return "J: %s jev unavailable -> fallback [%s]" % (doc["hook"], doc["decision_id"])
+    parts = []
+    for qid, judged in doc["answers"].items():
+        if "noul" in judged:
+            shown = {"yes": "yes", "no": "no"}.get(judged.get("decisive"), "?")
+            text = "%s=%s %.2f" % (qid, shown, judged["noul"])
+        elif "confidence" in judged:
+            text = "%s=%s %.2f" % (qid, answer_value(judged), judged["confidence"])
+        else:
+            text = "%s=none" % qid
+        parts.append(text.replace(" 0.", " .") + (" ok" if judged.get("act") else " -> fallback"))
+    prefix = "J(shadow):" if doc["power"] == "shadow" else "J:"
+    return "%s %s %s [%s]" % (prefix, doc["hook"], " · ".join(parts), doc["decision_id"])
+
+
+def emit(doc, fmt):
+    if fmt == "json":
         print(json.dumps(doc, indent=2, ensure_ascii=False))
+    elif fmt == "line":
+        print(j_line(doc))
     else:
         sys.stdout.write(to_yaml(doc))
+
+
+def output_format(args):
+    if getattr(args, "json", False):
+        return "json"
+    return "line" if getattr(args, "line", False) else "yaml"
 
 
 # --- commands ---------------------------------------------------------------
@@ -490,49 +536,170 @@ def cmd_power(args):
     return 0
 
 
-def cmd_ask(args):
-    catalog = load_catalog()
-    hook = catalog.get(args.hook)
-    if not hook:
-        raise BulmaError(4, "unknown hook %r; known: %s" % (args.hook, ", ".join(sorted(catalog))))
-    state = load_json_file(args.state)
+# --- state builders ---------------------------------------------------------
+# Recipes from HOOKS.md that code can assemble from world.json and gh, so the
+# orchestrator does not hand-write them. Hooks that need graph-local evidence
+# (findings, comments, tickets) stay hand-built.
+
+def trim_world(world):
+    states = [
+        {"graph": s.get("graph", ""), "status": s.get("status", ""), "waiting_user": s.get("waiting_user", "")}
+        for s in world.get("states") or []
+    ]
+    return {"stack_top": world.get("stack_top"), "jobs": world.get("jobs") or {}, "states": states}
+
+
+def load_world(args, root):
+    path = Path(args.world) if args.world else root / ".ruver-bulma" / "world.json"
+    if not path.exists():
+        raise BulmaError(4, "no world.json at %s; run scripts/world.sh first" % path)
+    return load_json_file(path)
+
+
+def gh_pr_json(args, fields):
+    if args.pr_json:
+        return load_json_file(args.pr_json)
+    if not args.pr:
+        raise BulmaError(4, "needs --pr <number|url> or --pr-json FILE")
+    cmd = ["gh", "pr", "view", str(args.pr), "--json", fields]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    except FileNotFoundError:
+        raise BulmaError(4, "gh not found; pass --pr-json FILE")
+    except subprocess.CalledProcessError as err:
+        raise BulmaError(4, "gh pr view failed: %s" % err.stderr.strip()[:200])
+    return json.loads(result.stdout)
+
+
+def pr_paths(pr):
+    return [f.get("path", "") for f in pr.get("files") or []]
+
+
+def build_entry_route(args, root):
+    world = load_world(args, root)
+    state = {"args": args.args or "", "world": trim_world(world), "user_login": world.get("user") or ""}
+    if world.get("pr"):
+        state["pr"] = world["pr"]
+    return state, None
+
+
+def build_entry_next_step(args, root):
+    world = load_world(args, root)
+    candidates = [
+        {"id": c.get("id", ""), "target": c.get("target", ""), "why": c.get("why", "")}
+        for c in world.get("candidates") or []
+    ]
+    if args.resume:
+        candidates = [c for c in candidates if c["id"].startswith("resume:")]
+        if not candidates:
+            raise BulmaError(4, "resume: no resume:* candidate in world.json")
+    criteria = {"candidate": {c["id"]: c["why"] or c["target"] for c in candidates}}
+    return {"args": args.args or "", "candidates": candidates, "world": trim_world(world)}, criteria
+
+
+def build_review_risk(args, root):
+    pr = gh_pr_json(args, "title,body,files,changedFiles,additions,deletions")
+    return {
+        "pr_title": pr.get("title", ""),
+        "pr_body": (pr.get("body") or "")[:PR_BODY_CAP],
+        "files": pr_paths(pr),
+        "changed_files": pr.get("changedFiles", len(pr.get("files") or [])),
+        "churn": int(pr.get("additions") or 0) + int(pr.get("deletions") or 0),
+    }, None
+
+
+def build_failure_class(args, root):
+    if not args.check_name or not args.log_file:
+        raise BulmaError(4, "reviewer.failure_class needs --check-name and --log-file")
+    pr = gh_pr_json(args, "files,mergeable")
+    try:
+        lines = Path(args.log_file).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as err:
+        raise BulmaError(4, "cannot read %s: %s" % (args.log_file, err))
+    return {
+        "check_name": args.check_name,
+        "log_tail": "\n".join(lines[-LOG_TAIL_LINES:]),
+        "pr": {"files": pr_paths(pr)},
+        "same_fail_on_base": args.same_fail_on_base,
+        "mergeable": pr.get("mergeable", ""),
+    }, None
+
+
+BUILDERS = {
+    "entry.route": build_entry_route,
+    "entry.next_step": build_entry_next_step,
+    "review.risk": build_review_risk,
+    "reviewer.failure_class": build_failure_class,
+}
+
+
+def save_state(root, hook_id, state, criteria):
+    """Write the state (and dynamic criteria) under .ruver-bulma/state/, kept for humans."""
+    folder = Path(root) / ".ruver-bulma" / "state"
+    folder.mkdir(parents=True, exist_ok=True)
+    stamp = "%s-%s" % (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"), uuid.uuid4().hex[:4])
+    state_path = folder / ("%s-%s.json" % (hook_id, stamp))
+    state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    criteria_path = None
+    if criteria is not None:
+        criteria_path = folder / ("%s-%s.criteria.json" % (hook_id, stamp))
+        criteria_path.write_text(json.dumps(criteria, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return state_path, criteria_path
+
+
+def build_state(hook_id, args, root):
+    builder = BUILDERS.get(hook_id)
+    if not builder:
+        raise BulmaError(4, "no state builder for %s (have: %s); write the state per HOOKS.md" % (hook_id, ", ".join(sorted(BUILDERS))))
+    state, criteria = builder(args, root)
+    return save_state(root, hook_id, state, criteria)
+
+
+def cmd_state(args):
+    load_catalog()
+    state_path, criteria_path = build_state(args.hook, args, ruver_root(args.ruver_root))
+    print(state_path)
+    if criteria_path:
+        print(criteria_path)
+    return 0
+
+
+# --- ask --------------------------------------------------------------------
+
+def prepare(hook, state, cfg, power_flag, model, criteria):
+    """Validate and build one request. Raises BulmaError(4) before any network call."""
     if not isinstance(state, (dict, list, str)):
         raise BulmaError(4, "state must be a JSON object, array or string")
-    cfg = load_config()
-    power, source = resolve_power(args.power, hook["id"], cfg)
-    model = args.model or cfg.get("model") or DEFAULT_MODEL
-    criteria = load_json_file(args.criteria) if args.criteria else {}
+    power, source = resolve_power(power_flag, hook["id"], cfg)
     budget = {"remaining": TOTAL_CAP, "truncated": False}
-    clean_state = sanitize(state, budget)
-    request = build_request(hook, clean_state, model, criteria)
-    if args.dry_run:
-        print(json.dumps(request, indent=2, ensure_ascii=False))
-        return 0
-
+    request = build_request(hook, sanitize(state, budget), model, criteria)
     overrides = cfg.get("act_at", {})
     thresholds = {
         qid: effective_act_at(overrides.get("%s.%s" % (hook["id"], qid), q["act_at"]), power, q.get("direction", "act"))
         for qid, q in hook["questions"].items()
     }
     warnings = ["state missing key: %s" % k for k in missing_keys(state if isinstance(state, dict) else {}, hook["state_keys"])]
-    graph_answers = parse_kv(args.graph_answer)
-    context = parse_kv(args.context)
-    root = ruver_root(args.ruver_root)
     doc = {
         "hook": hook["id"], "decision_id": new_decision_id(hook["id"]), "model": model,
         "power": power, "power_source": source, "truncated": budget["truncated"], "warnings": warnings,
     }
+    return request, thresholds, doc
+
+
+def ask_one(hook, request, thresholds, doc, replay, graph_answers, context):
+    """Send one prepared request (or read a replay). Returns (doc, ledger rows, exit code)."""
+    started = time.monotonic()
     try:
-        response = load_json_file(args.replay) if args.replay else post_json("/systemone", request)
+        response = load_json_file(replay) if replay else post_json("/systemone", request)
     except BulmaError as err:
         if err.code != 3:
             raise
         doc["error"] = {"code": 3, "message": str(err)}
         doc["answers"] = {qid: {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]} for qid in hook["questions"]}
-        append_rows(root, rows_for(doc, hook, thresholds, graph_answers, context, ("error:" + str(err))[:80]))
-        emit(doc, args.json)
-        return 3
-    doc["model"] = response.get("model", model)
+        return doc, rows_for(doc, hook, thresholds, graph_answers, context, ("error:" + str(err))[:80]), 3
+    if not replay:
+        doc["latency_ms"] = int((time.monotonic() - started) * 1000)
+    doc["model"] = response.get("model", doc["model"])
     doc["answers"] = {}
     for qid, question in hook["questions"].items():
         raw = (response.get("answers") or {}).get(qid)
@@ -540,14 +707,95 @@ def cmd_ask(args):
             doc["warnings"].append("no answer for %s" % qid)
             doc["answers"][qid] = {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]}
             continue
-        judged = judge(question, raw, thresholds[qid], power, hook["id"])
+        judged = judge(question, raw, thresholds[qid], doc["power"], hook["id"])
         if not judged["act"]:
             judged["fallback"] = hook["fallback"]
         doc["answers"][qid] = judged
     doc["usage"] = response.get("usage", {})
-    append_rows(root, rows_for(doc, hook, thresholds, graph_answers, context, "truncated" if budget["truncated"] else ""))
-    emit(doc, args.json)
-    return 0
+    return doc, rows_for(doc, hook, thresholds, graph_answers, context, "truncated" if doc["truncated"] else ""), 0
+
+
+def find_hook(catalog, hook_id):
+    hook = catalog.get(hook_id)
+    if not hook:
+        raise BulmaError(4, "unknown hook %r; known: %s" % (hook_id, ", ".join(sorted(catalog))))
+    return hook
+
+
+def cmd_ask(args):
+    catalog = load_catalog()
+    hook = find_hook(catalog, args.hook)
+    root = ruver_root(args.ruver_root)
+    if args.build:
+        if args.state or args.criteria:
+            raise BulmaError(4, "--build writes the state itself; drop --state and --criteria")
+        state_path, criteria_path = build_state(hook["id"], args, root)
+    elif args.state:
+        state_path, criteria_path = args.state, args.criteria
+    else:
+        raise BulmaError(4, "ask needs --state FILE or --build")
+    cfg = load_config()
+    model = args.model or cfg.get("model") or DEFAULT_MODEL
+    criteria = load_json_file(criteria_path) if criteria_path else {}
+    request, thresholds, doc = prepare(hook, load_json_file(state_path), cfg, args.power, model, criteria)
+    if args.dry_run:
+        print(json.dumps(request, indent=2, ensure_ascii=False))
+        return 0
+    doc, rows, code = ask_one(hook, request, thresholds, doc, args.replay, parse_kv(args.graph_answer), parse_kv(args.context))
+    append_rows(root, rows)
+    emit(doc, output_format(args))
+    return code
+
+
+def batch_items(path):
+    data = load_json_file(path)
+    items = data.get("items") if isinstance(data, dict) else data
+    if not isinstance(items, list) or not items:
+        raise BulmaError(4, "batch file needs a non-empty list, or {\"items\": [...]}")
+    shared = data.get("context", {}) if isinstance(data, dict) else {}
+    return items, shared
+
+
+def kv_map(value, where):
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise BulmaError(4, "%s must be an object of key: value" % where)
+    return {str(k): str(v) for k, v in value.items()}
+
+
+def cmd_ask_many(args):
+    """Many asks in one process: validate all, send in parallel, log once, one line each."""
+    catalog = load_catalog()
+    cfg = load_config()
+    model = args.model or cfg.get("model") or DEFAULT_MODEL
+    items, shared = batch_items(args.batch)
+    base_context = dict(kv_map(shared, "context"), **parse_kv(args.context))
+    jobs = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict) or "hook" not in item or "state" not in item:
+            raise BulmaError(4, "item %d needs hook and state" % index)
+        hook = find_hook(catalog, item["hook"])
+        state = item["state"] if isinstance(item["state"], (dict, list)) else load_json_file(item["state"])
+        criteria = item.get("criteria") or {}
+        if isinstance(criteria, str):
+            criteria = load_json_file(criteria)
+        request, thresholds, doc = prepare(hook, state, cfg, args.power, model, criteria)
+        context = dict(base_context, **kv_map(item.get("context"), "item %d context" % index))
+        jobs.append((str(item.get("id", index)), hook, request, thresholds, doc, item.get("replay"),
+                     kv_map(item.get("graph_answer"), "item %d graph_answer" % index), context))
+    workers = max(1, min(args.workers, len(jobs)))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(lambda job: (job[0],) + ask_one(*job[1:]), jobs))
+    rows = [row for _, _, item_rows, _ in results for row in item_rows]
+    append_rows(ruver_root(args.ruver_root), rows)
+    code = max(item_code for _, _, _, item_code in results)
+    if args.json:
+        print(json.dumps([dict(doc, id=item_id) for item_id, doc, _, _ in results], indent=2, ensure_ascii=False))
+    else:
+        for item_id, doc, _, _ in results:
+            print("%s %s" % (item_id, j_line(doc)))
+    return code
 
 
 def python_ok():
@@ -728,10 +976,31 @@ def cmd_report(args):
     if len(models) > 1:
         print()
         print("note: %d model ids in these rows (%s). Pin one with `bulma.py model set <id>` once thresholds are tuned." % (len(models), ", ".join(models)))
+    calls = {}
+    for row in rows:
+        calls.setdefault(row["decision_id"], row)
+    tokens = [int(r["input_tokens"]) for r in calls.values() if r["input_tokens"].isdigit()]
+    latencies = sorted(int(r["latency_ms"]) for r in calls.values() if r["latency_ms"].isdigit())
+    if tokens or latencies:
+        print()
+        print("calls: %d · input_tokens: %d (avg %d) · latency p50 %s ms, max %s ms" % (
+            len(calls), sum(tokens), sum(tokens) // len(tokens) if tokens else 0,
+            latencies[len(latencies) // 2] if latencies else "-", latencies[-1] if latencies else "-"))
     shadow = sum(1 for r in rows if r["power"] == "shadow")
     if shadow and shadow * 2 > len(rows):
         print("note: %d of %d rows ran under shadow; agree%% is the only live signal there." % (shadow, len(rows)))
     return 0
+
+
+def add_builder_args(p):
+    p.add_argument("--args", default="", help="raw /bulma args (entry.*)")
+    p.add_argument("--world", help="world.json path; default .ruver-bulma/world.json")
+    p.add_argument("--resume", action="store_true", help="entry.next_step: keep only resume:* candidates")
+    p.add_argument("--pr", help="PR number or URL for gh pr view")
+    p.add_argument("--pr-json", help="gh pr view --json output, instead of calling gh")
+    p.add_argument("--check-name")
+    p.add_argument("--log-file", help="failed check log; the last %d lines are sent" % LOG_TAIL_LINES)
+    p.add_argument("--same-fail-on-base", default="unknown", choices=["yes", "no", "unknown"])
 
 
 def build_parser():
@@ -749,9 +1018,18 @@ def build_parser():
     p.add_argument("--power")
     p.set_defaults(func=cmd_power)
 
+    p = sub.add_parser("state", help="build a hook's state file from world.json / gh and print its path")
+    p.add_argument("hook")
+    add_builder_args(p)
+    p.add_argument("--ruver-root")
+    p.set_defaults(func=cmd_state)
+
     p = sub.add_parser("ask", help="ask Jev one hook's questions")
     p.add_argument("hook")
-    p.add_argument("--state", required=True)
+    p.add_argument("--state")
+    p.add_argument("--build", action="store_true", help="build the state in code (see `state`) instead of --state")
+    add_builder_args(p)
+    p.add_argument("--line", action="store_true", help="print one J: chat line")
     p.add_argument("--power")
     p.add_argument("--model")
     p.add_argument("--criteria")
@@ -762,6 +1040,16 @@ def build_parser():
     p.add_argument("--ruver-root")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_ask)
+
+    p = sub.add_parser("ask-many", help="ask many hooks/states in parallel from one batch file")
+    p.add_argument("--batch", required=True, help='JSON: [{"id","hook","state","criteria","graph_answer","context","replay"}]')
+    p.add_argument("--power")
+    p.add_argument("--model")
+    p.add_argument("--context", action="append", default=[])
+    p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--ruver-root")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_ask_many)
 
     p = sub.add_parser("doctor", help="check python, key, catalog, config, and the Jev endpoint")
     p.add_argument("--json", action="store_true")

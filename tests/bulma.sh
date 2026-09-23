@@ -121,17 +121,17 @@ python3 "$BULMA" ask fd.triage --state "$TMP/big.json" --replay "$FIX/replay-fd-
 [[ "$(jget "$J" truncated)" == "true" ]] || fail "truncated flag not set on 20k string"
 ok redact-truncate
 
-# --- ledger: header once, one row per question, 17 columns, no tabs in values ---
+# --- ledger: header once, one row per question, 19 columns, no tabs in values ---
 TSV="$RR/.ruver-bulma/DECISIONS.tsv"
 need "$TSV"
 python3 - "$TSV" <<'PY'
 import sys
 lines = open(sys.argv[1], encoding="utf-8").read().rstrip("\n").split("\n")
 header = lines[0].split("\t")
-assert header == ["ts_iso","decision_id","hook","question","power","model","answer","confidence","act_at","acted","graph_answer","outcome","repo","pr","sha","ticket","note"], header
+assert header == ["ts_iso","decision_id","hook","question","power","model","answer","confidence","act_at","acted","graph_answer","outcome","repo","pr","sha","ticket","note","input_tokens","latency_ms"], header
 assert lines.count(lines[0]) == 1, "header repeated"
 rows = [l.split("\t") for l in lines[1:]]
-assert all(len(r) == 17 for r in rows), [len(r) for r in rows]
+assert all(len(r) == 19 for r in rows), [len(r) for r in rows]
 # runs so far: fd.triage x5 (4 rows each) + policy.ask x2 (2 rows) + next_step x1 (2 rows) = 26
 assert len(rows) == 26, len(rows)
 first = rows[0]
@@ -142,8 +142,73 @@ shadow = [r for r in rows if r[4] == "shadow"]
 assert shadow and all(r[9] == "false" for r in shadow), shadow
 big = [r for r in rows if r[16] == "truncated"]
 assert len(big) == 4, len(big)
+assert first[17] == "1412", first  # usage.input_tokens from the replay
+assert all(r[18] == "" for r in rows), "replays carry no latency"
 PY
 ok ledger
+
+# --- older 17-column ledger: report reads it, next ask migrates it ---
+OLD="$TMP/old"
+mkdir -p "$OLD/.ruver-bulma"
+printf 'ts_iso\tdecision_id\thook\tquestion\tpower\tmodel\tanswer\tconfidence\tact_at\tacted\tgraph_answer\toutcome\trepo\tpr\tsha\tticket\tnote\n2026-09-01T10:00:00Z\told1\tfd.triage\tpath\tbalanced\tjev-1.13.0\tdebug_fix\t0.9\t0.75\ttrue\t\t\to/r\t\t\t\t\n' >"$OLD/.ruver-bulma/DECISIONS.tsv"
+out="$(python3 "$BULMA" report --repo-only --ruver-root "$OLD")"
+grep -E -q '^\| fd\.triage\.path +\| 1 ' <<<"$out" || fail "report must read a 17-column ledger: $out"
+python3 "$BULMA" ask fd.triage --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-fd-triage.json" --ruver-root "$OLD" --json >/dev/null || fail "ask on old ledger"
+python3 - "$OLD/.ruver-bulma/DECISIONS.tsv" <<'PY'
+import sys
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+assert lines[0].endswith("\tinput_tokens\tlatency_ms"), lines[0]
+assert len(lines) == 6 and all(len(l.split("\t")) == 19 for l in lines), [len(l.split("\t")) for l in lines]
+assert lines[1].split("\t")[1] == "old1"
+PY
+out="$(python3 "$BULMA" report --repo-only --ruver-root "$OLD")"
+grep -F -q 'calls: 2 · input_tokens: 1412' <<<"$out" || fail "report cost line: $out"
+ok ledger-migrate
+
+# --- --line prints the overlay J: line ---
+out="$(python3 "$BULMA" ask fd.triage --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-fd-triage.json" --ruver-root "$RR" --line)"
+grep -E -q '^J: fd\.triage work_kind=bug \.91 ok · path=debug_fix \.88 ok · risk=elevated \.61 -> fallback · scope=backend_only \.79 ok \[[0-9TZ]+-fd\.triage-[0-9a-f]{4}\]$' <<<"$out" || fail "J line: $out"
+out="$(python3 "$BULMA" ask policy.ask --state "$FIX/state-policy-ask.json" --replay "$FIX/replay-policy-ask.json" --power shadow --ruver-root "$RR" --line)"
+grep -E -q '^J\(shadow\): policy\.ask important=yes \.72 -> fallback · uncertain=\? \.40 -> fallback' <<<"$out" || fail "shadow J line: $out"
+ok ask-line
+
+# --- ask-many: validates first, runs in parallel, one line per item, one ledger append ---
+MR="$TMP/mroot"
+python3 - "$TMP/batch.json" "$FIX" <<'PY'
+import json, sys
+fix = sys.argv[2]
+json.dump({"context": {"repo": "o/r", "pr": "805"}, "items": [
+    {"id": "c1", "hook": "fd.triage", "state": fix + "/state-fd-triage.json", "replay": fix + "/replay-fd-triage.json", "graph_answer": {"path": "debug_fix"}},
+    {"id": "c2", "hook": "policy.ask", "state": json.load(open(fix + "/state-policy-ask.json")), "replay": fix + "/replay-policy-ask.json"},
+    {"id": "c3", "hook": "entry.next_step", "state": fix + "/state-fd-triage.json", "criteria": fix + "/criteria-next-step.json", "replay": fix + "/replay-next-step.json"},
+]}, open(sys.argv[1], "w"))
+PY
+out="$(python3 "$BULMA" ask-many --batch "$TMP/batch.json" --ruver-root "$MR")"
+[[ "$(wc -l <<<"$out" | tr -d ' ')" == "3" ]] || fail "ask-many lines: $out"
+grep -E -q '^c1 J: fd\.triage .*path=debug_fix \.88 ok' <<<"$out" || fail "ask-many c1: $out"
+grep -E -q '^c2 J: policy\.ask important=yes \.72 ok' <<<"$out" || fail "ask-many c2: $out"
+grep -E -q '^c3 J: entry\.next_step candidate=resume:dev-4772' <<<"$out" || fail "ask-many c3: $out"
+python3 - "$MR/.ruver-bulma/DECISIONS.tsv" <<'PY'
+import sys
+rows = [l.split("\t") for l in open(sys.argv[1], encoding="utf-8").read().splitlines()[1:]]
+assert len(rows) == 4 + 2 + 2, len(rows)
+assert all(r[12] == "o/r" and r[13] == "805" for r in rows), "shared context"
+assert [r[10] for r in rows if r[3] == "path"] == ["debug_fix"], "per-item graph_answer"
+assert len({r[1] for r in rows}) == 3, "one decision id per item"
+PY
+python3 "$BULMA" ask-many --batch "$TMP/batch.json" --ruver-root "$MR" --json >"$J" || fail "ask-many --json"
+[[ "$(jget "$J" 1.id)" == "c2" ]] || fail "ask-many --json keeps item order and ids"
+python3 - "$TMP/bad.json" "$FIX" <<'PY'
+import json, sys
+fix = sys.argv[2]
+json.dump([{"hook": "fd.triage", "state": fix + "/state-fd-triage.json", "replay": fix + "/replay-fd-triage.json"},
+           {"hook": "entry.next_step", "state": fix + "/state-fd-triage.json"}], open(sys.argv[1], "w"))
+PY
+before="$(wc -l <"$MR/.ruver-bulma/DECISIONS.tsv")"
+set +e; python3 "$BULMA" ask-many --batch "$TMP/bad.json" --ruver-root "$MR" >/dev/null 2>&1; code=$?; set -e
+[[ "$code" -eq 4 ]] || fail "bad batch item must exit 4 before any ask, got $code"
+[[ "$(wc -l <"$MR/.ruver-bulma/DECISIONS.tsv")" == "$before" ]] || fail "bad batch must not log anything"
+ok ask-many
 
 # --- doctor without key: exit 2, names the variable, never leaks a key ---
 set +e
@@ -244,6 +309,31 @@ ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(op
 [[ "$ids" == "resume:dev-4772 qa:qa-pr-790 nothing" ]] || fail "state-only candidates: $ids"
 [[ ! -e "$FIX/world/.ruver-bulma/world.json" ]] || fail "world.sh wrote into the fixture root despite --out"
 ok world
+
+# --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---
+SR="$TMP/sroot"
+PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh for builders"
+out="$(python3 "$BULMA" state entry.route --args "review https://github.com/o/r/pull/805" --world "$W" --ruver-root "$SR")"
+[[ -f "$out" && "$out" == */sroot/.ruver-bulma/state/entry.route-*.json ]] || fail "state path: $out"
+[[ "$(jget "$out" world.stack_top)" == "qa" ]] || fail "entry.route world.stack_top"
+[[ "$(jget "$out" user_login)" == "ruverd" ]] || fail "entry.route user_login"
+python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); w=d["world"]; assert "prs" not in w and "candidates" not in w, w; assert set(w["states"][0]) == {"graph","status","waiting_user"}' "$out" || fail "entry.route world trim"
+paths="$(python3 "$BULMA" state entry.next_step --resume --world "$W" --ruver-root "$SR")"
+[[ "$(wc -l <<<"$paths" | tr -d ' ')" == "2" ]] || fail "next_step prints state and criteria: $paths"
+crit="$(tail -1 <<<"$paths")"
+[[ "$(python3 -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1]))["candidate"]))' "$crit")" == "resume:dev-4772" ]] || fail "resume filters criteria"
+out="$(python3 "$BULMA" state review.risk --pr-json "$FIX/pr-805.json" --ruver-root "$SR")"
+[[ "$(jget "$out" churn)" == "140" ]] || fail "review.risk churn"
+[[ "$(jget "$out" files.1)" == "api/inbox.py" ]] || fail "review.risk files"
+out="$(python3 "$BULMA" state reviewer.failure_class --pr-json "$FIX/pr-805.json" --check-name test --log-file "$FIX/ci-fail.log" --ruver-root "$SR")"
+[[ "$(jget "$out" mergeable)" == "MERGEABLE" ]] || fail "failure_class mergeable"
+[[ "$(jget "$out" same_fail_on_base)" == "unknown" ]] || fail "failure_class same_fail_on_base default"
+python3 -c 'import json,sys; t=json.load(open(sys.argv[1]))["log_tail"].splitlines(); assert len(t) == 200 and t[-1] == "line 260: FAILED test_inbox", t[-1]' "$out" || fail "log_tail keeps last 200 lines"
+if python3 "$BULMA" state qa.gate --ruver-root "$SR" >/dev/null 2>&1; then fail "qa.gate has no builder and must exit 4"; fi
+python3 "$BULMA" ask review.risk --build --pr-json "$FIX/pr-805.json" --ruver-root "$SR" --dry-run >"$J" || fail "ask --build dry-run"
+grep -F -q '"churn": 140' "$J" || fail "ask --build sends the built state"
+if python3 "$BULMA" ask review.risk --build --state "$FIX/state-fd-triage.json" --ruver-root "$SR" --dry-run >/dev/null 2>&1; then fail "--build with --state must exit 4"; fi
+ok state-builders
 
 # --- graph files and text invariants ---
 for f in SKILL.md GRAPH.md STATE.schema.md ARGS.md POWER.md REQUIREMENTS.md templates/STATE.md \
