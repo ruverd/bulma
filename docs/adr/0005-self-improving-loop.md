@@ -39,22 +39,32 @@ Decision, in order:
 2. **Collection.** `ruver-lstm` and `ruver-reviewer` append one
    observation per human comment they process, using the existing schema.
    Without this, step 1 has nothing to verify against.
-3. **Reconcile, then watchdog.** Reconcile first: a job whose PR `gh`
-   reports merged or closed becomes terminal. Then list stalled jobs with
-   their concrete next step, and resume only when the worktree still
-   exists. Report-only by default. The host scheduler runs it.
+3. **Reconcile, then watchdog: `/bulma watch`.** Scans every workspace
+   under `$RUVER_HOME`. A PR that `gh` reports merged or closed counts as
+   finished upstream and is cached in `$RUVER_HOME/bulma-watch.json`. It
+   never edits the other graph's STATE. A missing workspace directory is
+   orphaned. Everything else is listed with its next command. Report only.
+   The host scheduler runs it. On the first real run, most of the jobs that
+   looked stalled were PRs already merged or closed on GitHub.
 4. **Process lens of the lookback.** Once reconcile makes state
    trustworthy, cluster where runs die (node, status, lap count from the
    `ruver report` ledger) and propose graph edits the same way.
 
-Neither loop needs Jev, so neither lives inside `bulma`, which requires
-`TYPESAFE_API_KEY`. Target shape: a `ruver-lookback` graph, host-agnostic
-like the others.
+Both loops live in `bulma`, the single entry point: the other graphs
+become stages bulma loads, not commands a user types. Neither loop needs
+Jev, so both are local verbs (`watch`, `lookback`) that run without
+`TYPESAFE_API_KEY` or `doctor`, like `report`. Observation collection
+stays in the `ruver-lstm` and `ruver-reviewer` nodes, because those are
+the only places that read review comments.
+
+Deferred, not rejected: product-signal intake (error trackers, chat,
+issues). `bulma` is heading toward a software factory, and intake is the
+factory's front door. It waits until the watchdog and lookback make the
+internal loop trustworthy, because more input into an unreliable loop only
+multiplies stalled work.
 
 Rejected for now:
 
-- Product-signal intake (error trackers, chat, issues): that is a product
-  factory, not a skill marketplace.
 - Policy-based auto-merge: `never_merge` is a design rule.
 - A separate human-decision digest: no `waiting_user` job sat longer than
   three days, so it becomes a section of the watchdog report.
@@ -63,4 +73,4 @@ Rejected for now:
 - Recurrence memory inside triage: it ran 15 times. It comes for free once
   the lookback exists.
 
-Open: whether the watchdog may resume on its own, or only report.
+Open: whether the watchdog may resume on its own. It only reports for now.
