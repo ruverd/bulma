@@ -24,10 +24,11 @@ their PRs, so the lookback targets skills, not product code.
 
 Decision, in order:
 
-1. **Quality lookback.** Cluster what human reviewers caught and agents
+1. **Quality lookback: `/bulma lookback`.** Cluster what human reviewers caught and agents
    missed, compare each cluster against the current skill text, and
    output one proposed skill diff per real gap, shipped as a PR to this
-   repo. Never self-applied. Verification is the same count on the next
+   repo. Never self-applied. Each cluster names the skill section that
+   guards it. Verification is the same count on the next
    window, normalized per PR. A cluster that does not shrink means the
    change failed, and the fix is to reopen that change, not to add a
    second rule. Repo-specific patterns (a vendor SDK quirk, a project's

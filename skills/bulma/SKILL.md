@@ -2,7 +2,7 @@
 name: bulma
 category: graph
 description: Jev-gated router and overlay for ruver graphs. Use when /bulma.
-argument-hint: "<empty | ticket | PR url | text | power <level> | report | watch | resume>"
+argument-hint: "<empty | ticket | PR url | text | power <level> | report | watch | lookback | resume>"
 ---
 
 # Bulma (graph)
@@ -38,8 +38,8 @@ Details: [REQUIREMENTS.md](REQUIREMENTS.md).
 1. Load `ruver-memory`. Resolve `$RUVER_ROOT`. Init `.ruver-bulma/STATE.md`
    from [templates/STATE.md](templates/STATE.md) unless one is live.
 2. Parse args with [ARGS.md](ARGS.md) **before** any Jev call. Local verbs
-   (`power`, `tune`, `model`, `report`, `status`, `doctor`, `watch`) run and
-   stop.
+   (`power`, `tune`, `model`, `report`, `status`, `doctor`, `watch`,
+   `lookback`) run and stop.
 3. Walk [GRAPH.md](GRAPH.md): **admit → inventory → route → overlay → done**.
 
 ## Routing
@@ -71,6 +71,15 @@ and lists stalled work, work that needs the user, and orphaned work, each with
 its next command. It reconciles against GitHub first, so a PR that already
 merged is not reported as stuck. Report only, no key.
 [nodes/watch.md](nodes/watch.md).
+
+## Lookback
+
+`/bulma lookback` counts what human reviewers caught and the graphs missed, by
+cluster, per reviewed PR, against the previous window of the same length. Each
+cluster names the skill section meant to stop it, so a cluster that does not
+shrink after that section changed shows the change failed. It proposes skill
+edits and opens a draft PR only after the user says yes. No key.
+[nodes/lookback.md](nodes/lookback.md).
 
 ## Power
 

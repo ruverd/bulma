@@ -7,8 +7,8 @@
 
 1. Load `ruver-memory` (both files). Resolve `$RUVER_ROOT` (DISK.md).
 2. Parse args with `../ARGS.md`. `power`, `tune`, `model` → **power**.
-   `report`, `status`, `doctor` → **report**. `watch` → **watch**. These need
-   no key.
+   `report`, `status`, `doctor` → **report**. `watch` → **watch**. `lookback` →
+   **lookback**. These need no key.
 3. Otherwise run `python3 scripts/bulma.py doctor`.
    - exit 0 → continue.
    - exit 2 or 3 → print the script's message in the chat language, write
