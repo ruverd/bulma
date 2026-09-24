@@ -84,4 +84,15 @@ Rejected for now:
 - Recurrence memory inside triage: it ran 15 times. It comes for free once
   the lookback exists.
 
-Open: whether the watchdog may resume on its own. It only reports for now.
+Decided (2026-09-24): the watchdog only reports. On the day it shipped,
+auto-resume would have applied to one stalled item, because items that need
+the user and orphaned items cannot be resumed. The risks are pushing old work
+onto a branch that moved, spending tokens on work abandoned on purpose, and
+colliding with a live session in the same worktree. Revisit when
+`/bulma watch` regularly shows three or more stalled items. Scheduling the
+report (`/loop 6h /bulma watch`) is the supported middle ground.
+
+`insight.classify` was promoted to `balanced` the same day. In a sample of 10
+of the 37 confident labels that disagreed with the regex, the regex had
+matched on a stray word (`emit`, `sibling`, `pagination`) and Jev picked the
+right cluster in all 10.
