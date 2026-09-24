@@ -317,6 +317,59 @@
           "enum_source": "bulma/scripts/dispatch.py"
         }
       }
+    },
+    {
+      "id": "insight.classify",
+      "graph": "bulma",
+      "node": "lookback",
+      "stakes": "low",
+      "fallback": "regex clusters in lookback.py; every row counts; no lesson target",
+      "state_keys": ["pattern", "axis", "severity", "keywords", "source"],
+      "questions": {
+        "cluster": {
+          "type": "choice",
+          "field": "cluster",
+          "instructions": "`pattern` is one generalized sentence a human code reviewer taught on a pull request. Which defect class does it belong to? Judge the defect, not the vocabulary. Pick `other` when none fits well.",
+          "criteria": {
+            "sibling-path parity": "A guard, fix, header, or registry entry exists on one path while a sibling path (another commit path, CASE arm, bulk branch, second registry, inverse operation) still lacks it.",
+            "multi-store write / side effect": "A write spans two stores or a provider plus a local table, and partial failure, retry, or redelivery leaves bad state or emits an audit, event, or webhook twice.",
+            "test that cannot fail": "A test that passes no matter what: setup inside the try under test, an assertion no value breaks, a skip or env gate CI never enables, a spy never asserted.",
+            "unvalidated input into typed column": "User input reaches a typed column or schema (uuid, int, enum) without a format check, so a bad value becomes a server error.",
+            "reviewer self-defect": "The automated reviewer itself was wrong: wrong line, code that predates the PR, a finding a human already cleared, an invented path, or a duplicate.",
+            "acceptance-criteria completeness": "An acceptance criterion is unmet, only partly met, silently deferred, or an inventory claim was not checked against the source.",
+            "authz / privilege": "Authorization or authentication is weak: role rank not checked, fail-open, open redirect, static OAuth state, token issuer too broad.",
+            "silent catch / no error report": "An error is caught and swallowed, or logged without reaching the error tracker, so production failures stay invisible.",
+            "effect lifecycle": "A UI effect or subscription misses cleanup, cancellation, or a guard, so it leaks, re-fires, or updates after unmount.",
+            "pagination / unbounded": "A list or query has no limit, or paging mishandles the empty or last page.",
+            "tenant / cache-key isolation": "Data or cache keys are not scoped by tenant or session, so one user can see another's data.",
+            "other": "None of the classes above fits."
+          },
+          "act_at": 0.70,
+          "enum_source": "bulma/scripts/lookback.py"
+        },
+        "generalizable": {
+          "type": "noul",
+          "instructions": "Would this lesson prevent a defect in future, unrelated pull requests? A matter of taste, a one-off product decision, or a note about one feature is not.",
+          "criteria": {
+            "true": "A reusable rule that would catch or prevent the same defect class elsewhere.",
+            "false": "Taste, a product decision, or specific to one feature; teaches nothing reusable."
+          },
+          "act_at": 0.75
+        },
+        "lesson_for": {
+          "type": "choice",
+          "field": "lesson_for",
+          "instructions": "Where should this lesson live so it stops recurring? Prefer the implementer when the defect could have been avoided while writing the code. Choose repo_rule when it depends on this codebase's stack, vendors, or conventions.",
+          "criteria": {
+            "implementer": "A general coding rule the implementing agent should follow before any review, e.g. update every sibling path, keep tests able to fail.",
+            "reviewer": "Only detectable by reading the whole diff against its context; a check for the reviewing agent.",
+            "repo_rule": "Specific to this repository's stack, vendor SDK, or conventions; belongs in the repo's CLAUDE.md or AGENTS.md.",
+            "none": "Not worth writing down anywhere."
+          },
+          "act_at": 0.70,
+          "enum_source": "bulma/scripts/lookback.py"
+        }
+      }
     }
   ]
 }

@@ -32,7 +32,7 @@ API = "https://api.typesafe.ai/v1"
 DEFAULT_MODEL = "jev-1.13.0"
 LEVELS = {"shadow": None, "cautious": 0.10, "balanced": 0.0, "bold": -0.10}
 # Hooks that stay under this level until power_by_hook, env or flag names one.
-HOOK_DEFAULT_POWER = {"dispatch.tier": "shadow"}
+HOOK_DEFAULT_POWER = {"dispatch.tier": "shadow", "insight.classify": "shadow"}
 FLOOR = 0.50
 CEIL = 0.99
 PER_KEY_CAP = 8000

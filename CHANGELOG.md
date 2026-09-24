@@ -8,6 +8,13 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- `/bulma lookback --classify`: a new hook, `insight.classify`, has Jev label
+  each missed observation with a cluster, whether the lesson generalizes, and
+  where it should live (`implementer`, `reviewer`, `repo_rule`, `none`). Raw
+  answers are cached in `insights/labels.jsonl` per catalog version and judged
+  at read time with the current power. The hook defaults to `shadow`: labels
+  are logged and the table stays regex-only until you promote it. The table
+  gains a `lesson` column.
 - `/bulma lookback [--since N|DATE]`: counts the human-review misses in
   `observations.jsonl` by cluster, per reviewed PR, against the previous
   window of the same length. Each cluster names the skill section that should

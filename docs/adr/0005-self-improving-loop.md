@@ -37,6 +37,13 @@ Decision, in order:
    and found four gaps in `ruver-code-review` (sibling-path parity,
    multi-store partial failure, tests that cannot fail, unvalidated input
    into typed columns). One cluster was already fixed by `bind-findings.py`.
+   Jev labels each observation (`insight.classify`): its cluster, whether
+   it generalizes, and whether the lesson belongs to the implementer, the
+   reviewer, or the repo's own rules. A lesson that could have been avoided
+   while writing the code goes to the coder, not only to review. Jev is
+   used per observation, where volume allows calibration, and not to
+   decide whether a whole cluster deserves a change: that stays a
+   threshold plus the user's yes.
 2. **Collection.** `ruver-lstm` and `ruver-reviewer` append one
    observation per human comment they process, using the existing schema.
    Without this, step 1 has nothing to verify against.
