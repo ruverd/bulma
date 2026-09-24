@@ -13,6 +13,7 @@ this table **before** any Jev call. Trim, then match in order.
 | `report [--hook H] [--since D] [--repo-only]` | calibration table; stop |
 | `status` | STATE + power + last five ledger rows; stop |
 | `doctor` | run doctor and print; stop |
+| `watch [--stale-hours N] [--no-gh]` | stalled work across every workspace; stop |
 | `resume` | **inventory** → `entry.next_step` restricted to `resume:*` candidates |
 | tracker id `[A-Z][A-Z0-9]+-\d+` or tracker issue URL | **developer** directly, no Jev |
 | only PR or MR URLs, or `owner/repo#N` (one or more) | **inventory** per PR → **qa** when `pr.author_is_user`, else **reviewer**; no Jev |
@@ -34,5 +35,6 @@ Examples:
 /bulma power cautious
 /bulma tune fd.triage.path 0.70
 /bulma report --hook lstm.verify
+/bulma watch
 /bulma --power bold
 ```

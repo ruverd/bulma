@@ -2,7 +2,7 @@
 name: bulma
 category: graph
 description: Jev-gated router and overlay for ruver graphs. Use when /bulma.
-argument-hint: "<empty | ticket | PR url | text | power <level> | report | resume>"
+argument-hint: "<empty | ticket | PR url | text | power <level> | report | watch | resume>"
 ---
 
 # Bulma (graph)
@@ -38,7 +38,8 @@ Details: [REQUIREMENTS.md](REQUIREMENTS.md).
 1. Load `ruver-memory`. Resolve `$RUVER_ROOT`. Init `.ruver-bulma/STATE.md`
    from [templates/STATE.md](templates/STATE.md) unless one is live.
 2. Parse args with [ARGS.md](ARGS.md) **before** any Jev call. Local verbs
-   (`power`, `tune`, `model`, `report`, `status`, `doctor`) run and stop.
+   (`power`, `tune`, `model`, `report`, `status`, `doctor`, `watch`) run and
+   stop.
 3. Walk [GRAPH.md](GRAPH.md): **admit → inventory → route → overlay → done**.
 
 ## Routing
@@ -62,6 +63,14 @@ stops. Contract: [nodes/overlay.md](nodes/overlay.md).
 Workers: the overlay also picks the tier each coder worker runs on
 (`dispatch.tier`), escalates it on a fail, and never lowers a gate.
 [DISPATCH.md](DISPATCH.md).
+
+## Watch
+
+`/bulma watch` checks every workspace under `$RUVER_HOME`, not just this repo,
+and lists stalled work, work that needs the user, and orphaned work, each with
+its next command. It reconciles against GitHub first, so a PR that already
+merged is not reported as stuck. Report only, no key.
+[nodes/watch.md](nodes/watch.md).
 
 ## Power
 
@@ -90,5 +99,6 @@ One `J:` line per hook while the overlay runs, for example
   `../ruver-feature-delivery/DECISION_POLICY.md`.
 - Send full files to Jev. Caps are in HOOKS.md.
 - Run any hook before `doctor` passed in this run.
-- Write outside `$RUVER_ROOT/.ruver-bulma/` and `$RUVER_HOME/bulma.json`.
+- Write outside `$RUVER_ROOT/.ruver-bulma/`, `$RUVER_HOME/bulma.json`, and
+  `$RUVER_HOME/bulma-watch.json`.
 - Print `TYPESAFE_API_KEY`.

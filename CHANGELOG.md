@@ -12,6 +12,12 @@ Notable changes per release. Format follows
   sibling paths missing a guard the PR adds, multi-store writes on partial
   failure or redelivery, tests that cannot fail, and unvalidated input into
   typed columns. ADR 0005 records the self-improving loop behind it.
+- `/bulma watch`: a watchdog over every workspace under `$RUVER_HOME`. It
+  reconciles each PR with GitHub (merged or closed counts as finished and is
+  cached in `bulma-watch.json`), marks workspaces whose directory is gone as
+  orphaned, and prints the next command for the rest. Report only, no key.
+  `/bulma` inventory prints a one-line summary when other workspaces are
+  stalled.
 - `ruver-lstm` and `ruver-reviewer` record one observation per human review
   comment in `$RUVER_HOME/insights/observations.jsonl`
   (`ruver-bus/INSIGHTS.md`, `ruver-bus/scripts/observe.py`). Whether our
