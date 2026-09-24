@@ -102,7 +102,7 @@ output.
 
 ## Configuration at a glance
 
-Everything lives in `~/.ruver/bulma.json`. `bulma.py` writes it, so do not edit
+Everything lives in `~/.bulma/bulma.json`. `bulma.py` writes it, so do not edit
 it by hand. It is shared by every repo on the machine.
 
 ```json
@@ -125,7 +125,7 @@ it by hand. It is shared by every repo on the machine.
 
 Details: [POWER.md](skills/bulma/POWER.md) · [DISPATCH.md](skills/bulma/DISPATCH.md).
 Per-repo product policy (test commands, reviewers, sibling repos) stays in the
-target repo: [PRODUCT.md](skills/ruver-feature-delivery/PRODUCT.md).
+target repo: [PRODUCT.md](skills/bulma-feature-delivery/PRODUCT.md).
 
 ## Installation
 
@@ -133,16 +133,16 @@ target repo: [PRODUCT.md](skills/ruver-feature-delivery/PRODUCT.md).
 curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash
 ```
 
-Needs `git` and `curl`. macOS, Linux, and WSL. `ruver setup` also
+Needs `git` and `curl`. macOS, Linux, and WSL. `bulma setup` also
 installs [agent-browser](https://agent-browser.dev/) (Homebrew, else
 the official binary or npm) and Chrome, and warns if `gh` is older
-than 2.99 (`--attach`). Plugin install does not; run `ruver setup`
+than 2.99 (`--attach`). Plugin install does not; run `bulma setup`
 for that CLI.
 
 Install uses symlinks for Grok, Claude, and Cursor homes. When Codex is
 installed, shared `~/.agents` home gets managed copies because its plugin
 detector namespaces symlink targets below `plugin.json`; installing a second
-copy under `~/.codex/skills` would duplicate every skill. `ruver update`
+copy under `~/.codex/skills` would duplicate every skill. `bulma update`
 refreshes managed copies. Windows Git Bash turns
 `ln -s` into a silent copy unless
 Developer Mode is on and `MSYS=winsymlinks:nativestrict` is set, so `setup`
@@ -150,47 +150,46 @@ checks whether symlinks actually work and refuses rather than installing
 something that will never update. WSL is the supported path on Windows.
 
 That clones the repo, installs `skills/<name>` into `~/.agents/skills` and each
-detected host, and puts `ruver` on your PATH.
+detected host, and puts `bulma` on your PATH.
 
 ```bash
-ruver update     # git pull --ff-only main, then relink
-ruver status     # plugin health, then cwd job Walk if STATE exists
-ruver report     # wall time, laps, and host token totals
-ruver uninstall
+bulma update     # git pull --ff-only main, then relink
+bulma status     # plugin health, then cwd job Walk if STATE exists
+bulma report     # wall time, laps, and host token totals
+bulma uninstall
 ```
 
-`ruver report` reads the run ledger the graphs write as they walk: wall time and
+`bulma report` reads the run ledger the graphs write as they walk: wall time and
 lap count per node, plus the age of the QA claim. When a host transcript
 exists, it also prints prompt / uncached / cache% by workspace class. See
 [Measuring it](#measuring-it).
 
 **This checkout** (developing the repo): `./install.sh setup`
-points `ruver` at this tree. `ruver update` is `git pull` here.
+points `bulma` at this tree. `bulma update` is `git pull` here.
 
 **Plugin** (optional, not flattened the same way). Add the marketplace first,
-then install `ruver` from it:
+then install `bulma` from it:
 
 ```bash
 # Claude Code
 claude plugin marketplace add ruverd/skills
-claude plugin install ruver@skills
+claude plugin install bulma@skills
 
 # Grok
 grok plugin marketplace add ruverd/skills
-grok plugin install ruver --trust
+grok plugin install bulma --trust
 ```
 
 Inside a Claude Code session the same two steps are `/plugin marketplace add
-ruverd/skills` then `/plugin install ruver@skills`. `skills` is the marketplace
-name from `.claude-plugin/marketplace.json`; `ruver` is the plugin in it.
+ruverd/skills` then `/plugin install bulma@skills`. `skills` is the marketplace
+name from `.claude-plugin/marketplace.json`; `bulma` is the plugin in it.
 
 The plugin route auto-updates through the host, but it does not flatten skills
-into slash names the way `ruver setup` does. Do not combine plugin and
-`ruver setup` on the same host. `ruver status` warns if both are present.
+into slash names the way `bulma setup` does. Do not combine plugin and
+`bulma setup` on the same host. `bulma status` warns if both are present.
 
-Runtime disk is **`~/.ruver/`**, including `memory.md` (`/memory`).
-Install never creates `memory.md`. If `~/.grok/ruver` already exists,
-setup links `~/.ruver` to it so live jobs keep running.
+Runtime disk is **`~/.bulma/`**, including `memory.md` (`/memory`).
+Install never creates `memory.md`.
 
 ### Restart the session
 
@@ -211,14 +210,14 @@ app, and in the agent session.
 | Need | Used by |
 |---|---|
 | `gh` or `glab` authenticated (the forge this repo uses) | `/developer`, `/reviewer`, `/lstm`, `/qa` |
-| `agent-browser` + Chrome (`ruver setup`) | `/qa` on UI, and stills at PR open |
+| `agent-browser` + Chrome (`bulma setup`) | `/qa` on UI, and stills at PR open |
 | `gh` ≥ 2.99 | attach stills on the PR body and video on the QA comment |
 
 The app's Playwright/Cypress suite, if it has one, stays in **CI**.
 `/qa` does not run it.
 
 Which of those you need is discovered per repo
-([PRODUCT.md](skills/ruver-feature-delivery/PRODUCT.md)).
+([PRODUCT.md](skills/bulma-feature-delivery/PRODUCT.md)).
 A local goal does not need a tracker. API-only QA does not need a
 browser. `--no-pr` or a git-only remote ships a commit, not a PR.
 
@@ -233,7 +232,7 @@ On a GitHub PR that changes a screen, two artifacts:
 2. **Video of the walk** on the **QA comment** (`gh pr comment --attach`).
    PASS on UI without that video is invalid.
 
-Login is reused from `$HOME/.ruver/agent-browser/ruver-<owner>-<repo>/`
+Login is reused from `$HOME/.bulma/agent-browser/bulma-<owner>-<repo>/`
 until it expires, then the repo's `qa:login` / `qa:otp` helper.
 
 API-only PRs skip video. Attach an HTTP still of the changed
@@ -250,22 +249,22 @@ invent the ticket.
 
 ## Graph engineer
 
-The main thread of `/ruver-developer`, `/ruver-qa`, `/ruver-triage`,
-`/ruver-reviewer`, `/ruver-lstm`, and `/ruver-goal` is a **graph engineer**, not
-an implementer. `/ruver-bus` is the protocol they share, not a graph of its own.
+The main thread of `/bulma-developer`, `/bulma-qa`, `/bulma-triage`,
+`/bulma-reviewer`, `/bulma-lstm`, and `/bulma-goal` is a **graph engineer**, not
+an implementer. `/bulma-bus` is the protocol they share, not a graph of its own.
 
-It walks a GRAPH (nodes + edges). It writes STATE under `~/.ruver`.
+It walks a GRAPH (nodes + edges). It writes STATE under `~/.bulma`.
 It spawns a **worker** when a node must touch product code. It never
 opens `src/` itself.
 
 | Layer | Lives in | Example |
 |---|---|---|
 | Graph | `skills/<name>/GRAPH.md` | admit → deliver → mergeable → QA |
-| Host | [`ruver-host`](skills/ruver-host/SKILL.md) | how *this* harness spawns a child or wakes later |
-| Product | target repo `AGENTS.md` + [PRODUCT.md](skills/ruver-feature-delivery/PRODUCT.md) | test command, reviewers, sibling repos |
+| Host | [`bulma-host`](skills/bulma-host/SKILL.md) | how *this* harness spawns a child or wakes later |
+| Product | target repo `AGENTS.md` + [PRODUCT.md](skills/bulma-feature-delivery/PRODUCT.md) | test command, reviewers, sibling repos |
 
 A graph that says `spawn_subagent`, `model: grok-4.6`, or a company's
-GitHub handles has leaked. Host APIs stay in `ruver-host`. Product policy
+GitHub handles has leaked. Host APIs stay in `bulma-host`. Product policy
 stays in the repo you are in.
 
 Full write-up: [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md).
@@ -275,12 +274,12 @@ Command pages: [docs/commands](docs/commands/README.md).
 ## Reference
 
 `/bulma` is the entry point. The stages below still have their own slash
-commands (`/developer`, `/qa`, `/reviewer`, `/lstm`, `/goal`, `/ruver-triage`),
+commands (`/developer`, `/qa`, `/reviewer`, `/lstm`, `/goal`, `/bulma-triage`),
 which run without Jev and without a key. They are useful for debugging a single
 stage, but bulma is what ties them together.
 
 These split on one axis: who can invoke them. **User-invoked** skills
-are reachable when you type them (e.g. `/ruver-developer`); their job
+are reachable when you type them (e.g. `/bulma-developer`); their job
 is to orchestrate. **Model-invoked** skills can be invoked by you *or*
 reached for automatically when the task fits. A user-invoked graph may
 load a model-invoked skill or an engine, but it never spawns another
@@ -289,8 +288,8 @@ graph as a child.
 Deep pages live under [docs/commands](docs/commands/README.md).
 
 Codex reserves direct `/name` entries for built-in commands. Use
-`$ruver-developer` or `/skills`. Claude and Grok keep direct
-`/ruver-developer` and short aliases such as `/developer`. This difference
+`$bulma-developer` or `/skills`. Claude and Grok keep direct
+`/bulma-developer` and short aliases such as `/developer`. This difference
 comes from Codex's command parser, not skill installation.
 
 ### Graphs
@@ -303,30 +302,30 @@ comes from Codex's command parser, not skill installation.
 
 **User-invoked**
 
-- **[ruver-developer](skills/ruver-developer/SKILL.md)** (`/developer`, `/ruver-developer`): Ticket, goal, or PR_BUG fix. Draft PR, MERGEABLE, then QA. [page](docs/commands/ruver-developer.md)
-- **[ruver-qa](skills/ruver-qa/SKILL.md)** (`/qa`, `/ruver-qa`): Exercise a PR (agent-browser or HTTP). Comment with video (UI) or an HTTP still (API). [page](docs/commands/ruver-qa.md)
+- **[bulma-developer](skills/bulma-developer/SKILL.md)** (`/developer`, `/bulma-developer`): Ticket, goal, or PR_BUG fix. Draft PR, MERGEABLE, then QA. [page](docs/commands/bulma-developer.md)
+- **[bulma-qa](skills/bulma-qa/SKILL.md)** (`/qa`, `/bulma-qa`): Exercise a PR (agent-browser or HTTP). Comment with video (UI) or an HTTP still (API). [page](docs/commands/bulma-qa.md)
 - **[before-and-after](skills/before-and-after/SKILL.md)**: UI stills on the GitHub PR body. Loaded by the shipper and `/qa`.
-- **[ruver-triage](skills/ruver-triage/SKILL.md)** (`/ruver-triage`): Classify a QA finding. [page](docs/commands/ruver-triage.md)
-- **[ruver-reviewer](skills/ruver-reviewer/SKILL.md)** (`/reviewer`, `/ruver-reviewer`): Review a PR. Diagnose CI. [page](docs/commands/ruver-reviewer.md)
-- **[ruver-lstm](skills/ruver-lstm/SKILL.md)** (`/lstm`, `/ruver-lstm`): Incoming review. Patch the same branch. [page](docs/commands/ruver-lstm.md)
-- **[ruver-goal](skills/ruver-goal/SKILL.md)** (`/goal`, `/ruver-goal`): Wake until QA evidence on the head SHA. [page](docs/commands/ruver-goal.md)
+- **[bulma-triage](skills/bulma-triage/SKILL.md)** (`/bulma-triage`): Classify a QA finding. [page](docs/commands/bulma-triage.md)
+- **[bulma-reviewer](skills/bulma-reviewer/SKILL.md)** (`/reviewer`, `/bulma-reviewer`): Review a PR. Diagnose CI. [page](docs/commands/bulma-reviewer.md)
+- **[bulma-lstm](skills/bulma-lstm/SKILL.md)** (`/lstm`, `/bulma-lstm`): Incoming review. Patch the same branch. [page](docs/commands/bulma-lstm.md)
+- **[bulma-goal](skills/bulma-goal/SKILL.md)** (`/goal`, `/bulma-goal`): Wake until QA evidence on the head SHA. [page](docs/commands/bulma-goal.md)
 
 ### Protocol (model-invoked)
 
 Not a graph. It has no nodes and walks no edges. The graphs load it by name for
 the shared envelope, stack and QA-slot rules.
 
-- **[ruver-bus](skills/ruver-bus/SKILL.md)** (`/ruver-bus`): Shared envelopes, stack, and the QA slot. Graphs talk through files, not nested agents. [page](docs/commands/ruver-bus.md)
+- **[bulma-bus](skills/bulma-bus/SKILL.md)** (`/bulma-bus`): Shared envelopes, stack, and the QA slot. Graphs talk through files, not nested agents. [page](docs/commands/bulma-bus.md)
 
 ### Lib
 
 **User-invoked**
 
-- **[ruver-memory](skills/ruver-memory/SKILL.md)** (`/memory`, `/ruver-memory`): Chat language, confirmed reviewers, open questions. Outside git. [page](docs/commands/memory.md)
+- **[bulma-memory](skills/bulma-memory/SKILL.md)** (`/memory`, `/bulma-memory`): Chat language, confirmed reviewers, open questions. Outside git. [page](docs/commands/memory.md)
 
 **Model-invoked**
 
-- **[ruver-host](skills/ruver-host/SKILL.md)**: the host contract. Maps `load_skill`, `spawn_worker`, `worktree`, `schedule_wake`, `session_model` and the optional MCP capabilities onto whatever harness you are on. A graph loads it by name when a node mentions a primitive.
+- **[bulma-host](skills/bulma-host/SKILL.md)**: the host contract. Maps `load_skill`, `spawn_worker`, `worktree`, `schedule_wake`, `session_model` and the optional MCP capabilities onto whatever harness you are on. A graph loads it by name when a node mentions a primitive.
 - The bundled primitives (`unslop`, `tdd`, `how`, `why`, `grill-*`, `principle-*`, `before-and-after`, …) reach themselves when the task fits. Origins: [External references](#external-references).
 
 ### Engines
@@ -335,11 +334,11 @@ Called by a graph, or run alone. `category: engine`. Source: [`skills/`](skills/
 
 **User-invoked**
 
-- **[ruver-feature-delivery](skills/ruver-feature-delivery/SKILL.md)** (`/ruver-feature-delivery`, `/ruver-fd`): Grill → spec → tickets → TDD → draft PR, CI green. [page](docs/commands/ruver-feature-delivery.md)
-- **[ruver-code-review](skills/ruver-code-review/SKILL.md)** (`/ruver-code-review`): One GitHub review artifact. [page](docs/commands/ruver-code-review.md)
+- **[bulma-feature-delivery](skills/bulma-feature-delivery/SKILL.md)** (`/bulma-feature-delivery`, `/bulma-fd`): Grill → spec → tickets → TDD → draft PR, CI green. [page](docs/commands/bulma-feature-delivery.md)
+- **[bulma-code-review](skills/bulma-code-review/SKILL.md)** (`/bulma-code-review`): One GitHub review artifact. [page](docs/commands/bulma-code-review.md)
 
-Prefer `/ruver-developer` over raw `/ruver-fd` when you also want
-MERGEABLE + QA. Prefer `/ruver-reviewer` over raw `/ruver-code-review`
+Prefer `/bulma-developer` over raw `/bulma-fd` when you also want
+MERGEABLE + QA. Prefer `/bulma-reviewer` over raw `/bulma-code-review`
 when CI / mergeability need a graph around the engine.
 
 ## How the graphs fit
@@ -352,7 +351,7 @@ bus files:
           developer
                  │
                  ▼
-        ruver-feature-delivery
+        bulma-feature-delivery
                  │
            draft PR, CI green
                  │
@@ -363,11 +362,11 @@ bus files:
                  │
             PASS → ready
 
-reviewer ──► ruver-code-review ──► GitHub review
+reviewer ──► bulma-code-review ──► GitHub review
 lstm     ──► patch the same PR
 ```
 
-They talk through **ruver-bus** files, not nested graph agents.
+They talk through **bulma-bus** files, not nested graph agents.
 
 ### What bounds a run
 
@@ -386,8 +385,8 @@ is readable after the fact rather than inferred.
 
 ### Measuring it
 
-The graphs append one row per transition to `.ruver-bus/RUN_LOG.tsv` — two lines
-per node, no LLM cost. `ruver report` turns that into wall time and lap count
+The graphs append one row per transition to `.bulma-bus/RUN_LOG.tsv` — two lines
+per node, no LLM cost. `bulma report` turns that into wall time and lap count
 per `graph/node`, widest first:
 
 ```text
@@ -406,35 +405,35 @@ tokens (host transcript)
 ```
 
 Nothing gates on it. The table above is the control; this is the instrument.
-Graphs still never write token counts into the ledger. `ruver report`
+Graphs still never write token counts into the ledger. `bulma report`
 reads the host transcript when the installer knows the path.
-[`LEDGER.md`](skills/ruver-bus/LEDGER.md).
+[`LEDGER.md`](skills/bulma-bus/LEDGER.md).
 
 Runtime state:
 
 ```text
-~/.ruver/memory.md                       # you, every repo
-~/.ruver/bulma.json                      # power, thresholds, model, tiers
-~/.ruver/bulma-watch.json                # PRs watch saw merged or closed
-~/.ruver/insights/observations.jsonl     # human-review observations
-~/.ruver/<slug>/memory.md                # this git toplevel
-~/.ruver/<slug>/.ruver-bus/
+~/.bulma/memory.md                       # you, every repo
+~/.bulma/bulma.json                      # power, thresholds, model, tiers
+~/.bulma/bulma-watch.json                # PRs watch saw merged or closed
+~/.bulma/insights/observations.jsonl     # human-review observations
+~/.bulma/<slug>/memory.md                # this git toplevel
+~/.bulma/<slug>/.bulma-bus/
                   STACK.md               # which graph is active
                   ENVELOPE.md            # the message being handed over
                   JOBS.md                # workers + the QA lease
                   RUN_LOG.tsv            # transitions, timing, laps
-~/.ruver/<slug>/.ruver-bulma/            # route, decisions ledger, world.json
-~/.ruver/<slug>/.ruver-developer/        # one dir per graph or engine
-~/.ruver/<slug>/.ruver-qa/               # .ruver-triage, -reviewer, -lstm,
+~/.bulma/<slug>/.bulma-core/            # route, decisions ledger, world.json
+~/.bulma/<slug>/.bulma-developer/        # one dir per graph or engine
+~/.bulma/<slug>/.bulma-qa/               # .bulma-triage, -reviewer, -lstm,
                                          # -goal, -code-review,
                                          # -feature-delivery
 ```
 
 `<slug>` is the git toplevel with `/` replaced by `-`. Details:
-[`ruver-bus/DISK.md`](skills/ruver-bus/DISK.md).
+[`bulma-bus/DISK.md`](skills/bulma-bus/DISK.md).
 
-Workers (`ruver-fd-coder`, tester, shipper, …) write product code.
-Graph names (`ruver_developer`, `ruver_qa`, …) are **roles for the
+Workers (`bulma-fd-coder`, tester, shipper, …) write product code.
+Graph names (`bulma_developer`, `bulma_qa`, …) are **roles for the
 main thread**. Do not spawn those. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Layout
@@ -448,9 +447,9 @@ skills/                         # this repo
   docs/ARCHITECTURE.md
   docs/commands/                # one page per slash command
   skills/                       # one flat directory per skill
-    ruver-developer/            # category: graph
-    ruver-feature-delivery/     # category: engine
-    ruver-host/                 # category: lib, harness primitives
+    bulma-developer/            # category: graph
+    bulma-feature-delivery/     # category: engine
+    bulma-host/                 # category: lib, harness primitives
     unslop/                     # category: lib
     …
   agents/                       # fd workers + graph roles
@@ -462,12 +461,12 @@ directory; other homes link it. That is what
 makes `../other-skill/FILE.md` resolve in both places, and `tests/repo.sh`
 fails any link that leaves the skills root. `category` in the frontmatter says
 whether a skill is a graph, an engine, or a lib primitive. Slash names stay
-so `/ruver-developer` still works. Every skill is a sibling, so cross-skill links are `../<name>/FILE.md` and
+so `/bulma-developer` still works. Every skill is a sibling, so cross-skill links are `../<name>/FILE.md` and
 resolve identically in git and after install.
 
 ## What this repo does not include
 
-- Runtime `.ruver-*` state. That stays in `~/.ruver/`.
+- Runtime `.bulma-*` state. That stays in `~/.bulma/`.
 - Optional extras you may already have (caveman, cmux). The graphs
   do not load them.
 
@@ -477,11 +476,11 @@ Follow [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md). Short version:
 
 1. Folder under `skills/<name>/` with `category: graph | engine | lib`.
 2. Relative links only. No `~/.claude`, `~/.grok`, `~/.codex`.
-3. Host primitives → [ruver-host](skills/ruver-host/SKILL.md). Product policy → [PRODUCT.md](skills/ruver-feature-delivery/PRODUCT.md) plus the target repo.
+3. Host primitives → [bulma-host](skills/bulma-host/SKILL.md). Product policy → [PRODUCT.md](skills/bulma-feature-delivery/PRODUCT.md) plus the target repo.
 4. Add the path to **both** `plugin.json` and `.claude-plugin/plugin.json`,
    and the name to `.grok-plugin/plugin-index.json`. `tests/repo.sh` fails if
    any of them disagrees with the tree.
-5. Run `ruver setup` (or `./install.sh setup`), then `bash tests/repo.sh` and
+5. Run `bulma setup` (or `./install.sh setup`), then `bash tests/repo.sh` and
    `bash tests/install.sh`, then commit.
 
 ```bash

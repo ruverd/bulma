@@ -122,7 +122,7 @@ def main():
     for path in flat_files(root, "commands"):
         stem = os.path.basename(path)[: -len(".md")]
         # Underscore slash aliases doubled the command picker on every host and
-        # were never documented. The role names ruver_* live in agents/ instead.
+        # were never documented. The role names bulma_* live in agents/ instead.
         if "_" in stem:
             report(errors, path, root, "underscore command alias; use the hyphen form")
         fields, _ = parse(path)

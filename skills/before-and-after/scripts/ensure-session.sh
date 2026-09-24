@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 # Shared agent-browser session for this GitHub repo (not per-worktree).
-# Prints KEY=value. Cookies live under $RUVER_HOME/agent-browser/, never git.
+# Prints KEY=value. Cookies live under $BULMA_HOME/agent-browser/, never git.
 set -euo pipefail
 
-RUVER_HOME="${RUVER_HOME:-$HOME/.ruver}"
-if [[ ! -e "$RUVER_HOME" && -d "${HOME}/.grok/ruver" ]]; then
-  RUVER_HOME="${HOME}/.grok/ruver"
-fi
+BULMA_HOME="${BULMA_HOME:-$HOME/.bulma}"
 
 owner_repo=""
 if command -v gh >/dev/null 2>&1; then
@@ -34,11 +31,11 @@ if [[ -z "$owner_repo" ]]; then
 fi
 
 session="$(printf '%s' "$owner_repo" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')"
-session="ruver-${session}"
-dir="${RUVER_HOME}/agent-browser/${session}"
+session="bulma-${session}"
+dir="${BULMA_HOME}/agent-browser/${session}"
 mkdir -p "${dir}/captures"
 
 printf 'SESSION=%s\n' "$session"
 printf 'STATE_DIR=%s\n' "$dir"
 printf 'CAPTURE_DIR=%s\n' "${dir}/captures"
-printf 'RUVER_HOME=%s\n' "$RUVER_HOME"
+printf 'BULMA_HOME=%s\n' "$BULMA_HOME"

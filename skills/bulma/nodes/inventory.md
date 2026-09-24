@@ -1,10 +1,10 @@
 # Node: inventory
 
 **Verb:** observe
-**Capability:** read `$RUVER_ROOT`, `gh` read-only
+**Capability:** read `$BULMA_ROOT`, `gh` read-only
 
 Run `bash scripts/world.sh` (add `--pr <url>` when args carry a PR or MR
-URL). It writes `.ruver-bulma/world.json` and `.ruver-bulma/candidates.json`
+URL). It writes `.bulma-core/world.json` and `.bulma-core/candidates.json`
 and prints a three-line summary. Copy `stack_top`, `qa_active`, and the
 candidate ids into the chat `S:` line only when they change what happens
 next. Warnings (no `gh`, not authenticated) go into `D:` once.

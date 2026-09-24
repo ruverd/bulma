@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Memory"
+  short_description: "Read or save durable Bulma preferences"
+  default_prompt: "Use $bulma-memory to read or save this durable preference."

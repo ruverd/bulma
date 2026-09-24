@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Triage"
+  short_description: "Classify and route QA product failures"
+  default_prompt: "Use $bulma-triage to investigate and classify this QA failure."

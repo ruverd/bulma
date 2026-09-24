@@ -22,7 +22,7 @@ INDEX = ".grok-plugin/plugin-index.json"
 # One marketplace, one plugin in it, on every host. A host that reads a
 # different name installs something the docs never mention.
 MARKETPLACE_NAME = "skills"
-PLUGIN_NAME = "ruver"
+PLUGIN_NAME = "bulma"
 MARKETPLACES = [
     ".claude-plugin/marketplace.json",
     ".grok-plugin/marketplace.json",
@@ -80,7 +80,7 @@ def main():
             errors.append(f"{rel}: plugins are {names!r}, expected [{PLUGIN_NAME!r}]")
 
     index = load(root, INDEX)
-    components = index["plugins"]["ruver"]["components"]
+    components = index["plugins"]["bulma"]["components"]
     for kind, wanted in (
         ("skills", set(skill_dirs)),
         ("agents", {os.path.basename(p)[:-3] for p in flat_files(root, "agents")}),

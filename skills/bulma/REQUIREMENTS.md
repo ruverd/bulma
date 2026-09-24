@@ -11,7 +11,7 @@ Bulma needs TypeSafe Jev. Everything else in this repo does not.
 | `python3` | 3.9 or newer | exit 2 |
 | `TYPESAFE_API_KEY` | set in the environment | exit 2 |
 | `decisions.json` | parses and validates | exit 4 |
-| `$RUVER_HOME/bulma.json` | parses, or is absent | exit 4 |
+| `$BULMA_HOME/bulma.json` | parses, or is absent | exit 4 |
 | power | resolves to a known level | exit 4 |
 | Jev | `GET /v1/models` answers within 5 s | exit 3 |
 
@@ -27,7 +27,7 @@ and stops with `status: blocked`.
   missing: TYPESAFE_API_KEY  (create one at https://console.typesafe.ai)
   python3: ok (3.13.9)
 Set the key, then run /bulma again.
-Without Jev, run the graph directly: /developer, /qa, /reviewer, /lstm, /ruver-triage.
+Without Jev, run the graph directly: /developer, /qa, /reviewer, /lstm, /bulma-triage.
 ```
 
 Exit 3 prints `Jev unreachable.` with the status or error instead; `admit`
@@ -54,5 +54,5 @@ then in your shell profile:
 export TYPESAFE_API_KEY="..."
 ```
 
-`ruver status` prints `jev ok` or `jev missing (optional)`. The Python and
+`bulma status` prints `jev ok` or `jev missing (optional)`. The Python and
 JavaScript TypeSafe SDKs are not required; the script speaks HTTP directly.

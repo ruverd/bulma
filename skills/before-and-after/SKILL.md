@@ -3,7 +3,7 @@ name: before-and-after
 category: lib
 description: >
   Use when a GitHub PR needs before/after UI stills on the body, or
-  when ruver-qa / the shipper captures those stills with agent-browser.
+  when bulma-qa / the shipper captures those stills with agent-browser.
 ---
 
 # Before and after
@@ -43,7 +43,7 @@ agent-browser --session "$SESSION" --session-name "$SESSION" \
   --headed false open "$URL"
 ```
 
-State: `$RUVER_HOME/agent-browser/ruver-<owner>-<repo>/`. Never git.
+State: `$BULMA_HOME/agent-browser/bulma-<owner>-<repo>/`. Never git.
 Never Chrome `--profile Default`.
 
 After session restore, open a gated route. Login form still up → repo helper
@@ -53,7 +53,7 @@ with `--session-name "$SESSION"` so the next run skips login.
 Authenticate until the gated app route loads in that agent-browser session,
 then `agent-browser --session "$SESSION" --session-name "$SESSION"
 --headed false record start` with no URL and no `--state`
-(ruver-qa `references/EXECUTION.md`). `record start`
+(bulma-qa `references/EXECUTION.md`). `record start`
 opens a **new tab**. If that tab is Sign in / Check your email,
 restore auth with the repo's documented helper into **that session** and
 wait for the app shell before walking. Film and snapshot the same tab. A
@@ -61,7 +61,7 @@ login-wall `.webm` is never PASS.
 
 ## Inventory
 
-Same surfaces as ruver-qa PLAN.md. One still per changed route (or
+Same surfaces as bulma-qa PLAN.md. One still per changed route (or
 each host screen of a shared widget). **Desktop always.** Mobile only
 when the diff touches layout, CSS, media queries, or the design
 system. New route: after-only (`--before -`).
@@ -106,7 +106,7 @@ while IFS= read -r f; do ATTACH+=(--attach "$f"); done < <(
 gh pr edit "$PR" --body-file /tmp/pr-body-next.md "${ATTACH[@]}"
 ```
 
-Marker `<!-- ruver-before-and-after:start/end -->`. Replace that
+Marker `<!-- bulma-before-and-after:start/end -->`. Replace that
 block only. Place it near the top, after the opening summary, before
 Details/Testing. Confirm the body has no leftover `./captures` paths.
 
@@ -115,7 +115,7 @@ Details/Testing. Confirm the body has no leftover `./captures` paths.
 ## `/qa`
 
 Walk the plan with agent-browser. Clip recipe:
-[ruver-qa VIDEO.md](../ruver-qa/references/VIDEO.md).
+[bulma-qa VIDEO.md](../bulma-qa/references/VIDEO.md).
 Product errors still FINDINGS → triage → FAIL.
 
 If the body has no block and `forge=github`, capture the pair (base

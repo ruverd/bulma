@@ -52,6 +52,7 @@ check structure python3 "$LIB/check_structure.py" "$ROOT"
 check graphs python3 "$LIB/check_graphs.py" "$ROOT"
 check leaks python3 "$LIB/check_leaks.py" "$ROOT"
 check branch-name python3 "$LIB/check_branch_name.py" "$ROOT"
+check legacy-name python3 "$LIB/check_legacy_name.py" "$ROOT"
 
 if [[ "$FAILED" -ne 0 ]]; then
   echo "repo checks failed" >&2

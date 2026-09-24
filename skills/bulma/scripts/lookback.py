@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Quality lookback for /bulma: what human review catches that the graphs miss.
 
-Reads $RUVER_HOME/insights/observations.jsonl (contract:
-../../ruver-bus/INSIGHTS.md), keeps human comments whose claim held, and
+Reads $BULMA_HOME/insights/observations.jsonl (contract:
+../../bulma-bus/INSIGHTS.md), keeps human comments whose claim held, and
 counts them per cluster in a window and in the equal window before it,
 normalized per reviewed PR. A cluster whose `guard` names a skill section
 should shrink after that section changed; one that does not is the change
@@ -11,7 +11,7 @@ to reopen.
 Clustering: regexes over generalized_pattern by default, a floor. With
 --classify, Jev labels each missed row through the `insight.classify` hook
 (cluster, generalizable, lesson_for) and the labels are cached in
-$RUVER_HOME/insights/labels.jsonl, keyed by row id and catalog version. A
+$BULMA_HOME/insights/labels.jsonl, keyed by row id and catalog version. A
 label replaces the regex only where Jev acted; everywhere else the regex
 decides. Without --classify no key is needed and cached labels still apply.
 
@@ -36,7 +36,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CATALOG = HERE.parent / "decisions.json"
 HOOK = "insight.classify"
-BOT_MARKERS = ("ruver-", "[bot]", "bot", "agent", "claude", "copilot", "coderabbit", "decider")
+BOT_MARKERS = ("bulma-", "[bot]", "bot", "agent", "claude", "copilot", "coderabbit", "decider")
 MIN_PRS = 10  # below this many reviewed PRs in either window, no trend
 OTHER = "other"
 # Where a lesson should live. decisions.json insight.classify.lesson_for
@@ -47,39 +47,37 @@ LESSONS = ("implementer", "reviewer", "repo_rule", "none")
 # when the fix belongs in the target repo's CLAUDE.md / AGENTS.md. Names are
 # the insight.classify cluster enum, plus "other".
 CLUSTERS = [
-    ("sibling-path parity", "ruver-code-review Phase 5",
+    ("sibling-path parity", "bulma-code-review Phase 5",
      r"sibling|every (hook|path|caller)|all (callers|sibling|interactive controls|commit paths)|symmetric|bulk_operation|one block without|other callers|grep for all|repo-wide"),
-    ("multi-store write / side effect", "ruver-code-review Phase 6",
+    ("multi-store write / side effect", "bulma-code-review Phase 6",
      r"dual.?write|audit (event|emit)|emit|idempot|at-least-once|rollback|orphan|split-brain|readback|mirror|partial(ly)? succe|transaction"),
-    ("test that cannot fail", "ruver-code-review Phase 4",
+    ("test that cannot fail", "bulma-code-review Phase 4",
      r"vacuous|never fail|test\.skip|describe\.skip|zero (assertions|automat|default ci)|skips? when|only asserts?.*called|spy .* without|gated e2e|never wired"),
-    ("unvalidated input into typed column", "ruver-code-review Phase 6",
+    ("unvalidated input into typed column", "bulma-code-review Phase 6",
      r"uuid|@db\.|format validation|runtime.validat|cast error|as-cast|typed column"),
-    ("reviewer self-defect", "ruver-code-review bind-findings",
+    ("reviewer self-defect", "bulma-code-review bind-findings",
      r"line numbers?|diff-offset|pre-?exist|appear(s)? in the (pr )?diff|already (inspected|raised|cleared)|human reviewer (has )?(already|explicitly)|false-positive|invent|dedup"),
-    ("acceptance-criteria completeness", "ruver-code-review Phase 3",
+    ("acceptance-criteria completeness", "bulma-code-review Phase 3",
      r"acceptance criteri|\bac\b|enumerat|inventory|deferral"),
     ("authz / privilege", "repo rule",
      r"outrank|privilege|role tier|pkce|oauth state|csrf|issuer|fail(s)? open|open redirect"),
     ("silent catch / no error report", "repo rule",
      r"sentry|silent(ly)? (catch|swallow|fail)|swallow|breadcrumb|without .*capture"),
-    ("effect lifecycle", "ruver-code-review Phase 5",
+    ("effect lifecycle", "bulma-code-review Phase 5",
      r"useeffect|cleanup|teardown|unsubscribe|removeeventlistener|abort"),
-    ("pagination / unbounded", "ruver-code-review Phase 9",
+    ("pagination / unbounded", "bulma-code-review Phase 9",
      r"paginat|without a take|unbounded|take/limit|hasmore|hasnextpage"),
-    ("tenant / cache-key isolation", "ruver-code-review Phase 6",
+    ("tenant / cache-key isolation", "bulma-code-review Phase 6",
      r"tenant|cross-session|query ?key"),
 ]
 GUARD = {name: guard for name, guard, _ in CLUSTERS}
 
 
-def ruver_home():
-    env = os.environ.get("RUVER_HOME")
+def bulma_home():
+    env = os.environ.get("BULMA_HOME")
     if env:
         return Path(env)
-    home = Path.home() / ".ruver"
-    grok = Path.home() / ".grok" / "ruver"
-    return grok if not home.exists() and grok.is_dir() else home
+    return Path.home() / ".bulma"
 
 
 def load(path):
@@ -212,10 +210,10 @@ def classify(rows, labels, labels_path, version, replay):
         json.dump({"items": items}, fh)
         batch = fh.name
     try:
-        # Decisions log under insights/.ruver-bulma so /bulma report sees them.
+        # Decisions log under insights/.bulma-core so /bulma report sees them.
         out = subprocess.run(
             [sys.executable, str(HERE / "bulma.py"), "ask-many", "--batch", batch, "--json",
-             "--ruver-root", str(labels_path.parent)],
+             "--bulma-root", str(labels_path.parent)],
             capture_output=True, text=True)
     finally:
         os.unlink(batch)
@@ -303,10 +301,10 @@ def main():
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
-    path = Path(args.file) if args.file else ruver_home() / "insights" / "observations.jsonl"
+    path = Path(args.file) if args.file else bulma_home() / "insights" / "observations.jsonl"
     rows = load(path)
     if not rows:
-        print("lookback: no observations at %s. ruver-lstm and ruver-reviewer write them (INSIGHTS.md)." % path)
+        print("lookback: no observations at %s. bulma-lstm and bulma-reviewer write them (INSIGHTS.md)." % path)
         return 0
     try:
         cur_win, prev_win = window(args.since, args.until)

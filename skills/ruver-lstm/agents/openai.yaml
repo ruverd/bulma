@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ruver LSTM"
-  short_description: "Resolve incoming PR review feedback"
-  default_prompt: "Use $ruver-lstm to verify and address this PR feedback."

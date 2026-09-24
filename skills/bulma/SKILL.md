@@ -1,7 +1,7 @@
 ---
 name: bulma
 category: graph
-description: Jev-gated router and overlay for ruver graphs. Use when /bulma.
+description: Jev-gated router and overlay for bulma graphs. Use when /bulma.
 argument-hint: "<empty | ticket | PR url | text | power <level> | report | watch | lookback | resume>"
 ---
 
@@ -9,7 +9,7 @@ argument-hint: "<empty | ticket | PR url | text | power <level> | report | watch
 
 Orchestrator. You do not implement product code. You never merge.
 
-Bulma decides **which** ruver graph runs now, loads it on this thread, and
+Bulma decides **which** bulma graph runs now, loads it on this thread, and
 stays loaded while it runs. At each fork listed in [HOOKS.md](HOOKS.md) it asks
 TypeSafe Jev a typed question and acts on the answer when confidence clears a
 threshold the user controls ([POWER.md](POWER.md)). Code owns the edges; Jev
@@ -19,10 +19,10 @@ only picks among options the node already has.
 [STATE.schema.md](STATE.schema.md) · [HOOKS.md](HOOKS.md) ·
 [POWER.md](POWER.md) · [DISPATCH.md](DISPATCH.md) ·
 [REQUIREMENTS.md](REQUIREMENTS.md) ·
-[ruver-host](../ruver-host/SKILL.md) · [DISK.md](../ruver-bus/DISK.md)
-(`.ruver-*` is **global**, never the git root) · `ruver-memory`
+[bulma-host](../bulma-host/SKILL.md) · [DISK.md](../bulma-bus/DISK.md)
+(`.bulma-*` is **global**, never the git root) · `bulma-memory`
 
-Chat: `ruver-memory`. Unslop always. Scripts live in `scripts/` next to this
+Chat: `bulma-memory`. Unslop always. Scripts live in `scripts/` next to this
 file; the host tells you where the skill directory is. Run them with
 `python3` and `bash`.
 
@@ -35,7 +35,7 @@ Details: [REQUIREMENTS.md](REQUIREMENTS.md).
 
 ## Start
 
-1. Load `ruver-memory`. Resolve `$RUVER_ROOT`. Init `.ruver-bulma/STATE.md`
+1. Load `bulma-memory`. Resolve `$BULMA_ROOT`. Init `.bulma-core/STATE.md`
    from [templates/STATE.md](templates/STATE.md) unless one is live.
 2. Parse args with [ARGS.md](ARGS.md) **before** any Jev call. Local verbs
    (`power`, `tune`, `model`, `report`, `status`, `doctor`, `watch`,
@@ -66,7 +66,7 @@ Workers: the overlay also picks the tier each coder worker runs on
 
 ## Watch
 
-`/bulma watch` checks every workspace under `$RUVER_HOME`, not just this repo,
+`/bulma watch` checks every workspace under `$BULMA_HOME`, not just this repo,
 and lists stalled work, work that needs the user, and orphaned work, each with
 its next command. It reconciles against GitHub first, so a PR that already
 merged is not reported as stuck. Report only, no key.
@@ -84,7 +84,7 @@ edits and opens a draft PR only after the user says yes. No key.
 ## Power
 
 `shadow | cautious | balanced | bold`, global or per hook, plus a per-question
-`act_at` override, all in `$RUVER_HOME/bulma.json`. `/bulma power <level>`,
+`act_at` override, all in `$BULMA_HOME/bulma.json`. `/bulma power <level>`,
 `/bulma tune <hook.question> <act_at>`, `/bulma report`. Math and the
 calibration loop: [POWER.md](POWER.md).
 
@@ -105,9 +105,9 @@ One `J:` line per hook while the overlay runs, for example
 - Skip a gate or invent an edge because Jev said so.
 - ASK the user because Jev was undecided. Undecided means the graph rule.
   The only hook that can produce ASK is `policy.ask`, inside
-  `../ruver-feature-delivery/DECISION_POLICY.md`.
+  `../bulma-feature-delivery/DECISION_POLICY.md`.
 - Send full files to Jev. Caps are in HOOKS.md.
 - Run any hook before `doctor` passed in this run.
-- Write outside `$RUVER_ROOT/.ruver-bulma/`, `$RUVER_HOME/bulma.json`, and
-  `$RUVER_HOME/bulma-watch.json`.
+- Write outside `$BULMA_ROOT/.bulma-core/`, `$BULMA_HOME/bulma.json`, and
+  `$BULMA_HOME/bulma-watch.json`.
 - Print `TYPESAFE_API_KEY`.

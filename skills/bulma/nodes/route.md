@@ -13,14 +13,14 @@ Deterministic first, Jev second. Never guess a graph.
    Args that are only PR or MR refs → one `world.sh --pr` per ref, then read
    `pr.author_is_user`: `true` → `qa`, `false` → `reviewer`, no Jev call,
    `why: deterministic: pr author`. Several refs: one `reviewer` run with
-   every non-own URL (ruver-code-review fans out), then one `qa` run with
-   every own URL (ruver-qa queues extras). `pr` null (no `gh`) → step 2.
+   every non-own URL (bulma-code-review fans out), then one `qa` run with
+   every own URL (bulma-qa queues extras). `pr` null (no `gh`) → step 2.
    Words that name the work ("roda QA", "review") override the author
    rule: step 2 decides.
 2. PR or MR URL with other words, or free text →
    `python3 scripts/bulma.py ask entry.route --build --args "<args>" --context repo=<owner/repo> --context pr=<n> --json`.
    `--build` writes the `entry.route` state from `world.json` (recipe in
-   `../HOOKS.md`) to `.ruver-bulma/state/`. Do not write it by hand.
+   `../HOOKS.md`) to `.bulma-core/state/`. Do not write it by hand.
 3. Empty or `resume` →
    `python3 scripts/bulma.py ask entry.next_step --build --args "<args>" --json`
    (add `--resume` for `resume`: the builder keeps only `resume:*`

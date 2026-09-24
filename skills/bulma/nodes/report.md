@@ -5,7 +5,7 @@
 | Args | Command |
 |---|---|
 | `report [--hook H] [--since D] [--repo-only]` | `python3 scripts/bulma.py report …` |
-| `status` | print `.ruver-bulma/STATE.md` frontmatter, `bulma.py power`, and the last five rows of `.ruver-bulma/DECISIONS.tsv` as `J:` lines |
+| `status` | print `.bulma-core/STATE.md` frontmatter, `bulma.py power`, and the last five rows of `.bulma-core/DECISIONS.tsv` as `J:` lines |
 | `doctor` | `python3 scripts/bulma.py doctor` |
 
 Print the table verbatim (it is data, not chat). Add at most three

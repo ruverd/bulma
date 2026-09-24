@@ -1,6 +1,6 @@
 # Bulma STATE
 
-**Path:** `.ruver-bulma/STATE.md`
+**Path:** `.bulma-core/STATE.md`
 
 ## status
 
@@ -18,11 +18,11 @@ init | inventory | routing | waiting_user | overlay | done | blocked
 | `args` | raw args |
 | `target` | developer \| qa \| reviewer \| lstm \| triage \| memory \| none |
 | `target_args` | what the target graph receives |
-| `world_path` | `.ruver-bulma/world.json` |
+| `world_path` | `.bulma-core/world.json` |
 | `decision_ids` | comma list of decision ids this run |
 | `hooks_fired` / `hooks_fallback` | counts, updated per hook |
 | `waiting_user` | question text when stopped |
 | `updated_at` | ISO |
 
 Template: [templates/STATE.md](templates/STATE.md). Ledger of every Jev
-answer: `.ruver-bulma/DECISIONS.tsv` (columns in `scripts/bulma.py`).
+answer: `.bulma-core/DECISIONS.tsv` (columns in `scripts/bulma.py`).

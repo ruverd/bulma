@@ -6,10 +6,24 @@ Notable changes per release. Format follows
 
 ## [Unreleased]
 
+### Breaking
+
+- The project is Bulma. Every skill, agent, command, CLI, env var, state
+  directory, and GitHub marker uses the `bulma` prefix: `bulma-developer`,
+  `bulma-fd-coder`, `bulma_qa`, the `bulma` CLI, `$BULMA_HOME` (default
+  `~/.bulma`), `$BULMA_ROOT`, `.bulma-<graph>/` state dirs, and the router's own
+  `.bulma-core/`. `bulma setup` (and `bulma update`, which runs it) migrates an
+  existing install once: it moves the home, config, managed clone, state dirs,
+  and agent-browser profiles, rewrites observation reviewer ids, prunes the old
+  host links, adopts managed Codex copies in place, and removes the old CLI
+  link. Review and QA markers on open PRs from before the rename are not read,
+  so the next review of such a PR is a full deep pass and QA may run again.
+  `tests/repo.sh` fails on any reintroduction of the old name.
+
 ### Changed
 
 - The fd coder learns from past reviews, not only the reviewer.
-  `ruver-feature-delivery/LESSONS.md` holds one implementer rule per recurring
+  `bulma-feature-delivery/LESSONS.md` holds one implementer rule per recurring
   cluster (sibling paths, tests that cannot fail, multi-store writes, AC
   completeness, effect cleanup, pagination, authz). The coder and the fd
   reviewer load it on every ticket. `bulma/scripts/lessons.py` ranks the
@@ -38,19 +52,19 @@ Notable changes per release. Format follows
 - `world.sh` reads STATE files that have no frontmatter (older lstm and
   reviewer runs) and skips resume candidates whose PR `/bulma watch` has
   already seen merged or closed.
-- `ruver-code-review` checks four gaps a lookback over human review found:
+- `bulma-code-review` checks four gaps a lookback over human review found:
   sibling paths missing a guard the PR adds, multi-store writes on partial
   failure or redelivery, tests that cannot fail, and unvalidated input into
   typed columns. ADR 0005 records the self-improving loop behind it.
-- `/bulma watch`: a watchdog over every workspace under `$RUVER_HOME`. It
+- `/bulma watch`: a watchdog over every workspace under `$BULMA_HOME`. It
   reconciles each PR with GitHub (merged or closed counts as finished and is
   cached in `bulma-watch.json`), marks workspaces whose directory is gone as
   orphaned, and prints the next command for the rest. Report only, no key.
   `/bulma` inventory prints a one-line summary when other workspaces are
   stalled.
-- `ruver-lstm` and `ruver-reviewer` record one observation per human review
-  comment in `$RUVER_HOME/insights/observations.jsonl`
-  (`ruver-bus/INSIGHTS.md`, `ruver-bus/scripts/observe.py`). Whether our
+- `bulma-lstm` and `bulma-reviewer` record one observation per human review
+  comment in `$BULMA_HOME/insights/observations.jsonl`
+  (`bulma-bus/INSIGHTS.md`, `bulma-bus/scripts/observe.py`). Whether our
   review caught the same thing comes from the review marker, not a guess.
 - `/bulma` pins `jev-1.13.0` by default instead of the moving
   `jev-latest` alias, since the catalog thresholds were tuned against it.
@@ -71,9 +85,9 @@ Notable changes per release. Format follows
   session model, `light` is refused on elevated risk or high-risk paths, a
   fail escalates one tier inside the existing loop caps. Starts under
   `shadow`. `bulma.py dispatch plan | role | result | reverse | report |
-  review | map`; units logged to `.ruver-bulma/DISPATCH.tsv` with first
+  review | map`; units logged to `.bulma-core/DISPATCH.tsv` with first
   pass, loops, reversals and worker tokens. Model names live only in the
-  `tiers` map in `~/.ruver/bulma.json`. ADR 0004.
+  `tiers` map in `~/.bulma/bulma.json`. ADR 0004.
 
 - `bulma.py ask-many --batch FILE`: per-item hooks (QA findings, review
   comments) in one call. Items are validated first, sent in parallel and
@@ -82,14 +96,14 @@ Notable changes per release. Format follows
   `entry.next_step`, `review.risk` and `reviewer.failure_class` state in
   code (from `world.json` and `gh`), so the orchestrator stops writing it by
   hand. `ask --line` prints the overlay `J:` line.
-- `/bulma`: one entry point that picks the graph (developer / qa / reviewer / lstm / triage / memory) from args and a `world.sh` inventory, then asks TypeSafe Jev at nine forks (`fd.triage`, `policy.ask`, `qa.gate`, `triage.classify`, `lstm.verify`, `reviewer.failure_class`, `review.risk`, plus the two entry decisions). Acts when confidence clears a threshold set by `shadow | cautious | balanced | bold` power and per-question `act_at` in `~/.ruver/bulma.json`; else the graph's own rule. Every answer logged to `.ruver-bulma/DECISIONS.tsv`; `bulma.py report` suggests thresholds. Existing graphs unchanged. Optional: needs `TYPESAFE_API_KEY`.
-- `/ruver-lstm` verify binds each comment to HEAD (`claim_true`,
+- `/bulma`: one entry point that picks the graph (developer / qa / reviewer / lstm / triage / memory) from args and a `world.sh` inventory, then asks TypeSafe Jev at nine forks (`fd.triage`, `policy.ask`, `qa.gate`, `triage.classify`, `lstm.verify`, `reviewer.failure_class`, `review.risk`, plus the two entry decisions). Acts when confidence clears a threshold set by `shadow | cautious | balanced | bold` power and per-question `act_at` in `~/.bulma/bulma.json`; else the graph's own rule. Every answer logged to `.bulma-core/DECISIONS.tsv`; `bulma.py report` suggests thresholds. Existing graphs unchanged. Optional: needs `TYPESAFE_API_KEY`.
+- `/bulma-lstm` verify binds each comment to HEAD (`claim_true`,
   `fix_ok_here`, `risk`) and skip must cite a path or test. After a
   should-fix patch, **prove** runs the fd reviewer (`spec_verdict` =
   this comment, `quality_verdict` = TDD/DS) and tester before reply.
   Fail does not dismiss `CHANGES_REQUESTED`. Last `prove_fix_loops`
   slot is a fresh coder.
-- `/ruver-developer` triage writes `risk: low | normal | elevated`
+- `/bulma-developer` triage writes `risk: low | normal | elevated`
   orthogonal to `path`. An auth bug stays `debug_fix` + `elevated`;
   `light_change` + `elevated` runs blast. Resume replays world vs STATE
   (HANDOFF `# expect:` plus the ARGS.md table) and re-enters a node
@@ -98,7 +112,7 @@ Notable changes per release. Format follows
 - `plan_critic` runs after tickets on `full_feature` when `risk` is not
   `low`: main-thread scan at `normal`, one read-only spawn at `elevated`.
   Bugs and chores skip it. Chat status adds a Walk line (`✓` / `●` / `○`)
-  derived from ROUTING stages. `ruver status` prints that Walk from cwd
+  derived from ROUTING stages. `bulma status` prints that Walk from cwd
   STATE. Elevated UI tickets capture an After still before the next
   ticket. The last `review_fix_loops` slot is a fresh coder.
 - `/qa` plans a blast-radius table (callers → user flows; zero callers
@@ -107,10 +121,10 @@ Notable changes per release. Format follows
   coverage table. After the scripted walk, a scoped dogfood pass
   explores those surfaces off-script. `scripts/concat-clips.sh`
   concatenates clips into the comment reel.
-- `/ruver-code-review` writes the ticket/PR acceptance checklist before
+- `/bulma-code-review` writes the ticket/PR acceptance checklist before
   reading product files, drops findings whose `path:line` is not in the
   patch (`scripts/bind-findings.py`), and spawns one fresh critic on
-  high-risk diffs only (`scripts/classify-risk.py`). `/ruver-reviewer`
+  high-risk diffs only (`scripts/classify-risk.py`). `/bulma-reviewer`
   uses that path; it does not spawn a second critic.
 - The critic walks contracts, integration/state, and security/data-loss
   on that one spawn and does not vote unique findings off. Tests run
@@ -123,7 +137,7 @@ Notable changes per release. Format follows
 - Tracker checkout is always `feature/<id-lowercase>` (`DEV-4525` →
   `feature/dev-4525`). Host `{login}/<id>` worktrees and tracker
   `gitBranchName` no longer win.
-- SkillSpector static scan of `ruver-feature-delivery` no longer flags
+- SkillSpector static scan of `bulma-feature-delivery` no longer flags
   E4/TM1/AS3/EA1 keyword hits. The quality node, CI ban, adapters, and
   STATE template were rephrased; graph behavior is unchanged.
 
@@ -132,19 +146,19 @@ Notable changes per release. Format follows
 ### Fixed
 
 - Codex standalone installs now copy skills instead of symlinking them, keeping
-  public ids such as `$ruver-developer` instead of plugin-namespaced ids.
+  public ids such as `$bulma-developer` instead of plugin-namespaced ids.
 - Command templates no longer use features rejected by Codex command-to-skill
   migration.
-- Setup output and docs no longer claim Codex accepts direct `/ruver-*`
-  commands. Codex users invoke the same standalone skills with `$ruver-*` or
+- Setup output and docs no longer claim Codex accepts direct `/bulma-*`
+  commands. Codex users invoke the same standalone skills with `$bulma-*` or
   `/skills`.
-- Added `$ruver-fd` as a standalone alias for `ruver-feature-delivery`.
+- Added `$bulma-fd` as a standalone alias for `bulma-feature-delivery`.
 
 ## [0.9.0] - 2026-09-03
 
 ### Added
 
-- `ruver report` prints host token totals (prompt, uncached, cache%)
+- `bulma report` prints host token totals (prompt, uncached, cache%)
   by workspace class when a Grok transcript exists. Graphs still do
   not write token counts into the run ledger.
 
@@ -175,9 +189,9 @@ Notable changes per release. Format follows
 - `before-and-after` lib: GitHub PR body stills (desktop, mobile only
   when layout/CSS changes). Shipper attaches merge-base vs HEAD with
   `gh pr edit --attach`. `/qa` fills the block when it is missing.
-- `ruver setup` installs `agent-browser` and Chrome, and warns when
+- `bulma setup` installs `agent-browser` and Chrome, and warns when
   `gh` is older than 2.99 (`--attach`).
-- Shared login state under `~/.ruver/agent-browser/ruver-<owner>-<repo>/`.
+- Shared login state under `~/.bulma/agent-browser/bulma-<owner>-<repo>/`.
 
 ### Changed
 
@@ -197,11 +211,11 @@ Notable changes per release. Format follows
 
 ### Added
 
-- Branch and worktree rules in `ruver-bus` `JOBS.md`. Every task, foreground
+- Branch and worktree rules in `bulma-bus` `JOBS.md`. Every task, foreground
   included, gets its own worktree and branch from `origin/main` after
   `git fetch`. Never commit to main. `--force-with-lease` only on the task
   branch, never on main. Shipper rebases onto `origin/<base>` and re-runs
-  the hard gate before push. `ruver status` lists worktrees.
+  the hard gate before push. `bulma status` lists worktrees.
 - `templates/PR_BODY.md` and an `evidence` node. Before and After belong in
   the PR description. Screenshots publish as a secret gist.
 - Developer `bot_review` between `mergeable` and `request_qa`. Detected
@@ -217,7 +231,7 @@ Notable changes per release. Format follows
 
 ### Added
 
-- The QA slot is a lease. `qa_active` was cleared only by `ruver-qa`'s
+- The QA slot is a lease. `qa_active` was cleared only by `bulma-qa`'s
   `verdict` node, so any other exit — `handed_off` on a context limit,
   `escalated`, a killed session — left the claim set for good. Every later
   `QA_REQUEST` then parked in `qa_waiting` and never ran, while the graph kept
@@ -239,10 +253,10 @@ Notable changes per release. Format follows
   was `passed | failed` in `HANDOFF.md` so a handoff could not express
   `passed_partial`, `ci.status` was missing `skipped_no_pr`, and the blocker
   rollup was called `status`, colliding with the graph's own.
-- `$RUVER_ROOT/.ruver-bus/RUN_LOG.tsv`, a run ledger the graphs append to on
-  every transition, and `ruver report` to read it: wall time and lap count per
+- `$BULMA_ROOT/.bulma-bus/RUN_LOG.tsv`, a run ledger the graphs append to on
+  every transition, and `bulma report` to read it: wall time and lap count per
   `graph/node`, plus the age of the QA claim. Observation only — nothing gates
-  on it. See `skills/ruver-bus/LEDGER.md`.
+  on it. See `skills/bulma-bus/LEDGER.md`.
 - `version` in `.codex-plugin/marketplace.json` and
   `.cursor-plugin/marketplace.json`.
 
@@ -265,7 +279,7 @@ Notable changes per release. Format follows
 - `skills/why/references/sources/*.md` are now `references/source-*.md`.
 - README brought back in line with the product: the layer table pointed at the
   pre-flatten `skills/*/*/GRAPH.md`, `/goal` was missing from the command table
-  and the alias list even though `commands/goal.md` ships, `ruver-host` appeared
+  and the alias list even though `commands/goal.md` ships, `bulma-host` appeared
   nowhere in the reference section despite being one of the 34 skills, the
   runtime-state block showed three of the nine directories and none of the
   ledger, and "add a skill" named one of the three manifests the gate checks.
@@ -288,7 +302,7 @@ Notable changes per release. Format follows
   `skills/lib`, contradicting the paragraph under it.
 - Prose across the docs and four skills still called the host contract
   `HOST.md`, a file that no longer exists. `tests/repo.sh` now fails on the name.
-- `ruver-developer` described itself as delivering a *Linear* ticket, which the
+- `bulma-developer` described itself as delivering a *Linear* ticket, which the
   tracker genericization missed because the description is not a state field.
 - `how` and `diagnose` carried `\"` inside a folded YAML scalar, so literal
   backslashes reached the skill picker.
@@ -297,20 +311,20 @@ Notable changes per release. Format follows
 
 ### Added
 
-- `ruver --version` / `-V`.
+- `bulma --version` / `-V`.
 - `--only <hosts>` and `--all` to choose which agent homes `setup` writes to.
 - `--no-path` to leave `~/.zshrc` and `~/.bashrc` alone.
 - A symlink capability check. `setup` refuses on a filesystem where `ln -s`
-  silently copies, because `ruver update` would then never propagate.
+  silently copies, because `bulma update` would then never propagate.
 - `tests/repo.sh`: link, frontmatter, manifest and structure gates.
 - `shellcheck` in CI.
 - `category: graph | engine | lib` in every `SKILL.md`.
 - `commands/goal.md`, so `/goal` exists next to `/developer`, `/qa`,
   `/reviewer`, `/lstm` and `/memory`.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODEOWNERS`, issue and PR templates.
-- `skills/ruver-host`: the host contract, previously `HOST.md` at the repo root.
-- `ruver-goal` gained `GRAPH.md`, `STATE.schema.md` and four nodes.
-- `ruver-code-review` gained the `STATE.schema.md` it never had.
+- `skills/bulma-host`: the host contract, previously `HOST.md` at the repo root.
+- `bulma-goal` gained `GRAPH.md`, `STATE.schema.md` and four nodes.
+- `bulma-code-review` gained the `STATE.schema.md` it never had.
 
 ### Changed
 
@@ -324,18 +338,18 @@ Notable changes per release. Format follows
   is now `skills/<name>`, and `category` in the frontmatter carries what the
   directory used to. No link may leave the skills root, which is what makes
   `../other-skill/FILE.md` resolve the same in git and after install.
-- `ruver-code-review/SKILL.md` split from 668 lines into eight nodes and three
+- `bulma-code-review/SKILL.md` split from 668 lines into eight nodes and three
   references.
-- `ruver-bus` is `category: lib`. It has no nodes and walks no edges, so it is
+- `bulma-bus` is `category: lib`. It has no nodes and walks no edges, so it is
   documented as the shared protocol rather than as a graph.
 - State fields are vendor-neutral: `linear_id` and friends are `tracker_id` and
   friends, selected by `tracker:`. Linear works exactly as before through
   `LINEAR.md`, now explicitly the Linear adapter.
-- Optional MCP tools are named as capabilities and mapped in `ruver-host`.
+- Optional MCP tools are named as capabilities and mapped in `bulma-host`.
 
 ### Fixed
 
-- `.claude-plugin/plugin.json` omitted `ruver-memory`, so `/memory` did not
+- `.claude-plugin/plugin.json` omitted `bulma-memory`, so `/memory` did not
   exist for Claude Code plugin users.
 - Version drift: two manifests said 0.4.2 while two said 0.4.3.
 - `architect` referenced an `arena` skill that is not bundled here.
@@ -348,8 +362,8 @@ Notable changes per release. Format follows
 
 ### Removed
 
-- The seven `commands/ruver_*.md` underscore aliases. They doubled the command
-  picker on every host and were never documented. The role names `ruver_*`
+- The seven `commands/bulma_*.md` underscore aliases. They doubled the command
+  picker on every host and were never documented. The role names `bulma_*`
   remain in `agents/`.
 - `docs/superpowers/`: internal working notes that shipped to every user.
 

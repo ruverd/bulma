@@ -14,6 +14,6 @@ files remain MIT
 
 The delivery graph **adapts** grill (ASK last resort, DECIDE internally).
 Vanilla `grill-with-docs` interview-and-wait is off. See
-[`GRILL.md`](skills/ruver-feature-delivery/GRILL.md).
-TDD iron law in [`TDD.md`](skills/ruver-feature-delivery/TDD.md)
+[`GRILL.md`](skills/bulma-feature-delivery/GRILL.md).
+TDD iron law in [`TDD.md`](skills/bulma-feature-delivery/TDD.md)
 wins over any skip in bundled `tdd`.

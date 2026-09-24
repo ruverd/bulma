@@ -1,7 +1,7 @@
 {
   "version": 1,
   "plugins": {
-    "ruver": {
+    "bulma": {
       "components": {
         "skills": [
           {
@@ -10,7 +10,7 @@
           },
           {
             "name": "before-and-after",
-            "description": "Use when a GitHub PR needs before/after UI stills on the body, or when ruver-qa / the shipper captures those stills with agent-browser."
+            "description": "Use when a GitHub PR needs before/after UI stills on the body, or when bulma-qa / the shipper captures those stills with agent-browser."
           },
           {
             "name": "blast-radius",
@@ -18,7 +18,7 @@
           },
           {
             "name": "bulma",
-            "description": "Jev-gated router and overlay for ruver graphs. Use when /bulma."
+            "description": "Jev-gated router and overlay for bulma graphs. Use when /bulma."
           },
           {
             "name": "diagnose",
@@ -69,51 +69,51 @@
             "description": "Use when receiving code review feedback, before implementing suggestions."
           },
           {
-            "name": "ruver-bus",
-            "description": "Shared bus for the ruver agent graphs (developer, qa, triage, reviewer, lstm)."
+            "name": "bulma-bus",
+            "description": "Shared bus for the bulma agent graphs (developer, qa, triage, reviewer, lstm)."
           },
           {
-            "name": "ruver-code-review",
+            "name": "bulma-code-review",
             "description": "Adaptive PR review via gh. One PR: main thread."
           },
           {
-            "name": "ruver-developer",
-            "description": "Graph: deliver a Linear ticket via grill → spec → tickets → TDD (ruver-feature-delivery), then MERGEABLE + ruver-qa over the bus."
+            "name": "bulma-developer",
+            "description": "Graph: deliver a Linear ticket via grill → spec → tickets → TDD (bulma-feature-delivery), then MERGEABLE + bulma-qa over the bus."
           },
           {
-            "name": "ruver-fd",
-            "description": "Alias for ruver-feature-delivery."
+            "name": "bulma-fd",
+            "description": "Alias for bulma-feature-delivery."
           },
           {
-            "name": "ruver-feature-delivery",
+            "name": "bulma-feature-delivery",
             "description": "Use when delivering a ticket, bug."
           },
           {
-            "name": "ruver-goal",
+            "name": "bulma-goal",
             "description": "Drive developer → CI green → QA comment+evidence across turns with schedule_wake (HOST.md)."
           },
           {
-            "name": "ruver-host",
+            "name": "bulma-host",
             "description": "Host contract."
           },
           {
-            "name": "ruver-lstm",
+            "name": "bulma-lstm",
             "description": "Graph: author-side of review."
           },
           {
-            "name": "ruver-memory",
-            "description": "Use when /memory, /ruver-memory, a ruver graph or engine starts, the first run in a repo, CODEOWNERS or AGENTS.md list no reviewers."
+            "name": "bulma-memory",
+            "description": "Use when /memory, /bulma-memory, a bulma graph or engine starts, the first run in a repo, CODEOWNERS or AGENTS.md list no reviewers."
           },
           {
-            "name": "ruver-qa",
+            "name": "bulma-qa",
             "description": "Graph: QA a PR. One slot (queue extras). Plan happy and user-break from the diff, then agent-browser or HTTP. Bus TRIAGE_REQUEST on product errors."
           },
           {
-            "name": "ruver-reviewer",
-            "description": "Graph: review a PR/branch via /ruver-code-review, classify CI/test failures, optionally bus a REVIEW_RESULT."
+            "name": "bulma-reviewer",
+            "description": "Graph: review a PR/branch via /bulma-code-review, classify CI/test failures, optionally bus a REVIEW_RESULT."
           },
           {
-            "name": "ruver-triage",
+            "name": "bulma-triage",
             "description": "Graph: investigate a QA failure, classify PR_BUG / EXISTING_BUG / NEW_BUG / NOT_A_BUG / BLOCKED, route via the bus."
           },
           {
@@ -155,141 +155,141 @@
         ],
         "agents": [
           {
-            "name": "ruver-fd-blocker",
-            "description": "Use when the ruver-feature-delivery graph hits a dependency blocker (missing contract, open ticket, absent BE work)."
+            "name": "bulma-fd-blocker",
+            "description": "Use when the bulma-feature-delivery graph hits a dependency blocker (missing contract, open ticket, absent BE work)."
           },
           {
-            "name": "ruver-fd-ci",
-            "description": "Ruver FD CI gate. After PR, watch gh pr checks until all green; fix and push on failure. Task not delivered until green."
+            "name": "bulma-fd-ci",
+            "description": "Bulma FD CI gate. After PR, watch gh pr checks until all green; fix and push on failure. Task not delivered until green."
           },
           {
-            "name": "ruver-fd-coder",
-            "description": "Ruver FD implementer SUBAGENT. One ticket only, TDD red→green. Fresh per ticket. Never the whole plan."
+            "name": "bulma-fd-coder",
+            "description": "Bulma FD implementer SUBAGENT. One ticket only, TDD red→green. Fresh per ticket. Never the whole plan."
           },
           {
-            "name": "ruver-fd-context",
-            "description": "Use when the ruver-feature-delivery graph needs the mcp_context node (verify + fetch external context before implementing)."
+            "name": "bulma-fd-context",
+            "description": "Use when the bulma-feature-delivery graph needs the mcp_context node (verify + fetch external context before implementing)."
           },
           {
-            "name": "ruver-fd-debugger",
-            "description": "Ruver FD diagnose node. Root cause before fix. Prepares one TDD repro ticket for the coder. Use on path debug_fix."
+            "name": "bulma-fd-debugger",
+            "description": "Bulma FD diagnose node. Root cause before fix. Prepares one TDD repro ticket for the coder. Use on path debug_fix."
           },
           {
-            "name": "ruver-fd-fullstack",
-            "description": "Ruver FD fullstack coordinator. Worktrees on FE+BE with SAME branch name; host workers (Orca optional). Use when scope is fullstack."
+            "name": "bulma-fd-fullstack",
+            "description": "Bulma FD fullstack coordinator. Worktrees on FE+BE with SAME branch name; host workers (Orca optional). Use when scope is fullstack."
           },
           {
-            "name": "ruver-fd-plan-critic",
-            "description": "Ruver FD plan critic. Read-only on SPEC and TICKETS. Table of plan defects. Never edits product code or the plan files."
+            "name": "bulma-fd-plan-critic",
+            "description": "Bulma FD plan critic. Read-only on SPEC and TICKETS. Table of plan defects. Never edits product code or the plan files."
           },
           {
-            "name": "ruver-fd-quality",
-            "description": "Ruver FD quality gate. Runs thermo-nuclear-code-quality-review and applies fix all before any final commit/push/PR."
+            "name": "bulma-fd-quality",
+            "description": "Bulma FD quality gate. Runs thermo-nuclear-code-quality-review and applies fix all before any final commit/push/PR."
           },
           {
-            "name": "ruver-fd-reviewer",
-            "description": "Ruver FD reviewer. Read-only. Writes spec_verdict and quality_verdict. Pass only if both pass."
+            "name": "bulma-fd-reviewer",
+            "description": "Bulma FD reviewer. Read-only. Writes spec_verdict and quality_verdict. Pass only if both pass."
           },
           {
-            "name": "ruver-fd-shipper",
-            "description": "Ruver FD shipper. After thermo fix all — commit, push, draft PR. Does not claim delivery; CI gate follows."
+            "name": "bulma-fd-shipper",
+            "description": "Bulma FD shipper. After thermo fix all — commit, push, draft PR. Does not claim delivery; CI gate follows."
           },
           {
-            "name": "ruver-fd-tester",
+            "name": "bulma-fd-tester",
             "description": "Feature-delivery graph node. Runs hard gate commands (typecheck/lint/tests) and records real exit codes. Does not fix product code."
           },
           {
-            "name": "ruver-fd-triage",
-            "description": "Ruver FD router. Classifies goal as feature/bug/chore and picks full_feature vs debug_fix vs light_change. No product code."
+            "name": "bulma-fd-triage",
+            "description": "Bulma FD router. Classifies goal as feature/bug/chore and picks full_feature vs debug_fix vs light_change. No product code."
           },
           {
-            "name": "ruver_developer",
-            "description": "Senior delivery agent. Runs /ruver-feature-delivery, keeps the PR Draft, requires CI green AND MERGEABLE, then hands off to ruver_qa."
+            "name": "bulma_developer",
+            "description": "Senior delivery agent. Runs /bulma-feature-delivery, keeps the PR Draft, requires CI green AND MERGEABLE, then hands off to bulma_qa."
           },
           {
-            "name": "ruver_qa",
-            "description": "Product QA agent. Runs agent-browser checks on a GitHub PR, then hands potential product errors to ruver_triage."
+            "name": "bulma_qa",
+            "description": "Product QA agent. Runs agent-browser checks on a GitHub PR, then hands potential product errors to bulma_triage."
           },
           {
-            "name": "ruver_reviewer",
-            "description": "Senior PR/branch review agent. Runs /ruver-code-review, diagnoses CI/test/branch failures, classifies root cause. Never merges."
+            "name": "bulma_reviewer",
+            "description": "Senior PR/branch review agent. Runs /bulma-code-review, diagnoses CI/test/branch failures, classifies root cause. Never merges."
           },
           {
-            "name": "ruver_triage",
+            "name": "bulma_triage",
             "description": "Bug triage agent. Investigates a QA failure, classifies PR_BUG / EXISTING_BUG / NEW_BUG / NOT_A_BUG / BLOCKED, and routes the fix."
           }
         ],
         "commands": [
           {
             "name": "bulma",
-            "description": "Route the request to the right ruver graph and gate its forks with Jev decisions"
+            "description": "Route the request to the right bulma graph and gate its forks with Jev decisions"
           },
           {
             "name": "developer",
-            "description": "Alias /developer — same as /ruver-developer"
+            "description": "Alias /developer — same as /bulma-developer"
           },
           {
             "name": "goal",
-            "description": "Alias of /ruver-goal — keep going until QA evidence lands on the head SHA"
+            "description": "Alias of /bulma-goal — keep going until QA evidence lands on the head SHA"
           },
           {
             "name": "lstm",
-            "description": "Alias /lstm — same as /ruver-lstm"
+            "description": "Alias /lstm — same as /bulma-lstm"
           },
           {
             "name": "memory",
-            "description": "Alias /memory — same as /ruver-memory"
+            "description": "Alias /memory — same as /bulma-memory"
           },
           {
             "name": "qa",
-            "description": "Alias /qa — same as /ruver-qa"
+            "description": "Alias /qa — same as /bulma-qa"
           },
           {
             "name": "reviewer",
-            "description": "Alias /reviewer — same as /ruver-reviewer"
+            "description": "Alias /reviewer — same as /bulma-reviewer"
           },
           {
-            "name": "ruver-bus",
-            "description": "Resume or inspect the ruver graph bus (developer/qa/triage/reviewer)."
+            "name": "bulma-bus",
+            "description": "Resume or inspect the bulma graph bus (developer/qa/triage/reviewer)."
           },
           {
-            "name": "ruver-code-review",
+            "name": "bulma-code-review",
             "description": "Adaptive PR review via gh. One PR on main thread; 2+ PRs → one fresh subagent each."
           },
           {
-            "name": "ruver-developer",
+            "name": "bulma-developer",
             "description": "Deliver a ticket, goal, or PR_BUG. Grill → spec → tickets → TDD. Draft PR, CI green + MERGEABLE, then QA."
           },
           {
-            "name": "ruver-fd",
-            "description": "Alias /ruver-fd — resume handoff, token-lean, CI green = delivered"
+            "name": "bulma-fd",
+            "description": "Alias /bulma-fd — resume handoff, token-lean, CI green = delivered"
           },
           {
-            "name": "ruver-feature-delivery",
-            "description": "Ruver graph — grill → spec → tickets → TDD. MCP first, error if unavailable, no invent, then implement/ship"
+            "name": "bulma-feature-delivery",
+            "description": "Bulma graph — grill → spec → tickets → TDD. MCP first, error if unavailable, no invent, then implement/ship"
           },
           {
-            "name": "ruver-goal",
+            "name": "bulma-goal",
             "description": "Drive developer → CI green → QA comment+evidence via /goal and /loop."
           },
           {
-            "name": "ruver-lstm",
+            "name": "bulma-lstm",
             "description": "Address review comments and merge conflicts on an existing PR."
           },
           {
-            "name": "ruver-memory",
+            "name": "bulma-memory",
             "description": "Durable user/project prefs outside git (chat language, reviewers, open questions)."
           },
           {
-            "name": "ruver-qa",
-            "description": "QA a PR (agent-browser or HTTP). Happy and user-break from the diff. Hands potential bugs to ruver_triage."
+            "name": "bulma-qa",
+            "description": "QA a PR (agent-browser or HTTP). Happy and user-break from the diff. Hands potential bugs to bulma_triage."
           },
           {
-            "name": "ruver-reviewer",
+            "name": "bulma-reviewer",
             "description": "Review a PR/branch. Diagnose CI. Classify root cause. Never merge."
           },
           {
-            "name": "ruver-triage",
+            "name": "bulma-triage",
             "description": "Investigate a QA failure. Classify and route. Not a ticket bot."
           }
         ]

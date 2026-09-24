@@ -14,7 +14,7 @@ Code, not Jev, clamps the answer: `heavy` is the session model; gates
 (reviewer, quality, plan-critic, debugger, triage, grill) never go below
 it; `light` is refused on elevated risk or a `classify-risk.py` high path;
 a fail escalates one tier inside the existing loop caps. The host mapping
-(`tiers` in `$RUVER_HOME/bulma.json`) is the only place a model name
+(`tiers` in `$BULMA_HOME/bulma.json`) is the only place a model name
 appears, so graph files stay host-free.
 
 Measurement decides whether it pays: `DISPATCH.tsv` logs first pass,

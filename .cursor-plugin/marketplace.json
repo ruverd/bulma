@@ -5,17 +5,17 @@
     "email": "ruverd@gmail.com"
   },
   "metadata": {
-    "description": "Ruver agent graphs for delivery, QA, review, and incoming review comments."
+    "description": "Bulma agent graphs for delivery, QA, review, and incoming review comments."
   },
   "plugins": [
     {
-      "name": "ruver",
+      "name": "bulma",
       "source": "./",
-      "description": "Run /ruver-developer, /ruver-lstm, /ruver-qa and the graphs behind them.",
+      "description": "Run /bulma-developer, /bulma-lstm, /bulma-qa and the graphs behind them.",
       "version": "0.9.1",
       "category": "developer-tools",
       "tags": [
-        "ruver",
+        "bulma",
         "tdd",
         "qa",
         "review"

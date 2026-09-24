@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Feature Delivery"
+  short_description: "Deliver work through draft PR and green CI"
+  default_prompt: "Use $bulma-feature-delivery to deliver this ticket or goal."

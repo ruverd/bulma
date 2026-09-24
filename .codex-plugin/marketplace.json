@@ -5,8 +5,8 @@
   },
   "plugins": [
     {
-      "name": "ruver",
-      "description": "Run /ruver-developer, /ruver-lstm, /ruver-qa on any harness.",
+      "name": "bulma",
+      "description": "Run /bulma-developer, /bulma-lstm, /bulma-qa on any harness.",
       "version": "0.9.1",
       "source": {
         "source": "local",

@@ -3,8 +3,8 @@
 # Images only. Video belongs on the QA comment (gh pr comment --attach).
 set -euo pipefail
 
-MARKER_START='<!-- ruver-before-and-after:start -->'
-MARKER_END='<!-- ruver-before-and-after:end -->'
+MARKER_START='<!-- bulma-before-and-after:start -->'
+MARKER_END='<!-- bulma-before-and-after:end -->'
 
 usage() {
   cat <<'EOF'
@@ -213,8 +213,8 @@ replace_block() {
     exit 1
   fi
   local starts ends
-  starts="$(printf '%s' "$body" | grep -c 'ruver-before-and-after:start' || true)"
-  ends="$(printf '%s' "$body" | grep -c 'ruver-before-and-after:end' || true)"
+  starts="$(printf '%s' "$body" | grep -c 'bulma-before-and-after:start' || true)"
+  ends="$(printf '%s' "$body" | grep -c 'bulma-before-and-after:end' || true)"
   if [[ "$starts" -ne 1 || "$ends" -ne 1 ]]; then
     echo "PR body contains multiple before-and-after marker blocks" >&2
     exit 1
