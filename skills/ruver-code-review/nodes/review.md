@@ -66,6 +66,10 @@ asserts a mock instead of behaviour, error path untested, `it` description
 missing the `should` prefix (project rule), test disabled or skipped in the
 diff. New validation covered only by a happy-path test is a **nit**.
 
+A test in the diff that cannot fail counts as no test: setup or spy inside the
+`try` it tests, an assertion no value can break (`>= 0`), a skip or env gate
+that no CI workflow turns on, a spy with no assertion on its calls.
+
 ### Phase 5 — Correctness & regression (never skipped)
 
 For each changed exported symbol, find who else uses it:
@@ -94,13 +98,24 @@ same cap. Then check (`axis: correctness`):
 - off-by-one and empty-collection paths in new logic
 - broad `catch` (`Error`, `unknown`, or untyped) that can hide an unexpected failure
 - `?.` skipping an operation that must run
+- a guard, fix, header, or registry entry this PR adds on one path while a
+  sibling in the same file or module still lacks it: another commit path
+  (autosave, navigate-away), another `CASE` arm, the bulk branch of a
+  single-item handler, a second registry of the same ids, the inverse
+  operation. The finding names the sibling `path:line`
 
 ### Phase 6 — Contract & data
 
 `axis: contract`. Request and response shape versus the type, error branch
 handled, pagination and default values, nullable field treated as required,
 migration reversibility and backfill, id or tenant scoping on every query that
-touches shared tables.
+touches shared tables. User input reaching a typed column (uuid, int, enum)
+with no format check, so a bad value is a 500 instead of a 400 or 404.
+
+A write that spans two stores, or an external provider and a local table: say
+what state is left when the second step fails, and what a retry or an
+at-least-once redelivery writes or emits again. An audit, event, or webhook
+emit gated on input presence instead of rows actually changed fires on replay.
 
 Spreading the request body into a write is mass assignment. **Blocker** if that
 can set role, tenant, price, or a flag/permission. Otherwise drop.
