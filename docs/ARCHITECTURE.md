@@ -1,6 +1,8 @@
 # Bulma architecture
 
-Command pages: [commands/](commands/README.md).
+This page is for contributors. It shows the step-by-step graph of each stage.
+For the overview, read [How Bulma works](how-it-works.md) first. Command pages:
+[commands/](commands/README.md).
 
 Five graphs share one session. They do not nest. They pass work through
 files on the bus.
@@ -82,7 +84,7 @@ still, or by walking the FE screens that call them. Unit tests or
 
 ## /bulma-lstm
 
-Looks shit to me. Author side of review. Same PR, same branch.
+Short for "looks shit to me". The author side of a review. Same PR, same branch.
 
 ```
 URL | resume | LSTM_REQUEST

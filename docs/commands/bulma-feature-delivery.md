@@ -55,4 +55,4 @@ Forge, tracker, toolchain, reviewers, assignee:
 ## Related
 
 [`/bulma-developer`](bulma-developer.md) · [`/bulma-goal`](bulma-goal.md) ·
-workers in the [README catalog](../../README.md#agents)
+worker contracts in [`agents/`](../../agents/)

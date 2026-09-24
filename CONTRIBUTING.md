@@ -1,64 +1,89 @@
 # Contributing
 
-This repo is a marketplace of agent skills, not an application. The thing you
-ship is instructions an agent follows, so the review bar is about whether a node
-can be executed unambiguously by a model that has never seen this repo.
+Bulma is a set of agent skills, not an application. What you change here is
+instructions that an AI model follows. So the review question for every change
+is: can a model that has never seen this repo follow this step one way only?
 
-## Layout
+## Set up a development checkout
+
+```bash
+git clone https://github.com/ruverd/bulma.git
+cd bulma
+./install.sh setup
+```
+
+`./install.sh setup` points the `bulma` command and every agent at this
+checkout, so your edits take effect after you restart the agent. In this
+checkout, `bulma update` runs `git pull`.
+
+## Repo layout
 
 | Path | What lives there |
 |---|---|
-| `skills/` | Skills. Each has `SKILL.md` with `category: graph \| engine \| lib` |
-| `agents/` | Worker and role contracts. Not skills |
-| `commands/` | Slash aliases. Each points at one skill and defines no steps |
-| `docs/` | Human-facing pages, one per command |
-| `skills/bulma-host/` | Harness primitives. Anything host-specific belongs here |
-| `tests/` | Gates, described below |
+| `skills/` | One flat folder per skill. Each has a `SKILL.md` with `category: graph`, `engine`, or `lib` |
+| `agents/` | Contracts for workers and stage roles. These are not skills |
+| `commands/` | Slash command aliases. Each one points at a skill and defines no steps |
+| `docs/` | Pages for people. [docs/README.md](docs/README.md) lists them |
+| `skills/bulma-host/` | How each coding agent starts workers and schedules later turns. Anything agent-specific goes here |
+| `tests/` | The checks listed below |
 
-Read [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md) before adding a graph.
+The skill categories:
 
-## Gates
+- `graph`: a stage with its own graph of steps, such as `bulma-developer`
+- `engine`: a large job that stages call, such as `bulma-feature-delivery`
+- `lib`: a small shared skill, such as `unslop` or `tdd`
+
+Read [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md) before you add or change
+a graph.
+
+## Run the tests
 
 ```bash
-bash tests/install.sh          # the bulma CLI: setup, update, uninstall, flags
-bash tests/repo.sh             # repo invariants: links, frontmatter, manifests, structure
-bash tests/before-and-after.sh # PR stills formatter + session dir
-bash tests/bulma-qa.sh         # QA per-surface clips, not qa:login
-bash tests/bulma-code-review.sh # spec-first, patch bind, high-risk critic
-bash tests/bulma-developer.sh  # risk axis, split review verdicts, resume invariants
-bash tests/bulma-lstm.sh       # comment bind, prove before reply
+bash tests/repo.sh              # links, frontmatter, manifests, structure
+bash tests/install.sh           # the bulma CLI: setup, update, uninstall, flags
+bash tests/bulma.sh             # the /bulma router, hooks, watch, and lookback
+bash tests/bulma-developer.sh   # risk levels, split review verdicts, resume
+bash tests/bulma-code-review.sh # spec first, findings bound to the patch, critic
+bash tests/bulma-lstm.sh        # comment binding, proof before reply
+bash tests/bulma-qa.sh          # QA clips and evidence rules
+bash tests/before-and-after.sh  # the PR screenshot formatter
 ```
 
-These run in CI on every push. `tests/repo.sh` needs `python3`, and it runs
-`shellcheck` when that is installed. Using the skills still needs `git` and
-`curl`; `bulma setup` also installs `agent-browser`.
+CI runs all of them on every push. `tests/repo.sh` needs `python3`, and it
+also runs `shellcheck` when `shellcheck` is installed.
 
-## Adding a skill
+If you have the Grok CLI, also run `grok plugin validate .` to check the Grok
+plugin manifest.
 
-1. `skills/<name>/SKILL.md` with `name` matching the directory, a `description`
-   that says *when* to use it, and `category`.
-2. Relative links only, and none that leave the skill's own directory. After
-   install every skill is a sibling, so `../<other-skill>/FILE.md` resolves the
-   same in git and on disk. A link like `../../docs/ARCHITECTURE.md` only works on hosts
-   that follow symlinks with the kernel and breaks on hosts that normalise the
-   path string first.
-3. Host primitives go in `bulma-host`. Product policy goes in `PRODUCT.md` and the
-   target repo. Never hardcode `~/.claude`, `~/.grok`, `~/.cursor`, `~/.codex`,
-   a model id, or a company's handles.
-4. List the path in `plugin.json` and `.claude-plugin/plugin.json`. The Grok
-   plugin index is derived from frontmatter, so do not hand-edit it.
-5. Run `./install.sh setup` if you install by symlink, then commit.
+## Add a skill
 
-`bash tests/repo.sh` will tell you which of these you missed.
+1. Create `skills/<name>/SKILL.md`. Set `name` to the folder name, set
+   `category`, and write a `description` that says when to use the skill.
+2. Use relative links only. After install, every skill sits next to every
+   other one, so link to another skill as `../<other-skill>/FILE.md`. A link
+   that leaves the skills folder, such as `../../docs/ARCHITECTURE.md`, breaks
+   on agents that resolve paths as text.
+3. Put agent-specific details in `bulma-host`. Put repo-specific details in
+   [PRODUCT.md](skills/bulma-feature-delivery/PRODUCT.md) and the target repo.
+   Never write `~/.claude`, `~/.grok`, `~/.cursor`, `~/.codex`, a model ID, or a
+   person's handle into a skill.
+4. Add the folder path to `plugin.json` and `.claude-plugin/plugin.json`. Add
+   the name and description to `.grok-plugin/plugin-index.json`.
+5. Run `./install.sh setup`, then `bash tests/repo.sh`. The test names anything
+   you missed in steps 1 to 4.
 
-## Writing style
+## Write for people and for models
 
-Skill bodies, commit messages, PR text and CI output are English. Chat language
-follows `bulma-memory`. Apply the bundled `unslop` skill to anything a person
-reads.
+- Write skill files, commit messages, pull request text, and CI output in
+  English. The chat language follows `bulma-memory`.
+- Apply the bundled [unslop](skills/unslop/SKILL.md) skill to anything a person
+  reads.
+- For pages in `docs/`, follow [technical-writing](skills/technical-writing/SKILL.md).
+  Each page is one kind: a tutorial, a how-to guide, a reference, or an
+  explanation. Add new terms to [docs/glossary.md](docs/glossary.md).
 
 ## Third-party skills
 
-`skills/` bundles copies from other projects so a clone runs without extra
-marketplaces. Keep the origin and licence rows in
-[THIRD_PARTY.md](THIRD_PARTY.md) accurate when you add or update one.
+`skills/` includes copies of skills from other projects, so a clone works
+without extra marketplaces. When you add or update one, keep its origin and
+license row in [THIRD_PARTY.md](THIRD_PARTY.md) correct.
