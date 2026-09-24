@@ -35,6 +35,14 @@ session="bulma-${session}"
 dir="${BULMA_HOME}/agent-browser/${session}"
 mkdir -p "${dir}/captures"
 
+# Bulma's own agent-browser config. AGENT_BROWSER_CONFIG replaces both
+# ~/.agent-browser/config.json and ./agent-browser.json, so neither can turn
+# on a visible window, a Chrome profile, or attach to the user's Chrome.
+config="${BULMA_HOME}/agent-browser/config.json"
+printf '{"headed": false}\n' >"$config"
+
+printf 'export AGENT_BROWSER_CONFIG=%s\n' "$config"
+printf 'unset AGENT_BROWSER_HEADED AGENT_BROWSER_AUTO_CONNECT AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PROVIDER AGENT_BROWSER_EXTENSIONS\n'
 printf 'SESSION=%s\n' "$session"
 printf 'STATE_DIR=%s\n' "$dir"
 printf 'CAPTURE_DIR=%s\n' "${dir}/captures"

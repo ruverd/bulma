@@ -314,6 +314,8 @@ gh_attach_ok() {
 }
 
 install_agent_browser_bin() {
+  # The methods https://agent-browser.dev/installation documents, in the order
+  # a fresh machine is most likely to have them.
   if command -v brew >/dev/null 2>&1; then
     brew install agent-browser
     return
@@ -322,30 +324,58 @@ install_agent_browser_bin() {
     npm install -g agent-browser
     return
   fi
-  echo "warn   install agent-browser from https://agent-browser.dev/" >&2
+  if command -v cargo >/dev/null 2>&1; then
+    cargo install agent-browser
+    return
+  fi
   return 1
 }
 
+agent_browser_missing() {
+  echo "error  agent-browser is required. /qa and PR stills use it and nothing else." >&2
+  echo "       $1" >&2
+  echo "       Install it from https://agent-browser.dev/installation:" >&2
+  echo "         npm install -g agent-browser && agent-browser install" >&2
+  echo "       then run: bulma setup" >&2
+  return 1
+}
+
+# agent-browser is the only browser the QA graphs drive. Without it a model
+# reaches for whatever browser the host offers, and that is how a user's own
+# Chrome ends up opening mid-QA. So setup does not finish green without it.
 ensure_agent_browser() {
   if [[ "${BULMA_SKIP_DEPS:-0}" = "1" ]]; then
     echo "skip   agent-browser (BULMA_SKIP_DEPS)"
     return 0
   fi
   if [[ "$DRY" -eq 1 ]]; then
-    echo "dry-run: install agent-browser + Chrome if missing"
+    echo "dry-run: install agent-browser + Chrome for Testing if missing"
     return 0
   fi
   if ! command -v agent-browser >/dev/null 2>&1; then
     echo "need   agent-browser"
     install_agent_browser_bin || true
+    hash -r
   fi
-  if command -v agent-browser >/dev/null 2>&1; then
-    echo "ok     agent-browser $(agent-browser --version 2>/dev/null | head -1)"
-    agent-browser install >/dev/null || echo "warn   agent-browser install (Chrome) failed" >&2
-  else
-    echo "warn   agent-browser missing. UI /qa is BLOCKED until it is installed." >&2
-    echo "       brew install agent-browser && agent-browser install" >&2
+  if ! command -v agent-browser >/dev/null 2>&1; then
+    agent_browser_missing "No brew, npm, or cargo installed it."
+    return 1
   fi
+  echo "ok     agent-browser $(agent-browser --version 2>/dev/null | head -1)"
+  local browser_install=(agent-browser install)
+  [[ "$(uname -s)" == "Linux" ]] && browser_install+=(--with-deps)
+  if ! "${browser_install[@]}" >/dev/null; then
+    agent_browser_missing "'${browser_install[*]}' could not download Chrome for Testing."
+    return 1
+  fi
+  if ! agent-browser doctor --offline --quick >/dev/null 2>&1; then
+    agent_browser_missing "'agent-browser doctor --offline --quick' failed. Run it to see why."
+    return 1
+  fi
+  echo "ok     agent-browser Chrome for Testing"
+}
+
+ensure_gh() {
   if command -v gh >/dev/null 2>&1; then
     if gh_attach_ok; then
       echo "ok     gh $(gh --version 2>/dev/null | head -1)"
@@ -483,9 +513,15 @@ cmd_setup() {
   install_for_hosts
   ensure_bin
   ensure_path_snippet
-  ensure_agent_browser
+  local browser_ok=1
+  ensure_agent_browser || browser_ok=0
+  ensure_gh
   hint_jev
   echo
+  if [[ "$browser_ok" -eq 0 ]]; then
+    echo "skills are linked, but setup is not complete: install agent-browser, then run bulma setup" >&2
+    exit 1
+  fi
   echo "done. restart the agent session"
   echo "  Codex: \$bulma-developer or /skills"
   echo "  Claude/Grok: /developer or /bulma-developer"
@@ -602,7 +638,7 @@ cmd_status() {
   if command -v agent-browser >/dev/null 2>&1; then
     echo "browser  $(command -v agent-browser)"
   else
-    echo "browser  agent-browser missing (bulma setup)"
+    echo "browser  agent-browser missing, required for /qa (bulma setup)"
   fi
   if [[ -n "${TYPESAFE_API_KEY:-}" ]]; then
     echo "jev      ok (TYPESAFE_API_KEY set; /bulma available)"

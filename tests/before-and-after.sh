@@ -111,4 +111,21 @@ echo "$out" | grep -q "CAPTURE_DIR=$HOME_FAKE/.bulma/agent-browser/bulma-acme-ap
 [[ -d "$HOME_FAKE/.bulma/agent-browser/bulma-acme-app/captures" ]] || fail "did not mkdir captures"
 ok ensure-session
 
+# ensure-session pins agent-browser to Bulma's headless config, so a user or
+# project agent-browser.json cannot open a visible browser during QA.
+CFG="$HOME_FAKE/.bulma/agent-browser/config.json"
+echo "$out" | grep -qx "export AGENT_BROWSER_CONFIG=$CFG" || fail "config not pinned: $out"
+grep -q '"headed": false' "$CFG" || fail "bulma agent-browser config must be headless"
+for var in AGENT_BROWSER_HEADED AGENT_BROWSER_AUTO_CONNECT AGENT_BROWSER_EXECUTABLE_PATH; do
+  echo "$out" | grep -E '^unset ' | grep -qw "$var" || fail "ensure-session must unset $var"
+done
+got="$(
+  cd "$TMP/repo" &&
+  HOME="$HOME_FAKE" BULMA_HOME="$HOME_FAKE/.bulma" AGENT_BROWSER_HEADED=1 bash -c '
+    eval "$("$0")"
+    printf "%s|%s" "${AGENT_BROWSER_HEADED:-unset}" "$AGENT_BROWSER_CONFIG"' "$SES"
+)"
+[[ "$got" == "unset|$CFG" ]] || fail "eval should drop AGENT_BROWSER_HEADED and pin config (got $got)"
+ok ensure-session-headless
+
 echo "all passed"

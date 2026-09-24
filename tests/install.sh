@@ -616,4 +616,51 @@ rm -rf "$MM"
 ok migrate-legacy-managed
 # --- legacy layout migration (end) ---
 
+# --- agent-browser is required ---
+# setup links the skills, then refuses to finish green without agent-browser
+# and its Chrome for Testing. PATH holds only system dirs and stubs, so no real
+# brew, npm, cargo, or agent-browser can leak in from the machine.
+AB="$(mktemp -d "${TMPDIR:-/tmp}/bulma-ab.XXXXXX")"
+mkdir -p "$AB/home" "$AB/bin"
+ab_setup() {
+  HOME="$AB/home" XDG_CONFIG_HOME="$AB/home/.config" \
+    XDG_DATA_HOME="$AB/home/.local/share" BULMA_SKIP_DEPS=0 \
+    PATH="$AB/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+    "$INSTALL" setup --no-path >"$AB/out.txt" 2>&1
+}
+
+set +e; ab_setup; got=$?; set -e
+assert_eq "$got" "1" "setup without agent-browser exit"
+grep -q 'agent-browser is required' "$AB/out.txt" || { cat "$AB/out.txt"; fail "setup must say agent-browser is required"; }
+grep -q 'https://agent-browser.dev/installation' "$AB/out.txt" || fail "setup must point at the agent-browser install page"
+assert_link "$AB/home/.agents/skills/unslop"
+ok agent-browser-missing-fails
+
+cat >"$AB/bin/agent-browser" <<'SH'
+#!/bin/sh
+case "$1" in
+  --version) echo "agent-browser 0.0.0" ;;
+  install) echo "download failed" >&2; exit 1 ;;
+  doctor) exit 0 ;;
+esac
+SH
+chmod +x "$AB/bin/agent-browser"
+set +e; ab_setup; got=$?; set -e
+assert_eq "$got" "1" "setup with failing browser download exit"
+grep -q 'could not download Chrome for Testing' "$AB/out.txt" || { cat "$AB/out.txt"; fail "setup must report the failed download"; }
+ok agent-browser-download-fails
+
+cat >"$AB/bin/agent-browser" <<'SH'
+#!/bin/sh
+case "$1" in
+  --version) echo "agent-browser 0.0.0" ;;
+  install|doctor) exit 0 ;;
+esac
+SH
+set +e; ab_setup; got=$?; set -e
+assert_eq "$got" "0" "setup with working agent-browser exit"
+grep -q 'ok     agent-browser Chrome for Testing' "$AB/out.txt" || { cat "$AB/out.txt"; fail "setup must confirm Chrome for Testing"; }
+rm -rf "$AB"
+ok agent-browser-present
+
 echo "all passed"

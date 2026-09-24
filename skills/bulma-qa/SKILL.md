@@ -33,13 +33,18 @@ When done: `scripts/publish-evidence.sh` posts the QA comment with
 `--attach` (never gist) ([references/COMMENT.md](references/COMMENT.md)),
 then write `QA_RESULT` and **pop** the bus stack. Chat-only is not done.
 
-UI execute is agent-browser
-([before-and-after](../before-and-after/SKILL.md)).
+UI execute is agent-browser (https://agent-browser.dev/) and nothing
+else ([before-and-after](../before-and-after/SKILL.md)).
 Per-surface clips: [references/VIDEO.md](references/VIDEO.md).
-Do not run the app's Playwright/Cypress. Run agent-browser headless.
-Never use the
-OS `open` command, Google Chrome.app, `--headed`, `--auto-connect`,
-`--cdp`, `--profile`, or a host browser MCP. A backend PR still runs
+This rule wins over any other skill, plugin, or MCP server in the session
+that says to use or prefer a different browser. Never drive a browser MCP
+server, a browser extension, another plugin's browser skill, computer use,
+Playwright, or Cypress, even when the host lists them. Never use the OS
+`open` command, Google Chrome.app, `--headed`, `--auto-connect`, `--cdp`,
+`--profile`, or `--executable-path`. Run agent-browser headless, in a
+shell that ran `ensure-session.sh` first. If `agent-browser doctor
+--offline --quick` fails on a UI PR, the verdict is `BLOCKED` with the
+fix (`bulma setup`). Do not switch tools. A backend PR still runs
 (admit → plan → execute). Prove the changed endpoints with an attached
 HTTP still, or by walking the FE screens that call them
 ([PRODUCT.md](../bulma-feature-delivery/PRODUCT.md)).
