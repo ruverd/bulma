@@ -153,6 +153,11 @@ Notable changes per release. Format follows
 
 ### Fixed
 
+- `bulma setup` no longer links `commands/<name>.md` into
+  `~/.claude/commands` when `skills/<name>/` exists, and removes that
+  link from earlier installs. Claude Code had listed `/bulma`,
+  `/bulma-fd` and the other `/bulma-*` entries twice, once per source.
+  Grok still gets every command.
 - Tracker checkout is always `feature/<id-lowercase>` (`DEV-4525` →
   `feature/dev-4525`). Host `{login}/<id>` worktrees and tracker
   `gitBranchName` no longer win.

@@ -327,19 +327,35 @@ ok update-worktree
 PR_HOME="$(mktemp -d "${TMPDIR:-/tmp}/bulma-prune.XXXXXX")"
 mkdir -p "$mini/skills/gone" "$mini/commands"
 echo '# gone' >"$mini/skills/gone/SKILL.md"
-printf -- '---\ndescription: gone\n---\n' >"$mini/commands/gone.md"
+printf -- '---\ndescription: gone\n---\n' >"$mini/commands/gone-alias.md"
 HOME="$PR_HOME" XDG_CONFIG_HOME="$PR_HOME/.config" \
   XDG_DATA_HOME="$PR_HOME/.local/share" "$mini/install.sh" setup --all >/dev/null
 assert_dir "$PR_HOME/.agents/skills/gone"
-assert_link "$PR_HOME/.claude/commands/gone.md"
+assert_link "$PR_HOME/.claude/commands/gone-alias.md"
 assert_not "$PR_HOME/.codex/skills/gone"
-rm -rf "$mini/skills/gone" "$mini/commands/gone.md"
+rm -rf "$mini/skills/gone" "$mini/commands/gone-alias.md"
 HOME="$PR_HOME" XDG_CONFIG_HOME="$PR_HOME/.config" \
   XDG_DATA_HOME="$PR_HOME/.local/share" "$mini/install.sh" setup --all >/dev/null
 assert_gone "$PR_HOME/.agents/skills/gone"
-assert_gone "$PR_HOME/.claude/commands/gone.md"
+assert_gone "$PR_HOME/.claude/commands/gone-alias.md"
 assert_dir "$PR_HOME/.agents/skills/unslop"
 ok setup-prunes-removed-links
+
+# --- Claude gets no command that shadows a skill of the same name ---
+DUP_HOME="$(mktemp -d "${TMPDIR:-/tmp}/bulma-dup.XXXXXX")"
+mkdir -p "$DUP_HOME/.claude/commands"
+ln -s "$(cd "$mini" && pwd)/commands/unslop.md" "$DUP_HOME/.claude/commands/unslop.md"
+printf -- '---\ndescription: dup\n---\n' >"$mini/commands/unslop.md"
+printf -- '---\ndescription: alias\n---\n' >"$mini/commands/alias.md"
+HOME="$DUP_HOME" XDG_CONFIG_HOME="$DUP_HOME/.config" \
+  XDG_DATA_HOME="$DUP_HOME/.local/share" "$mini/install.sh" setup --all >/dev/null
+assert_link "$DUP_HOME/.claude/skills/unslop"
+assert_gone "$DUP_HOME/.claude/commands/unslop.md"
+assert_link "$DUP_HOME/.claude/commands/alias.md"
+assert_link "$DUP_HOME/.grok/commands/unslop.md"
+rm -f "$mini/commands/unslop.md" "$mini/commands/alias.md"
+rm -rf "$DUP_HOME"
+ok setup-skips-claude-commands-shadowing-skills
 
 rm -rf "$PR_HOME"
 
