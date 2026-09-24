@@ -64,12 +64,14 @@ def frontmatter(path):
     except OSError:
         return {}, ""
     match = re.match(r"^---\n(.*?)\n---", text, re.S)
+    # Older STATE files have no frontmatter: bare `key: value` lines under the
+    # title, up to the first section heading.
+    head = match.group(1) if match else text.split("\n## ", 1)[0]
     fields = {}
-    if match:
-        for line in match.group(1).splitlines():
-            if ":" in line and not line.startswith((" ", "\t")):
-                key, _, value = line.partition(":")
-                fields[key.strip()] = value.strip().strip('"')
+    for line in head.splitlines():
+        if re.match(r"^[a-z_]+:", line):
+            key, _, value = line.partition(":")
+            fields.setdefault(key.strip(), value.strip().strip("\"'"))
     return fields, text
 
 
@@ -205,8 +207,17 @@ if gh("--version") is not None and gh("auth", "status") is not None:
 else:
     warnings.append("gh not found or not authenticated: prs omitted")
 
+# PRs /bulma watch already saw merged or closed: nothing left to resume.
+try:
+    with open(os.path.join(os.path.dirname(root), "bulma-watch.json"), encoding="utf-8") as handle:
+        closed = json.load(handle).get("closed", {})
+except (OSError, ValueError, AttributeError):
+    closed = {}
+
 candidates = []
 for state in states:
+    if state["pr_url"] in closed:
+        continue
     if state["status"] in ("waiting_user", "escalated"):
         job = state["job_id"] or state["graph"]
         why = "%s %s since %s" % (state["graph"], state["status"], state["updated_at"] or "unknown")

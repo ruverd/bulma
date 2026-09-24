@@ -8,6 +8,14 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- `/bulma lookback [--since N|DATE]`: counts the human-review misses in
+  `observations.jsonl` by cluster, per reviewed PR, against the previous
+  window of the same length. Each cluster names the skill section that should
+  stop it. The node proposes edits and opens a draft PR only after the user
+  says yes.
+- `world.sh` reads STATE files that have no frontmatter (older lstm and
+  reviewer runs) and skips resume candidates whose PR `/bulma watch` has
+  already seen merged or closed.
 - `ruver-code-review` checks four gaps a lookback over human review found:
   sibling paths missing a guard the PR adds, multi-store writes on partial
   failure or redelivery, tests that cannot fail, and unvalidated input into

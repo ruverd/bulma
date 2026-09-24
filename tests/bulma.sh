@@ -445,6 +445,67 @@ out="$(PATH="/nonexistent:$PATH" python3 "$WATCH" --home "$WH" --summary)"
 [[ "$out" == "watch: 1 need you, 1 stalled, 1 orphaned elsewhere (/bulma watch)" ]] || fail "watch summary: $out"
 ok watch
 
+# --- world.sh: frontmatter-less STATE, closed PRs from the watch cache ---
+WL="$TMP/wl-home/slug"
+mkdir -p "$WL/.ruver-reviewer" "$WL/.ruver-lstm" "$WL/.ruver-developer"
+printf '# Reviewer STATE\n\nstatus: escalated\npr_url: https://github.com/o/r/pull/9\njob_id: rev-pr-9\n\n## Notes\nstatus: waiting_user\n' >"$WL/.ruver-reviewer/STATE.md"
+printf '# LSTM STATE\n\nstatus: done\njob_id: lstm-pr-8\n' >"$WL/.ruver-lstm/STATE.md"
+printf -- '---\nstatus: waiting_user\npr_url: https://github.com/o/r/pull/7\njob_id: dev-7\n---\n' >"$WL/.ruver-developer/STATE.md"
+printf '{"closed": {"https://github.com/o/r/pull/7": "MERGED"}}' >"$TMP/wl-home/bulma-watch.json"
+W2="$TMP/wl.json"
+PATH="$FIX/bin-broken:$(dirname "$(command -v python3)"):/usr/bin:/bin" bash "$WORLD" --ruver-root "$WL" --out "$W2" >/dev/null || fail "world.sh legacy exit"
+python3 - "$W2" <<'PY' || fail "world.sh legacy STATE / closed cache"
+import json, sys
+w = json.load(open(sys.argv[1]))
+st = {s["graph"]: s["status"] for s in w["states"]}
+assert st["reviewer"] == "escalated", st   # first key wins, section text ignored
+assert st["lstm"] == "done", st
+ids = [c["id"] for c in w["candidates"]]
+assert ids == ["resume:rev-pr-9", "nothing"], ids   # dev-7's PR merged upstream
+PY
+ok world-legacy
+
+# --- lookback.py: windows, per-PR trend, human filter, claim_true drop ---
+LB="$SKILL/scripts/lookback.py"
+LO="$TMP/obs.jsonl"
+python3 - "$LO" <<'PY'
+import json, sys
+rows = []
+def add(i, day, pattern, reviewer="alice", **kw):
+    row = dict(id="gh-%d" % i, pr_ref="o/r#%d" % i, reviewer=reviewer, timestamp=day + "T10:00:00Z",
+               generalized_pattern=pattern, caught_by_ours="no", severity_inferred="important",
+               context_keywords=["kw"])
+    row.update(kw)
+    rows.append(row)
+for i in range(20):   # previous window: 20 PRs, 2 sibling misses
+    add(100 + i, "2026-08-10", "Guard added on one path, sibling path lacks it" if i < 2 else "Unrelated naming nit")
+for i in range(10):   # current window: 10 PRs, 5 sibling misses
+    add(200 + i, "2026-09-10", "Guard added on one path, sibling path lacks it" if i < 5 else "Unrelated naming nit")
+add(300, "2026-09-11", "Guard added on one path, sibling path lacks it", reviewer="coderabbitai[bot]")
+add(301, "2026-09-11", "Guard added on one path, sibling path lacks it", claim_true="no")
+add(302, "2026-09-11", "Guard added on one path, sibling path lacks it", caught_by_ours="yes")
+with open(sys.argv[1], "w") as fh:
+    fh.write("\n".join(json.dumps(r) for r in rows) + "\nnot json\n")
+PY
+out="$(python3 "$LB" --file "$LO" --since 2026-09-01 --until 2026-09-30 --json)"
+python3 - "$out" <<'PY' || fail "lookback json: $out"
+import json, sys
+d = json.loads(sys.argv[1])
+assert d["previous"] == ["2026-08-02", "2026-08-31"], d["previous"]
+assert d["prs"] == 12 and d["missed"] == 10, (d["prs"], d["missed"])   # bot dropped; 301 and 302 PRs count, not misses
+row = next(c for c in d["clusters"] if c["cluster"] == "sibling-path parity")
+assert row["obs"] == 5 and row["trend"] == "up", row
+assert row["guard"] == "ruver-code-review Phase 5", row
+PY
+out="$(python3 "$LB" --file "$LO" --since 7 --until 2026-09-12)"
+grep -F -q 'lookback 2026-09-06..2026-09-12 vs 2026-08-30..2026-09-05' <<<"$out" || fail "lookback day-count window: $out"
+grep -F -q 'need data' <<<"$out" || fail "lookback: empty previous window must say need data"
+out="$(python3 "$LB" --file "$TMP/missing.jsonl")"
+grep -F -q 'no observations' <<<"$out" || fail "lookback without file: $out"
+rc=0; python3 "$LB" --file "$LO" --since yesterday >/dev/null 2>&1 || rc=$?
+[[ "$rc" == "4" ]] || fail "lookback bad --since must exit 4 (rc=$rc)"
+ok lookback
+
 # --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---
 SR="$TMP/sroot"
 PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh for builders"

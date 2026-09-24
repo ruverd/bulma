@@ -14,6 +14,7 @@ this table **before** any Jev call. Trim, then match in order.
 | `status` | STATE + power + last five ledger rows; stop |
 | `doctor` | run doctor and print; stop |
 | `watch [--stale-hours N] [--no-gh]` | stalled work across every workspace; stop |
+| `lookback [--since N\|YYYY-MM-DD] [--until YYYY-MM-DD]` | human-review misses by cluster vs the previous window; stop |
 | `resume` | **inventory** → `entry.next_step` restricted to `resume:*` candidates |
 | tracker id `[A-Z][A-Z0-9]+-\d+` or tracker issue URL | **developer** directly, no Jev |
 | only PR or MR URLs, or `owner/repo#N` (one or more) | **inventory** per PR → **qa** when `pr.author_is_user`, else **reviewer**; no Jev |
@@ -36,5 +37,6 @@ Examples:
 /bulma tune fd.triage.path 0.70
 /bulma report --hook lstm.verify
 /bulma watch
+/bulma lookback --since 2026-09-24
 /bulma --power bold
 ```

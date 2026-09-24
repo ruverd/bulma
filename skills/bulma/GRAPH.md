@@ -5,7 +5,7 @@
   → admit        doctor (hard gate) · power · catalog · init STATE
   → inventory    scripts/world.sh → .ruver-bulma/world.json + candidates.json
   → route        ARGS.md first; else ask entry.route | entry.next_step
-        ├ local verb (power · tune · model · report · status · doctor · watch) → run, stop
+        ├ local verb (power · tune · model · report · status · doctor · watch · lookback) → run, stop
         ├ act      → overlay (load_graph target on the main thread)
         └ suggest  → one question, waiting_user, stop
   → overlay      target graph runs; at each HOOKS.md row: ask → apply → J:
@@ -21,6 +21,7 @@
 | admit | args are `power`, `tune`, `model` | **power** (no doctor needed), then stop |
 | admit | args are `report`, `status`, `doctor` | **report** (no doctor needed), then stop |
 | admit | args are `watch` | **watch** (no doctor needed), then stop |
+| admit | args are `lookback` | **lookback** (no doctor needed), then stop |
 | admit | ok | **inventory** |
 | inventory | always | **route** |
 | route | deterministic target (tracker id or tracker URL; bare PR refs by author) | **overlay** |
@@ -35,7 +36,8 @@
 ## Nodes
 
 `nodes/admit.md` · `nodes/inventory.md` · `nodes/route.md` ·
-`nodes/overlay.md` · `nodes/done.md` · `nodes/power.md` · `nodes/report.md` · `nodes/watch.md`
+`nodes/overlay.md` · `nodes/done.md` · `nodes/power.md` · `nodes/report.md` · `nodes/watch.md` ·
+`nodes/lookback.md`
 
 ## Defaults
 
