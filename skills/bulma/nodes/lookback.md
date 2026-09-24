@@ -66,16 +66,26 @@ Under the current power, a label counts only where it clears the threshold:
 ## Output
 
 Print the script output as-is. Then, in the chat language, one line per
-cluster that needs action, strongest evidence first:
+cluster that needs action, strongest evidence first. Where a proposal goes
+depends on `lesson`, and falls back to `guard` when `lesson` is `-` or `mixed`:
 
-- guard is a skill section and trend is `up` or `=` after that section
-  changed: the change did not work. Say so and propose rewording that
-  section. Do not stack a second rule on top of it.
-- no guard fits and the cluster spans 5 or more PRs: propose a new check,
-  quoting two or three patterns from `--json` `examples`.
-- guard is `repo rule`: propose the one-line rule for that repo's `CLAUDE.md`.
-- unclustered keywords repeat 5 or more times: name the candidate cluster.
+| `lesson` | Proposal goes to |
+|---|---|
+| `implementer` | The cluster's section in [LESSONS.md](../../ruver-feature-delivery/LESSONS.md), which the fd coder and fd reviewer load on every ticket. If the section is missing, add it. `lessons.py` only injects clusters that have a section |
+| `reviewer` | The `guard` section of `ruver-code-review` |
+| `repo_rule` | The target repo's `CLAUDE.md` or `AGENTS.md`. Run `python3 scripts/lessons.py --repo <owner/repo> --kind repo_rule` for that repo's examples and draft one line per cluster from them |
+| `none` | Nothing. Say so once |
 
-Stop with one question: which proposals to turn into a draft PR. Only on a yes,
-edit the skill on a new branch, run the repo gates, and open a draft PR. Never
-edit a skill without that yes, and never merge. Stop.
+Rules for choosing what to propose:
+
+- The cluster's rule already exists and the trend is `up` or `=` after it
+  changed: the change did not work. Say so and propose rewording that rule. Do
+  not stack a second rule on top of it.
+- No rule exists and the cluster spans 5 or more PRs: propose one, quoting two
+  or three patterns from the `--json` `examples`.
+- Unclustered keywords repeat 5 or more times: name the candidate cluster.
+
+Stop with one question: which proposals to turn into draft PRs. Only on a yes,
+edit on a new branch (this repo for skill files, the target repo for
+`CLAUDE.md`), run that repo's gates, and open a draft PR based on `main`. Never
+edit without that yes, and never merge. Stop.

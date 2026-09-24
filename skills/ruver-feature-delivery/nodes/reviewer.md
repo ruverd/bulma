@@ -29,6 +29,9 @@ Spec axis: the ticket + SPEC.md, not a new design.
 `pass` only if all of:
 
 - **TDD:** every new piece of logic has a test; STATE has RED→GREEN evidence
+- **Lessons:** no violation of [LESSONS.md](../LESSONS.md) or of the
+  recurring-lessons block in the prompt. A violation is a finding (record it,
+  §Observe)
 - Tests assert behavior, not only mocks
 - Security/errors/loading if applicable
 - **UI** (if the ticket/diff is UI) — [UI_DESIGN_SYSTEM.md](../UI_DESIGN_SYSTEM.md):

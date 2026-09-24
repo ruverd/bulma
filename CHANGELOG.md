@@ -8,6 +8,16 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- The fd coder learns from past reviews, not only the reviewer.
+  `ruver-feature-delivery/LESSONS.md` holds one implementer rule per recurring
+  cluster (sibling paths, tests that cannot fail, multi-store writes, AC
+  completeness, effect cleanup, pagination, authz). The coder and the fd
+  reviewer load it on every ticket. `bulma/scripts/lessons.py` ranks the
+  current repo's own recurring misses and prints at most five with their rules
+  and an example, pasted into each coder brief. `--kind repo_rule` lists the
+  clusters whose fix belongs in the repo's `CLAUDE.md`. `/bulma lookback`
+  routes each proposal by `lesson`: LESSONS.md, the review checklist, or the
+  target repo's `CLAUDE.md`.
 - The fd `reviewer` and `quality` gates record each defect they catch in
   `observations.jsonl` as `source: fd`, keyed by job and a finding slug that
   stays the same across laps. `/bulma lookback` shows a `gate` column per

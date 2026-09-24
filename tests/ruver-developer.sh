@@ -205,4 +205,13 @@ grep -F -q 'fresh** coder' "$FD/IMPLEMENTATION.md" \
 has 'status-walk.sh' "$ROOT/install.sh"
 ok ticket-after-and-fresh-coder
 
+# --- recurring lessons reach the coder and the fd reviewer ---
+FDX="$ROOT/skills/ruver-feature-delivery"
+grep -F -q 'lessons.py --repo' "$FDX/IMPLEMENTATION.md" || fail "IMPLEMENTATION.md must inject lessons.py output"
+grep -F -q 'LESSONS.md' "$FDX/nodes/coder.md" || fail "coder.md must load LESSONS.md"
+grep -F -q 'LESSONS.md' "$FDX/nodes/reviewer.md" || fail "fd reviewer must check LESSONS.md"
+grep -F -q 'LESSONS.md' "$ROOT/agents/ruver-fd-coder.md" || fail "ruver-fd-coder agent must load LESSONS.md"
+grep -c '^### ' "$FDX/LESSONS.md" | grep -q -v '^0$' || fail "LESSONS.md has no rules"
+ok coder-lessons
+
 echo "all passed"

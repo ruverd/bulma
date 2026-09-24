@@ -6,6 +6,8 @@ Follow [../IMPLEMENTATION.md](../IMPLEMENTATION.md) + [../TDD.md](../TDD.md).
 
 One ticket only. No PR, no merge, no force-push.
 
+Apply [../LESSONS.md](../LESSONS.md) and the prompt's recurring-lessons block.
+
 UI: reuse DS. No Figma → copy 2–5 recent same-type screens. Record those paths.
 
 Coder does not reopen grill/spec. Different design → `NEEDS_CONTEXT`.
