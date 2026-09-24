@@ -26,7 +26,7 @@ saying it does not know.
 
 ## Where it lives
 
-`$RUVER_HOME/bulma.json`, written by `scripts/bulma.py`, never by hand in a
+`$BULMA_HOME/bulma.json`, written by `scripts/bulma.py`, never by hand in a
 graph, outside git, shared by every repo on the machine:
 
 ```json

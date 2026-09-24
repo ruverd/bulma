@@ -23,7 +23,7 @@ command keeps working without Jev.
 | Args | Then |
 |---|---|
 | empty | `world.sh` lists open items (waiting graphs, PRs with review comments, red CI, PRs ready for QA). Jev ranks them. Above threshold it runs the pick; below, or on `cautious`, it asks you |
-| ticket id or tracker URL | [developer](ruver-developer.md), no Jev call for routing |
+| ticket id or tracker URL | [developer](bulma-developer.md), no Jev call for routing |
 | PR or MR URL, free text | Jev picks developer / qa / reviewer / lstm / triage / memory, or `none` |
 
 While the chosen graph runs, ten hooks fire
@@ -38,7 +38,7 @@ never a Jev call.
 ## Power
 
 `shadow | cautious | balanced | bold`, global or per hook, per-question
-thresholds, all in `~/.ruver/bulma.json`
+thresholds, all in `~/.bulma/bulma.json`
 ([POWER.md](../../skills/bulma/POWER.md)). Every answer lands in
 `DECISIONS.tsv`; `/bulma report` turns it into a calibration table.
 
@@ -50,6 +50,6 @@ thresholds, all in `~/.ruver/bulma.json`
 
 ## Related
 
-[`/ruver-developer`](ruver-developer.md) · [`/ruver-qa`](ruver-qa.md) ·
-[`/ruver-reviewer`](ruver-reviewer.md) · [`/ruver-lstm`](ruver-lstm.md) ·
-[`/ruver-triage`](ruver-triage.md)
+[`/bulma-developer`](bulma-developer.md) · [`/bulma-qa`](bulma-qa.md) ·
+[`/bulma-reviewer`](bulma-reviewer.md) · [`/bulma-lstm`](bulma-lstm.md) ·
+[`/bulma-triage`](bulma-triage.md)

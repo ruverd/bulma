@@ -4,24 +4,24 @@ set -euo pipefail
 case "$1 ${2:-}" in
   "--version ") echo "gh version 2.99.0 (stub)" ;;
   "auth status") exit 0 ;;
-  "api user") echo "ruverd" ;;
+  "api user") echo "octocat" ;;
   "pr list") cat <<'JSON'
 [
  {"number": 805, "url": "https://github.com/o/r/pull/805", "title": "feat: inbox", "isDraft": true, "headRefOid": "aaa111",
-  "mergeable": "MERGEABLE", "reviewDecision": "CHANGES_REQUESTED", "author": {"login": "ruverd"},
+  "mergeable": "MERGEABLE", "reviewDecision": "CHANGES_REQUESTED", "author": {"login": "octocat"},
   "statusCheckRollup": [{"conclusion": "SUCCESS"}]},
  {"number": 812, "url": "https://github.com/o/r/pull/812", "title": "fix: badge", "isDraft": true, "headRefOid": "bbb222",
-  "mergeable": "MERGEABLE", "reviewDecision": "", "author": {"login": "ruverd"},
+  "mergeable": "MERGEABLE", "reviewDecision": "", "author": {"login": "octocat"},
   "statusCheckRollup": [{"conclusion": "SUCCESS"}, {"conclusion": "SUCCESS"}]},
  {"number": 799, "url": "https://github.com/o/r/pull/799", "title": "chore: deps", "isDraft": false, "headRefOid": "ccc333",
-  "mergeable": "MERGEABLE", "reviewDecision": "", "author": {"login": "ruverd"},
+  "mergeable": "MERGEABLE", "reviewDecision": "", "author": {"login": "octocat"},
   "statusCheckRollup": [{"conclusion": "FAILURE"}]}
 ]
 JSON
   ;;
   "pr view") cat <<'JSON'
 {"number": 805, "url": "https://github.com/o/r/pull/805", "title": "feat: inbox", "isDraft": true, "headRefOid": "aaa111",
- "mergeable": "MERGEABLE", "reviewDecision": "CHANGES_REQUESTED", "author": {"login": "ruverd"},
+ "mergeable": "MERGEABLE", "reviewDecision": "CHANGES_REQUESTED", "author": {"login": "octocat"},
  "statusCheckRollup": [{"conclusion": "SUCCESS"}]}
 JSON
   ;;

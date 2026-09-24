@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma FD"
+  short_description: "Deliver work through draft PR and green CI"
+  default_prompt: "Use $bulma-fd to deliver this ticket or resume its delivery."

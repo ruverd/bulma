@@ -12,7 +12,7 @@ can be executed unambiguously by a model that has never seen this repo.
 | `agents/` | Worker and role contracts. Not skills |
 | `commands/` | Slash aliases. Each points at one skill and defines no steps |
 | `docs/` | Human-facing pages, one per command |
-| `skills/ruver-host/` | Harness primitives. Anything host-specific belongs here |
+| `skills/bulma-host/` | Harness primitives. Anything host-specific belongs here |
 | `tests/` | Gates, described below |
 
 Read [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md) before adding a graph.
@@ -20,18 +20,18 @@ Read [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md) before adding a graph.
 ## Gates
 
 ```bash
-bash tests/install.sh          # the ruver CLI: setup, update, uninstall, flags
+bash tests/install.sh          # the bulma CLI: setup, update, uninstall, flags
 bash tests/repo.sh             # repo invariants: links, frontmatter, manifests, structure
 bash tests/before-and-after.sh # PR stills formatter + session dir
-bash tests/ruver-qa.sh         # QA per-surface clips, not qa:login
-bash tests/ruver-code-review.sh # spec-first, patch bind, high-risk critic
-bash tests/ruver-developer.sh  # risk axis, split review verdicts, resume invariants
-bash tests/ruver-lstm.sh       # comment bind, prove before reply
+bash tests/bulma-qa.sh         # QA per-surface clips, not qa:login
+bash tests/bulma-code-review.sh # spec-first, patch bind, high-risk critic
+bash tests/bulma-developer.sh  # risk axis, split review verdicts, resume invariants
+bash tests/bulma-lstm.sh       # comment bind, prove before reply
 ```
 
 These run in CI on every push. `tests/repo.sh` needs `python3`, and it runs
 `shellcheck` when that is installed. Using the skills still needs `git` and
-`curl`; `ruver setup` also installs `agent-browser`.
+`curl`; `bulma setup` also installs `agent-browser`.
 
 ## Adding a skill
 
@@ -42,7 +42,7 @@ These run in CI on every push. `tests/repo.sh` needs `python3`, and it runs
    same in git and on disk. A link like `../../docs/ARCHITECTURE.md` only works on hosts
    that follow symlinks with the kernel and breaks on hosts that normalise the
    path string first.
-3. Host primitives go in `ruver-host`. Product policy goes in `PRODUCT.md` and the
+3. Host primitives go in `bulma-host`. Product policy goes in `PRODUCT.md` and the
    target repo. Never hardcode `~/.claude`, `~/.grok`, `~/.cursor`, `~/.codex`,
    a model id, or a company's handles.
 4. List the path in `plugin.json` and `.claude-plugin/plugin.json`. The Grok
@@ -54,7 +54,7 @@ These run in CI on every push. `tests/repo.sh` needs `python3`, and it runs
 ## Writing style
 
 Skill bodies, commit messages, PR text and CI output are English. Chat language
-follows `ruver-memory`. Apply the bundled `unslop` skill to anything a person
+follows `bulma-memory`. Apply the bundled `unslop` skill to anything a person
 reads.
 
 ## Third-party skills

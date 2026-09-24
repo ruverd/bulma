@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Developer"
+  short_description: "Deliver tickets and goals through QA"
+  default_prompt: "Use $bulma-developer to deliver this ticket or goal end to end."

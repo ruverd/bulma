@@ -10,7 +10,7 @@ QA execute on UI is now agent-browser. The app's e2e suite stays in
 CI. Stills (before/after, two worktrees) go on the GitHub PR body at
 ship via `gh pr edit --attach`. The walk video goes on the QA comment
 via `gh pr comment --attach`. Session cookies live under
-`~/.ruver/agent-browser/`, shared across worktrees.
+`~/.bulma/agent-browser/`, shared across worktrees.
 
 `format.mjs` from vercel-labs/before-and-after is PolyForm Shield. We
 did not copy it. `format.sh` here is MIT and images-only.

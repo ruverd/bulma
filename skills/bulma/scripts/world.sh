@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Snapshot the delivery world for /bulma: bus stack, .ruver-* STATEs, the
+# Snapshot the delivery world for /bulma: bus stack, .bulma-* STATEs, the
 # user's open PRs, and ranked candidates. Read-only apart from world.json and
 # candidates.json. No Jev call. gh is optional; without it prs is null.
 set -euo pipefail
 
 usage() {
-  echo "usage: world.sh [--ruver-root DIR] [--pr URL] [--limit N] [--out FILE]" >&2
+  echo "usage: world.sh [--bulma-root DIR] [--pr URL] [--limit N] [--out FILE]" >&2
 }
 
 ROOT_OVERRIDE="" PR_URL="" LIMIT=10 OUT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --ruver-root) ROOT_OVERRIDE="$2"; shift 2 ;;
+    --bulma-root) ROOT_OVERRIDE="$2"; shift 2 ;;
     --pr) PR_URL="$2"; shift 2 ;;
     --limit) LIMIT="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
@@ -28,17 +28,14 @@ resolve_root() {
   local top slug home
   top="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
   slug="$(echo "$top" | sed 's|^/||; s|/|-|g')"
-  home="${RUVER_HOME:-$HOME/.ruver}"
-  if [[ ! -e "$home" && -d "$HOME/.grok/ruver" ]]; then
-    home="$HOME/.grok/ruver"
-  fi
+  home="${BULMA_HOME:-$HOME/.bulma}"
   echo "$home/$slug"
 }
 
 ROOT="$(resolve_root)"
 if [[ -z "$OUT" ]]; then
-  mkdir -p "$ROOT/.ruver-bulma"
-  OUT="$ROOT/.ruver-bulma/world.json"
+  mkdir -p "$ROOT/.bulma-core"
+  OUT="$ROOT/.bulma-core/world.json"
 fi
 mkdir -p "$(dirname "$OUT")"
 
@@ -130,7 +127,7 @@ def qa_marker_on_head(owner, repo, number, sha):
     raw = gh("api", "repos/%s/%s/issues/%d/comments" % (owner, repo, number), "--paginate", "--jq", ".[].body")
     if raw is None:
         return None
-    return any(re.search(r"<!--\s*ruver-qa:.*sha=" + re.escape(sha), body) for body in raw.split("\n"))
+    return any(re.search(r"<!--\s*bulma-qa:.*sha=" + re.escape(sha), body) for body in raw.split("\n"))
 
 
 def shape(pr, user):
@@ -152,7 +149,7 @@ def shape(pr, user):
         "author_is_user": bool(user) and login == user,
     }
 
-bus = os.path.join(root, ".ruver-bus")
+bus = os.path.join(root, ".bulma-bus")
 stack = read_lines(os.path.join(bus, "STACK.md"))
 env_fields, _ = frontmatter(os.path.join(bus, "ENVELOPE.md"))
 envelope = {k: env_fields.get(k, "") for k in ("type", "from", "to", "pr_url", "job_id")} if env_fields else None
@@ -166,7 +163,7 @@ jobs = {
 states = []
 if os.path.isdir(root):
     for name in sorted(os.listdir(root)):
-        if not name.startswith(".ruver-") or name in (".ruver-bus", ".ruver-bulma"):
+        if not name.startswith(".bulma-") or name in (".bulma-bus", ".bulma-core"):
             continue
         path = os.path.join(root, name, "STATE.md")
         if not os.path.isfile(path):
@@ -177,7 +174,7 @@ if os.path.isdir(root):
             match = re.search(r"\*\*Question:\*\*\s*(.+)", text)
             question = match.group(1).strip() if match else ""
         states.append({
-            "graph": name[len(".ruver-"):],
+            "graph": name[len(".bulma-"):],
             "status": fields.get("status", ""),
             "job_id": fields.get("job_id", ""),
             "pr_url": fields.get("pr_url", ""),
@@ -245,7 +242,7 @@ for candidate in candidates:
 
 world = {
     "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    "ruver_root": root,
+    "bulma_root": root,
     "user": user,
     "stack": stack,
     "stack_top": stack[-1] if stack else "",

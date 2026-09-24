@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Install and update Ruver skills (flatten into agent homes).
+# Install and update Bulma skills (flatten into agent homes).
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
 #   ./install.sh setup
-#   ruver update
-#   ruver status
-#   ruver uninstall
+#   bulma update
+#   bulma status
+#   bulma uninstall
 #
 # Options: --dry-run  --yes / -y  --help
 # Compat:  --uninstall  (same as uninstall)
@@ -15,18 +15,18 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Install and update Ruver skills.
+Install and update Bulma skills.
 
 Usage:
-  ruver                 Menu (TTY) or command list (no TTY)
-  ruver setup           Flatten skills into agent homes
-  ruver update          git pull --ff-only main, then setup
-  ruver status          Repo, version, SHA, homes, worktrees, cwd job Walk
-  ruver report          Wall time and laps per graph node; host token totals when a transcript exists
-  ruver uninstall       Remove our symlinks
-  ruver uninstall --purge
+  bulma                 Menu (TTY) or command list (no TTY)
+  bulma setup           Flatten skills into agent homes
+  bulma update          git pull --ff-only main, then setup
+  bulma status          Repo, version, SHA, homes, worktrees, cwd job Walk
+  bulma report          Wall time and laps per graph node; host token totals when a transcript exists
+  bulma uninstall       Remove our symlinks
+  bulma uninstall --purge
                         Also delete the managed clone
-  ruver version         Print the version
+  bulma version         Print the version
 
 Options:
   --dry-run       Print actions, write nothing
@@ -38,12 +38,12 @@ Options:
   -V, --version   Print the version
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash
-  ruver setup
-  ruver update
-  ruver status
-  ruver report
-  ruver uninstall
+  curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
+  bulma setup
+  bulma update
+  bulma status
+  bulma report
+  bulma uninstall
 EOF
 }
 
@@ -90,11 +90,11 @@ while [[ $# -gt 0 ]]; do
     --purge) PURGE=1; shift ;;
     --uninstall) CMD="uninstall"; UNINSTALL=1; shift ;;
     --plugin|--grok-plugin)
-      echo "Plugin install is not part of ruver. Add the marketplace first:" >&2
-      echo "  claude plugin marketplace add ruverd/skills" >&2
-      echo "  claude plugin install ruver@skills" >&2
-      echo "  grok plugin marketplace add ruverd/skills" >&2
-      echo "  grok plugin install ruver --trust" >&2
+      echo "Plugin install is not part of bulma. Add the marketplace first:" >&2
+      echo "  claude plugin marketplace add ruverd/bulma" >&2
+      echo "  claude plugin install bulma@bulma" >&2
+      echo "  grok plugin marketplace add ruverd/bulma" >&2
+      echo "  grok plugin install bulma --trust" >&2
       exit 1
       ;;
     -h|--help)
@@ -144,13 +144,13 @@ resolve_file() {
 SELF="$(resolve_file "${BASH_SOURCE[0]:-$0}")"
 REPO="$(cd "$(dirname "$SELF")" && pwd)"
 BACKUP_ROOT="${SKILLS_BACKUP_ROOT:-${AI_SKILLS_BACKUP_ROOT:-$HOME/.skills-backups}}"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/ruver"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/bulma"
 CONFIG_FILE="$CONFIG_DIR/config"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-MANAGED_REPO="$DATA_HOME/ruver/repo"
-DEFAULT_ORIGIN="https://github.com/ruverd/skills.git"
+MANAGED_REPO="$DATA_HOME/bulma/repo"
+DEFAULT_ORIGIN="https://github.com/ruverd/bulma.git"
 BIN_DIR="$HOME/.local/bin"
-BIN_LINK="$BIN_DIR/ruver"
+BIN_LINK="$BIN_DIR/bulma"
 
 config_get() {
   local key="$1"
@@ -171,14 +171,128 @@ plugin_version() {
   sed -n 's/.*"version": "\([^"]*\)".*/\1/p' "$REPO/plugin.json" | head -1
 }
 
-ensure_ruver_home() {
-  if [[ -d "$HOME/.grok/ruver" && ! -e "$HOME/.ruver" ]]; then
-    echo "link   $HOME/.ruver -> $HOME/.grok/ruver"
-    run ln -sfn "$HOME/.grok/ruver" "$HOME/.ruver"
+ensure_bulma_home() {
+  run mkdir -p "${BULMA_HOME:-$HOME/.bulma}"
+}
+
+# --- legacy layout migration (begin) -----------------------------------------
+# One-time move from the layout used before the project was renamed to Bulma.
+# Idempotent: every step checks before it acts, and never overwrites a target
+# that already exists. tests/repo.sh allows the old name only inside this block.
+LEGACY="ruver"
+
+legacy_state_dir() {  # .<legacy>-<graph> -> .bulma-<graph>; the router's own dir -> .bulma-core
+  local base="$1" graph
+  graph="${base#."$LEGACY"-}"
+  if [[ "$graph" == "bulma" ]]; then
+    echo ".bulma-core"
   else
-    run mkdir -p "$HOME/.ruver"
+    echo ".bulma-$graph"
   fi
 }
+
+legacy_rewrite() {  # file python-expr: rewrite a text file in place
+  local file="$1" expr="$2"
+  [[ -f "$file" ]] || return 0
+  if [[ "$DRY" -eq 1 ]]; then
+    echo "dry-run: rewrite $file"
+    return 0
+  fi
+  LEGACY="$LEGACY" python3 - "$file" "$expr" <<'PY'
+import os, sys
+path, expr = sys.argv[1], sys.argv[2]
+old = os.environ["LEGACY"]
+text = open(path, encoding="utf-8").read()
+new = eval(expr, {"text": text, "old": old})
+if new != text:
+    open(path, "w", encoding="utf-8").write(new)
+PY
+}
+
+migrate_legacy() {
+  local new_home="${BULMA_HOME:-$HOME/.bulma}"
+  local old_home="$HOME/.$LEGACY"
+  if [[ ! -e "$old_home" && -d "$HOME/.grok/$LEGACY" ]]; then
+    old_home="$HOME/.grok/$LEGACY"
+  fi
+  if [[ -e "$old_home" && ! -e "$new_home" ]]; then
+    echo "move   $old_home -> $new_home"
+    run mv "$old_home" "$new_home"
+  fi
+  local d base target
+  if [[ -d "$new_home" ]]; then
+    for d in "$new_home"/*/."$LEGACY"-*; do
+      [[ -d "$d" ]] || continue
+      base="$(basename "$d")"
+      target="$(dirname "$d")/$(legacy_state_dir "$base")"
+      [[ -e "$target" ]] && continue
+      run mv "$d" "$target"
+    done
+    for d in "$new_home/agent-browser/$LEGACY"-*; do
+      [[ -d "$d" ]] || continue
+      target="$new_home/agent-browser/bulma-${d##*/"$LEGACY"-}"
+      [[ -e "$target" ]] || run mv "$d" "$target"
+    done
+    legacy_rewrite "$new_home/insights/observations.jsonl" \
+      'text.replace("\"reviewer\": \"%s-" % old, "\"reviewer\": \"bulma-").replace("\"reviewer\":\"%s-" % old, "\"reviewer\":\"bulma-")'
+  fi
+  local old_config="${XDG_CONFIG_HOME:-$HOME/.config}/$LEGACY"
+  if [[ -d "$old_config" && ! -e "$CONFIG_DIR" ]]; then
+    echo "move   $old_config -> $CONFIG_DIR"
+    run mv "$old_config" "$CONFIG_DIR"
+  fi
+  local old_data="$DATA_HOME/$LEGACY" new_data="$DATA_HOME/bulma"
+  if [[ -d "$old_data" && ! -e "$new_data" ]]; then
+    # A managed install runs from inside that directory. Compare physical
+    # paths (//, /var -> /private/var) so REPO follows the move.
+    local old_real repo_real
+    old_real="$(cd "$old_data" && pwd -P)"
+    repo_real="$(cd "$REPO" && pwd -P)"
+    echo "move   $old_data -> $new_data"
+    run mv "$old_data" "$new_data"
+    if [[ "$repo_real" == "$old_real"/* && "$DRY" -ne 1 ]]; then
+      REPO="$(cd "$new_data" && pwd -P)${repo_real#"$old_real"}"
+      SELF="$REPO/install.sh"
+      config_set_repo "$REPO"
+    fi
+  fi
+  legacy_rewrite "$CONFIG_FILE" 'text.replace("/%s/repo" % old, "/bulma/repo")'
+  if [[ -L "$BIN_DIR/$LEGACY" ]]; then
+    echo "rm     $BIN_DIR/$LEGACY (the command is now: bulma)"
+    run rm "$BIN_DIR/$LEGACY"
+  fi
+  local dir link
+  for dir in "$HOME"/.{agents,claude,grok,cursor,codex}/{skills,agents,commands}; do
+    [[ -d "$dir" ]] || continue
+    for link in "$dir"/*; do
+      base="$(basename "$link")"
+      if [[ -L "$link" ]]; then
+        [[ "$base" == *"$LEGACY"* ]] || continue
+        target="$(readlink "$link")"
+        # Ours: into this checkout, or into the managed clone before it moved.
+        if [[ "$target" == "$REPO/"* || "$target" == *"/$LEGACY/repo/"* ]]; then
+          echo "prune  $link"
+          run rm "$link"
+        fi
+      elif [[ -f "$link/.$LEGACY-installed-copy" ]] && grep -qx "managed-by=$LEGACY" "$link/.$LEGACY-installed-copy"; then
+        if [[ "$base" == *"$LEGACY"* ]]; then
+          echo "prune  $link"
+          run rm -rf "$link"
+        else
+          echo "adopt  $link"
+          run rm "$link/.$LEGACY-installed-copy"
+          [[ "$DRY" -eq 1 ]] || printf 'managed-by=bulma\n' >"$link/$CODEX_COPY_MARKER"
+        fi
+      fi
+    done
+  done
+  local rc
+  for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
+    [[ -f "$rc" ]] && grep -q "^# $LEGACY PATH$" "$rc" && legacy_rewrite "$rc" 'text.replace("# %s PATH\n" % old, "# bulma PATH\n")'
+  done
+  return 0
+}
+# --- legacy layout migration (end) -------------------------------------------
 
 ensure_bin() {
   run mkdir -p "$BIN_DIR"
@@ -213,8 +327,8 @@ install_agent_browser_bin() {
 }
 
 ensure_agent_browser() {
-  if [[ "${RUVER_SKIP_DEPS:-0}" = "1" ]]; then
-    echo "skip   agent-browser (RUVER_SKIP_DEPS)"
+  if [[ "${BULMA_SKIP_DEPS:-0}" = "1" ]]; then
+    echo "skip   agent-browser (BULMA_SKIP_DEPS)"
     return 0
   fi
   if [[ "$DRY" -eq 1 ]]; then
@@ -252,7 +366,7 @@ hint_jev() {
 }
 
 ensure_path_snippet() {
-  local line='# ruver PATH'
+  local line='# bulma PATH'
   local block rc
   case ":$PATH:" in
     *":$BIN_DIR:"*) return 0 ;;
@@ -363,8 +477,9 @@ cmd_setup() {
   echo "repo    $REPO"
   echo
   check_symlinks
+  migrate_legacy
   config_set_repo "$REPO"
-  ensure_ruver_home
+  ensure_bulma_home
   install_for_hosts
   ensure_bin
   ensure_path_snippet
@@ -372,8 +487,8 @@ cmd_setup() {
   hint_jev
   echo
   echo "done. restart the agent session"
-  echo "  Codex: \$ruver-developer or /skills"
-  echo "  Claude/Grok: /developer or /ruver-developer"
+  echo "  Codex: \$bulma-developer or /skills"
+  echo "  Claude/Grok: /developer or /bulma-developer"
   echo "  export PATH=\"$BIN_DIR:\$PATH\""
 }
 
@@ -383,13 +498,13 @@ cmd_update() {
   repo="${repo:-$REPO}"
   if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "not a git clone: $repo" >&2
-    echo "  ruver setup" >&2
+    echo "  bulma setup" >&2
     exit 1
   fi
   REPO="$repo"
   SELF="$repo/install.sh"
   if [[ -n "$(git -C "$repo" status --porcelain)" ]]; then
-    echo "working tree is dirty. commit or stash, then ruver update" >&2
+    echo "working tree is dirty. commit or stash, then bulma update" >&2
     git -C "$repo" status -sb >&2
     exit 1
   fi
@@ -404,7 +519,7 @@ cmd_update() {
   fi
   git -C "$repo" fetch origin
   if ! git -C "$repo" pull --ff-only origin main; then
-    echo "clone diverged from main. ruver status" >&2
+    echo "clone diverged from main. bulma status" >&2
     exit 1
   fi
   new="$(git -C "$repo" rev-parse --short HEAD)"
@@ -449,18 +564,15 @@ status_worktrees() {
 status_job() {
   local top home slug root state walk
   top="$(git rev-parse --show-toplevel 2>/dev/null)" || return 0
-  home="${RUVER_HOME:-$HOME/.ruver}"
-  if [[ ! -e "$home" && -d "$HOME/.grok/ruver" ]]; then
-    home="$HOME/.grok/ruver"
-  fi
+  home="${BULMA_HOME:-$HOME/.bulma}"
   slug="$(printf '%s' "$top" | sed 's|^/||; s|/|-|g')"
   root="$home/$slug"
-  state="$root/.ruver-feature-delivery/STATE.md"
-  walk="$REPO/skills/ruver-feature-delivery/scripts/status-walk.sh"
+  state="$root/.bulma-feature-delivery/STATE.md"
+  walk="$REPO/skills/bulma-feature-delivery/scripts/status-walk.sh"
   if [[ -f "$state" && -f "$walk" ]]; then
     echo "cwd      $top"
     bash "$walk" "$state"
-  elif [[ -f "$root/.ruver-developer/STATE.md" ]]; then
+  elif [[ -f "$root/.bulma-developer/STATE.md" ]]; then
     echo "cwd      $top"
     echo "job      developer (no fd STATE)"
   fi
@@ -482,15 +594,15 @@ cmd_status() {
     status_worktrees "$repo"
   fi
   status_job
-  if command -v ruver >/dev/null 2>&1; then
-    echo "path     $(command -v ruver)"
+  if command -v bulma >/dev/null 2>&1; then
+    echo "path     $(command -v bulma)"
   else
-    echo "path     ruver not on PATH (export PATH=\"$BIN_DIR:\$PATH\")"
+    echo "path     bulma not on PATH (export PATH=\"$BIN_DIR:\$PATH\")"
   fi
   if command -v agent-browser >/dev/null 2>&1; then
     echo "browser  $(command -v agent-browser)"
   else
-    echo "browser  agent-browser missing (ruver setup)"
+    echo "browser  agent-browser missing (bulma setup)"
   fi
   if [[ -n "${TYPESAFE_API_KEY:-}" ]]; then
     echo "jev      ok (TYPESAFE_API_KEY set; /bulma available)"
@@ -517,11 +629,11 @@ cmd_status() {
       echo "missing  $dest"
     fi
   done
-  if command -v grok >/dev/null 2>&1 && grok plugin list 2>/dev/null | grep -qi ruver; then
-    echo "warn     grok plugin ruver is also installed (duplicate skills)"
+  if command -v grok >/dev/null 2>&1 && grok plugin list 2>/dev/null | grep -qi bulma; then
+    echo "warn     grok plugin bulma is also installed (duplicate skills)"
   fi
-  if command -v claude >/dev/null 2>&1 && claude plugins list 2>/dev/null | grep -qi ruver; then
-    echo "warn     claude plugin ruver is also installed (duplicate skills)"
+  if command -v claude >/dev/null 2>&1 && claude plugins list 2>/dev/null | grep -qi bulma; then
+    echo "warn     claude plugin bulma is also installed (duplicate skills)"
   fi
 }
 
@@ -704,14 +816,14 @@ PY
 # a bottleneck is a number instead of a hunch. Token totals come from the
 # host transcript when present, never from the ledger.
 cmd_report() {
-  local home="${RUVER_HOME:-$HOME/.ruver}"
+  local home="${BULMA_HOME:-$HOME/.bulma}"
   local found=0 dir slug ledger jobs body tokens
   if [[ -d "$home" ]]; then
     for dir in "$home"/*; do
       [[ -d "$dir" ]] || continue
       slug="$(basename "$dir")"
-      ledger="$dir/.ruver-bus/RUN_LOG.tsv"
-      jobs="$dir/.ruver-bus/JOBS.md"
+      ledger="$dir/.bulma-bus/RUN_LOG.tsv"
+      jobs="$dir/.bulma-bus/JOBS.md"
       # A repo keeps its bus dir long after the last run. Build the body first
       # and print the heading only if there is something under it, or every
       # repo you ever touched shows up as an empty section.
@@ -740,7 +852,7 @@ cmd_report() {
   fi
   if [[ "$found" -eq 0 ]]; then
     echo "no runs recorded under $home"
-    echo "The graphs append to .ruver-bus/RUN_LOG.tsv as they walk. Run one."
+    echo "The graphs append to .bulma-bus/RUN_LOG.tsv as they walk. Run one."
   fi
 }
 
@@ -783,19 +895,19 @@ cmd_uninstall() {
 
 print_banner() {
   echo
-  echo "  RUVER"
+  echo "  BULMA"
   echo "  Agent graphs. Flattened into your homes."
   echo
 }
 
 print_home() {
   print_banner
-  printf '  $ ruver setup      Flatten skills into agent homes\n'
-  printf '  $ ruver update     git pull --ff-only main\n'
-  printf '  $ ruver status     Repo, version, homes, worktrees, cwd job Walk\n'
-  printf '  $ ruver uninstall  Remove our symlinks\n'
+  printf '  $ bulma setup      Flatten skills into agent homes\n'
+  printf '  $ bulma update     git pull --ff-only main\n'
+  printf '  $ bulma status     Repo, version, homes, worktrees, cwd job Walk\n'
+  printf '  $ bulma uninstall  Remove our symlinks\n'
   echo
-  echo "  try: ruver setup"
+  echo "  try: bulma setup"
   echo
 }
 
@@ -804,17 +916,17 @@ is_bootstrap() {
   return 0
 }
 
-# The whole install is symlinks: ruver update pulls the clone and every agent
+# The whole install is symlinks: bulma update pulls the clone and every agent
 # home follows through the link. On Windows Git Bash without Developer Mode or
 # MSYS=winsymlinks:nativestrict, ln -s silently copies instead, so updates stop
 # propagating and nothing tells you. Test the capability rather than guessing
 # from the OS name.
 symlinks_work() {
-  if [[ "${RUVER_FORCE_NO_SYMLINK:-0}" = "1" ]]; then
+  if [[ "${BULMA_FORCE_NO_SYMLINK:-0}" = "1" ]]; then
     return 1
   fi
   local probe target
-  probe="$(mktemp -d "${TMPDIR:-/tmp}/ruver-symprobe.XXXXXX")" || return 1
+  probe="$(mktemp -d "${TMPDIR:-/tmp}/bulma-symprobe.XXXXXX")" || return 1
   target="$probe/target"
   : >"$target"
   if ln -s "$target" "$probe/link" 2>/dev/null && [[ -L "$probe/link" ]]; then
@@ -834,8 +946,8 @@ check_symlinks() {
     return 0
   fi
   echo "error  this filesystem cannot create symlinks." >&2
-  echo "       ruver installs by symlinking skills into your agent homes, and" >&2
-  echo "       ruver update relies on those links to pick up new commits." >&2
+  echo "       bulma installs by symlinking skills into your agent homes, and" >&2
+  echo "       bulma update relies on those links to pick up new commits." >&2
   echo "       On Windows: use WSL, or enable Developer Mode and set" >&2
   echo "       MSYS=winsymlinks:nativestrict in Git Bash." >&2
   exit 1
@@ -844,7 +956,7 @@ check_symlinks() {
 need_bin() {
   command -v "$1" >/dev/null 2>&1 && return 0
   echo "missing $1" >&2
-  echo "  curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash" >&2
+  echo "  curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash" >&2
   exit 1
 }
 
@@ -853,7 +965,7 @@ cmd_bootstrap() {
   need_bin curl
   local repo
   repo="$(config_get repo)"
-  if [[ -n "$repo" && -f "$repo/plugin.json" ]] && grep -q '"name": "ruver"' "$repo/plugin.json"; then
+  if [[ -n "$repo" && -f "$repo/plugin.json" ]] && grep -q '"name": "bulma"' "$repo/plugin.json"; then
     exec "$repo/install.sh" update --yes
   fi
   run mkdir -p "$(dirname "$MANAGED_REPO")"
@@ -877,16 +989,16 @@ cmd_menu() {
   local n=4 sel=1
   local i label desc key rest
   # Saved globally so the INT trap can restore cooked mode after Ctrl-C.
-  _RUVER_STTY="$(stty -g 2>/dev/null || true)"
+  _BULMA_STTY="$(stty -g 2>/dev/null || true)"
   restore() {
-    if [[ -n "${_RUVER_STTY:-}" ]]; then
-      stty "$_RUVER_STTY" 2>/dev/null || true
+    if [[ -n "${_BULMA_STTY:-}" ]]; then
+      stty "$_BULMA_STTY" 2>/dev/null || true
     else
       stty echo 2>/dev/null || true
     fi
     printf '\033[?25h'
     trap - INT TERM
-    unset _RUVER_STTY
+    unset _BULMA_STTY
   }
   trap 'restore; exit 130' INT TERM
   printf '\033[?25l'
@@ -949,9 +1061,9 @@ cmd_menu() {
 main() {
   if [[ "$CMD" == "version" ]]; then
     if [[ -f "$REPO/plugin.json" ]]; then
-      echo "ruver $(plugin_version)"
+      echo "bulma $(plugin_version)"
     else
-      echo "ruver (no checkout here; run: ruver status)" >&2
+      echo "bulma (no checkout here; run: bulma status)" >&2
       exit 1
     fi
     return
@@ -968,7 +1080,7 @@ main() {
     report) cmd_report ;;
     uninstall) cmd_uninstall ;;
     help) usage ;;
-    version) echo "ruver $(plugin_version)" ;;
+    version) echo "bulma $(plugin_version)" ;;
     *) usage; exit 1 ;;
   esac
 }
@@ -1018,18 +1130,18 @@ link_one() {
   run ln -sfn "$src" "$dest"
 }
 
-CODEX_COPY_MARKER=".ruver-installed-copy"
+CODEX_COPY_MARKER=".bulma-installed-copy"
 
 codex_copy_is_ours() {
   local dest="$1"
   [[ -f "$dest/$CODEX_COPY_MARKER" ]] || return 1
-  grep -qx 'managed-by=ruver' "$dest/$CODEX_COPY_MARKER"
+  grep -qx 'managed-by=bulma' "$dest/$CODEX_COPY_MARKER"
 }
 
 copy_codex_skill() {
   local src="$1"
   local dest="$2"
-  local tmp="${dest}.ruver-tmp-$$"
+  local tmp="${dest}.bulma-tmp-$$"
   run mkdir -p "$(dirname "$dest")"
 
   if [[ -L "$dest" ]] && is_ours "$dest"; then
@@ -1055,7 +1167,7 @@ copy_codex_skill() {
   fi
   rm -rf "$tmp"
   cp -R "$src" "$tmp"
-  printf 'managed-by=ruver\n' >"$tmp/$CODEX_COPY_MARKER"
+  printf 'managed-by=bulma\n' >"$tmp/$CODEX_COPY_MARKER"
   mv "$tmp" "$dest"
 }
 
@@ -1067,7 +1179,7 @@ remove_codex_skill() {
     echo "rm     $dest"
     run rm -rf "$dest"
   elif [[ -e "$dest" ]]; then
-    echo "keep   $dest (not a Ruver-managed Codex copy)"
+    echo "keep   $dest (not a Bulma-managed Codex copy)"
   fi
 }
 
@@ -1166,8 +1278,8 @@ install_skills() {
 }
 
 # Codex canonicalizes symlink targets and namespaces any skill below a plugin
-# manifest (`ruver:ruver-developer`). Managed copies in the shared skill home
-# keep standalone ids such as `$ruver-developer` without duplicate discovery.
+# manifest (`bulma:bulma-developer`). Managed copies in the shared skill home
+# keep standalone ids such as `$bulma-developer` without duplicate discovery.
 install_codex_skills() {
   local dest_dir="$1"
   local src dest name

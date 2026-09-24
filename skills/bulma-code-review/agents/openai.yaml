@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Code Review"
+  short_description: "Run adaptive evidence-based PR review"
+  default_prompt: "Use $bulma-code-review to review this PR."

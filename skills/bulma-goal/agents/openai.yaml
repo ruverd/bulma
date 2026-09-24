@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Goal"
+  short_description: "Drive delivery until QA evidence lands"
+  default_prompt: "Use $bulma-goal to drive this delivery through final QA evidence."

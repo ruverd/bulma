@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ruver Feature Delivery"
-  short_description: "Deliver work through draft PR and green CI"
-  default_prompt: "Use $ruver-feature-delivery to deliver this ticket or goal."

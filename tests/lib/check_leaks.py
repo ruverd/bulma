@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Host and vendor specifics belong in ruver-host, adapters and agent contracts.
+"""Host and vendor specifics belong in bulma-host, adapters and agent contracts.
 A skill that names a harness tool, a model id or a person is no longer portable."""
 import os
 import re
@@ -29,13 +29,13 @@ RULES = [
         lambda rel: (
             os.path.basename(rel) in ("LINEAR.md", "MCP_CONTEXT.md", "PRODUCT.md")
             or rel.startswith("skills/why/")
-            or rel == "skills/ruver-host/SKILL.md"
+            or rel == "skills/bulma-host/SKILL.md"
             or "/adapters/" in rel
             or not rel.startswith(("skills/", "agents/", "commands/"))
         ),
     ),
     (
-        "HOST.md is not a file any more; name the skill ruver-host",
+        "HOST.md is not a file any more; name the skill bulma-host",
         re.compile(r"HOST\.md"),
         # The changelog has to be able to name the file it moved.
         lambda rel: rel == "CHANGELOG.md",
@@ -43,7 +43,7 @@ RULES = [
     (
         "harness MCP tool name",
         re.compile(r"mcp__[a-z0-9_-]+"),
-        lambda rel: rel == "skills/ruver-host/SKILL.md"
+        lambda rel: rel == "skills/bulma-host/SKILL.md"
         or "/adapters/" in rel
         or rel.startswith("agents/")
         or rel.startswith("docs/"),

@@ -2,7 +2,7 @@
 
 ## Reporting
 
-Open a [security advisory](https://github.com/ruverd/skills/security/advisories/new)
+Open a [security advisory](https://github.com/ruverd/bulma/security/advisories/new)
 or email ruverd@gmail.com. Please do not open a public issue for anything
 exploitable. Expect a first reply within a week.
 
@@ -12,7 +12,7 @@ Two things worth understanding before you install.
 
 **The installer symlinks into your home directory.** `install.sh` creates
 symlinks under `~/.agents`, and under the agent homes that already exist
-(`~/.claude`, `~/.grok`, `~/.cursor`, `~/.codex`). It puts `ruver` in
+(`~/.claude`, `~/.grok`, `~/.cursor`, `~/.codex`). It puts `bulma` in
 `~/.local/bin` and, unless you pass `--no-path`, appends a `PATH` line to
 `~/.zshrc` and `~/.bashrc`. It names each file as it goes. Anything it would
 overwrite is moved to `~/.skills-backups/<timestamp>/` first. `--dry-run`
@@ -30,7 +30,7 @@ they are instructions to a model, not enforced permissions. Your agent's own
 permission settings are the real boundary. Review them before pointing any of
 this at a repository you care about.
 
-Runtime state lives outside your repositories in `~/.ruver/`, and nothing in it
+Runtime state lives outside your repositories in `~/.bulma/`, and nothing in it
 is committed.
 
 ## Scope

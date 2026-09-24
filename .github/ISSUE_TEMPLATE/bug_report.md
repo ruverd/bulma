@@ -16,8 +16,8 @@ Command or slash command, and the arguments you passed.
 
 - Host: Claude Code / Grok / Cursor / Codex, and version
 - OS:
-- `ruver --version`:
-- `ruver status` output:
+- `bulma --version`:
+- `bulma status` output:
 
 ## If a skill misbehaved
 

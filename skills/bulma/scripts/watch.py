@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Find stalled ruver work in every workspace under $RUVER_HOME.
+"""Find stalled bulma work in every workspace under $BULMA_HOME.
 
 Watchdog for /bulma: reads each workspace's graph STATE.md files, drops
 terminal ones, reconciles the rest against GitHub (a merged or closed PR
 means the run finished outside the graph), and prints one line per
 workspace with the concrete next step. Read-only on graph state. The only
-file it writes is $RUVER_HOME/bulma-watch.json, which caches PRs already
+file it writes is $BULMA_HOME/bulma-watch.json, which caches PRs already
 seen merged or closed so later runs skip the gh call. No Jev, no key.
 
 usage: watch.py [--stale-hours N] [--no-gh] [--summary] [--json] [--home DIR]
@@ -23,22 +23,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 GRAPHS = ("developer", "feature-delivery", "qa", "triage", "reviewer", "lstm", "goal")
-# ruver-bus/JOBS.md terminal set, plus the close statuses graphs write.
+# bulma-bus/JOBS.md terminal set, plus the close statuses graphs write.
 DONE = {"done", "done_notes", "done_report", "complete", "published", "deferred",
         "handed_off", "classified", "walked", "qa_pass"}
 NEEDS_YOU = {"waiting_user", "escalated", "blocked", "waiting_blocker"}
 CACHE_NAME = "bulma-watch.json"
 
 
-def ruver_home(override):
+def bulma_home(override):
     if override:
         return Path(override)
-    env = os.environ.get("RUVER_HOME")
+    env = os.environ.get("BULMA_HOME")
     if env:
         return Path(env)
-    home = Path.home() / ".ruver"
-    grok = Path.home() / ".grok" / "ruver"
-    return grok if not home.exists() and grok.is_dir() else home
+    return Path.home() / ".bulma"
 
 
 def frontmatter(path):
@@ -121,7 +119,7 @@ def scan(home, stale_hours, now):
         jobs, any_pr = [], ""
         states = {}
         for graph in GRAPHS:
-            path = ws / (".ruver-" + graph) / "STATE.md"
+            path = ws / (".bulma-" + graph) / "STATE.md"
             if path.is_file():
                 states[graph] = (path, frontmatter(path))
         for graph, (path, fields) in states.items():
@@ -193,9 +191,9 @@ def main():
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
-    home = ruver_home(args.home)
+    home = bulma_home(args.home)
     if not home.is_dir():
-        print("watch: no ruver home at %s" % home)
+        print("watch: no bulma home at %s" % home)
         return 0
     now = datetime.now(timezone.utc)
     cache_path = home / CACHE_NAME

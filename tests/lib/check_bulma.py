@@ -12,7 +12,7 @@ import sys
 
 CATALOG = os.path.join("skills", "bulma", "decisions.json")
 HOOKS_MD = os.path.join("skills", "bulma", "HOOKS.md")
-PROTOCOL = os.path.join("skills", "ruver-bus", "PROTOCOL.md")
+PROTOCOL = os.path.join("skills", "bulma-bus", "PROTOCOL.md")
 ROUTE_EXTRA = {"memory", "none"}
 
 BACKTICK = re.compile(r"`([^`]+)`")
@@ -66,7 +66,7 @@ def expected_enum(root, source, question_id, field, keys):
     base = os.path.basename(source)
     if base == "ROUTING.md":
         return yaml_enum(text, field or question_id)
-    if source.endswith("ruver-triage/STATE.schema.md"):
+    if source.endswith("bulma-triage/STATE.schema.md"):
         return table_row_backticks(text, "classification")
     if base == "FAILURES.md":
         return failures_classes(text)

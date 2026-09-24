@@ -3,7 +3,7 @@
 ```
 /bulma [args]
   → admit        doctor (hard gate) · power · catalog · init STATE
-  → inventory    scripts/world.sh → .ruver-bulma/world.json + candidates.json
+  → inventory    scripts/world.sh → .bulma-core/world.json + candidates.json
   → route        ARGS.md first; else ask entry.route | entry.next_step
         ├ local verb (power · tune · model · report · status · doctor · watch · lookback) → run, stop
         ├ act      → overlay (load_graph target on the main thread)
@@ -42,7 +42,7 @@
 ## Defaults
 
 ```yaml
-power: balanced          # $RUVER_HOME/bulma.json overrides
+power: balanced          # $BULMA_HOME/bulma.json overrides
 model: jev-1.13.0        # pinned; migrate with `bulma.py model set <id>`
 never_merge: true
 enter_bus_stack: false

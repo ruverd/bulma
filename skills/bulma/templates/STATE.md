@@ -7,7 +7,7 @@ model: ""
 args: ""
 target: ""
 target_args: ""
-world_path: ".ruver-bulma/world.json"
+world_path: ".bulma-core/world.json"
 decision_ids: ""
 hooks_fired: 0
 hooks_fallback: 0

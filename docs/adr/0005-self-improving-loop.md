@@ -6,11 +6,11 @@ The graphs improve only when someone edits a skill by hand. Two signals
 already exist on disk and nothing reads them:
 
 - A past review pipeline appended human-review observations to
-  `~/.ruver/insights/observations.jsonl` (pattern, axis, severity, and a
+  `~/.bulma/insights/observations.jsonl` (pattern, axis, severity, and a
   self-assessed "would an existing agent catch it"). About 1100 rows over
   seven weeks and about 220 per-PR reports with suggested edits. No
   suggestion became a skill diff. Collection stopped in July.
-- Run state under `~/.ruver/*/.ruver-*/STATE.md`. Dozens of jobs sit in a
+- Run state under `~/.bulma/*/.bulma-*/STATE.md`. Dozens of jobs sit in a
   non-terminal status (`shipping`, `ci_watching`, `waiting_ci`,
   `delivering`) for days. Some of them finished outside the graph and
   their state was never updated.
@@ -34,7 +34,7 @@ Decision, in order:
    second rule. Repo-specific patterns (a vendor SDK quirk, a project's
    error-reporting rule) go to that repo's `CLAUDE.md` or `AGENTS.md`,
    never to a skill. The first report ran by hand over the existing file
-   and found four gaps in `ruver-code-review` (sibling-path parity,
+   and found four gaps in `bulma-code-review` (sibling-path parity,
    multi-store partial failure, tests that cannot fail, unvalidated input
    into typed columns). One cluster was already fixed by `bind-findings.py`.
    Jev labels each observation (`insight.classify`): its cluster, whether
@@ -44,28 +44,28 @@ Decision, in order:
    used per observation, where volume allows calibration, and not to
    decide whether a whole cluster deserves a change: that stays a
    threshold plus the user's yes. Implementer lessons live in
-   `ruver-feature-delivery/LESSONS.md`, and each coder brief carries the
+   `bulma-feature-delivery/LESSONS.md`, and each coder brief carries the
    current repo's top recurring misses (`bulma/scripts/lessons.py`), so
    the loop prevents the defect as well as catching it.
-2. **Collection.** `ruver-lstm` and `ruver-reviewer` append one
+2. **Collection.** `bulma-lstm` and `bulma-reviewer` append one
    observation per human comment they process, using the existing schema.
    Without this, step 1 has nothing to verify against.
 3. **Reconcile, then watchdog: `/bulma watch`.** Scans every workspace
-   under `$RUVER_HOME`. A PR that `gh` reports merged or closed counts as
-   finished upstream and is cached in `$RUVER_HOME/bulma-watch.json`. It
+   under `$BULMA_HOME`. A PR that `gh` reports merged or closed counts as
+   finished upstream and is cached in `$BULMA_HOME/bulma-watch.json`. It
    never edits the other graph's STATE. A missing workspace directory is
    orphaned. Everything else is listed with its next command. Report only.
    The host scheduler runs it. On the first real run, most of the jobs that
    looked stalled were PRs already merged or closed on GitHub.
 4. **Process lens of the lookback.** Once reconcile makes state
    trustworthy, cluster where runs die (node, status, lap count from the
-   `ruver report` ledger) and propose graph edits the same way.
+   `bulma report` ledger) and propose graph edits the same way.
 
 Both loops live in `bulma`, the single entry point: the other graphs
 become stages bulma loads, not commands a user types. Neither loop needs
 Jev, so both are local verbs (`watch`, `lookback`) that run without
 `TYPESAFE_API_KEY` or `doctor`, like `report`. Observation collection
-stays in the `ruver-lstm` and `ruver-reviewer` nodes, because those are
+stays in the `bulma-lstm` and `bulma-reviewer` nodes, because those are
 the only places that read review comments.
 
 Deferred, not rejected: product-signal intake (error trackers, chat,

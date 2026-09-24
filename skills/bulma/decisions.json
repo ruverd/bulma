@@ -23,7 +23,7 @@
             "none": "Nothing above fits, or `args` is a question to answer in chat rather than work to run."
           },
           "act_at": 0.70,
-          "enum_source": "ruver-bus/PROTOCOL.md"
+          "enum_source": "bulma-bus/PROTOCOL.md"
         }
       }
     },
@@ -55,7 +55,7 @@
     },
     {
       "id": "fd.triage",
-      "graph": "ruver-feature-delivery",
+      "graph": "bulma-feature-delivery",
       "node": "triage",
       "stakes": "normal",
       "fallback": "ROUTING.md heuristic",
@@ -73,7 +73,7 @@
             "spike": "Investigation or question only; no code is expected to ship."
           },
           "act_at": 0.70,
-          "enum_source": "ruver-feature-delivery/ROUTING.md"
+          "enum_source": "bulma-feature-delivery/ROUTING.md"
         },
         "path": {
           "type": "choice",
@@ -85,7 +85,7 @@
             "light_change": "Chore, rename, config, copy, or one or two obvious files with no product fork and no design decision."
           },
           "act_at": 0.75,
-          "enum_source": "ruver-feature-delivery/ROUTING.md"
+          "enum_source": "bulma-feature-delivery/ROUTING.md"
         },
         "risk": {
           "type": "choice",
@@ -97,7 +97,7 @@
             "elevated": "Touches auth, session, tenant, billing, payment, PII, secrets, RBAC, migrations, webhooks, or a public API or contract."
           },
           "act_at": 0.80,
-          "enum_source": "ruver-feature-delivery/ROUTING.md"
+          "enum_source": "bulma-feature-delivery/ROUTING.md"
         },
         "scope": {
           "type": "choice",
@@ -110,13 +110,13 @@
             "fullstack": "Frontend and backend live in different repositories and both change."
           },
           "act_at": 0.70,
-          "enum_source": "ruver-feature-delivery/ROUTING.md"
+          "enum_source": "bulma-feature-delivery/ROUTING.md"
         }
       }
     },
     {
       "id": "policy.ask",
-      "graph": "ruver-feature-delivery",
+      "graph": "bulma-feature-delivery",
       "node": "grill",
       "stakes": "normal",
       "fallback": "DECISION_POLICY.md as written",
@@ -146,7 +146,7 @@
     },
     {
       "id": "qa.gate",
-      "graph": "ruver-qa",
+      "graph": "bulma-qa",
       "node": "execute",
       "stakes": "high",
       "fallback": "hand every finding to triage (VERDICTS.md)",
@@ -183,7 +183,7 @@
     },
     {
       "id": "triage.classify",
-      "graph": "ruver-triage",
+      "graph": "bulma-triage",
       "node": "classify",
       "stakes": "high",
       "fallback": "orchestrator classification per classify.md",
@@ -201,13 +201,13 @@
             "BLOCKED": "Cannot be judged: environment, auth, or missing data prevents reproduction and inspection."
           },
           "act_at": 0.80,
-          "enum_source": "ruver-triage/STATE.schema.md"
+          "enum_source": "bulma-triage/STATE.schema.md"
         }
       }
     },
     {
       "id": "lstm.verify",
-      "graph": "ruver-lstm",
+      "graph": "bulma-lstm",
       "node": "verify",
       "stakes": "normal",
       "fallback": "verify.md judgment by the orchestrator",
@@ -232,7 +232,7 @@
             "na": "The comment proposes no concrete change."
           },
           "act_at": 0.75,
-          "enum_source": "ruver-lstm/nodes/verify.md"
+          "enum_source": "bulma-lstm/nodes/verify.md"
         },
         "risk": {
           "type": "choice",
@@ -244,13 +244,13 @@
             "elevated": "Touches auth, session, tenant, billing, payment, PII, secrets, RBAC, migrations, webhooks, or a public API or contract."
           },
           "act_at": 0.75,
-          "enum_source": "ruver-lstm/nodes/verify.md"
+          "enum_source": "bulma-lstm/nodes/verify.md"
         }
       }
     },
     {
       "id": "reviewer.failure_class",
-      "graph": "ruver-reviewer",
+      "graph": "bulma-reviewer",
       "node": "diagnose",
       "stakes": "normal",
       "fallback": "manual diagnosis per FAILURES.md",
@@ -270,13 +270,13 @@
             "HUMAN INTERVENTION REQUIRED": "Ambiguous product question, security, missing credentials, destructive action, or architecture call."
           },
           "act_at": 0.75,
-          "enum_source": "ruver-reviewer/references/FAILURES.md"
+          "enum_source": "bulma-reviewer/references/FAILURES.md"
         }
       }
     },
     {
       "id": "review.risk",
-      "graph": "ruver-code-review",
+      "graph": "bulma-code-review",
       "node": "critic",
       "stakes": "normal",
       "fallback": "classify-risk.py output",
@@ -291,13 +291,13 @@
             "low": "Ordinary product code with none of those surfaces and modest size."
           },
           "act_at": 0.75,
-          "enum_source": "ruver-code-review/scripts/classify-risk.py"
+          "enum_source": "bulma-code-review/scripts/classify-risk.py"
         }
       }
     },
     {
       "id": "dispatch.tier",
-      "graph": "ruver-feature-delivery",
+      "graph": "bulma-feature-delivery",
       "node": "implement",
       "stakes": "normal",
       "fallback": "heavy (session model)",

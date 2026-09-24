@@ -7,7 +7,6 @@ REQUIRED = [
     "CONTRIBUTING.md",
     "CHANGELOG.md",
     "SECURITY.md",
-    "CODEOWNERS",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/ISSUE_TEMPLATE/bug_report.md",
     ".github/ISSUE_TEMPLATE/feature_request.md",

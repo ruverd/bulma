@@ -1,7 +1,7 @@
 # Node: lookback
 
 **Verb:** find what keeps coming back
-**Capability:** read `$RUVER_HOME/insights/observations.jsonl`; write only a
+**Capability:** read `$BULMA_HOME/insights/observations.jsonl`; write only a
 branch and a draft PR in the skills repo, and only after the user says yes
 
 The quality half of the self-improving loop. Human reviewers keep catching
@@ -16,8 +16,8 @@ shrink, and proposes the next change.
 | `lookback --since YYYY-MM-DD [--until YYYY-MM-DD]` | explicit window, e.g. since a skill change merged |
 | `lookback --classify` | first label the unlabeled misses in both windows with Jev, then report |
 
-Rows come from `ruver-lstm` and `ruver-reviewer`
-([INSIGHTS.md](../../ruver-bus/INSIGHTS.md)). Only human comments count, and a
+Rows come from `bulma-lstm` and `bulma-reviewer`
+([INSIGHTS.md](../../bulma-bus/INSIGHTS.md)). Only human comments count, and a
 comment that lstm verified as wrong (`claim_true: no`) is dropped.
 
 ## Labels
@@ -26,7 +26,7 @@ Without `--classify`, clusters come from regexes and cached labels, and no key
 is needed. `--classify` needs `TYPESAFE_API_KEY`. It asks the `insight.classify`
 hook ([HOOKS.md](../HOOKS.md)) once per missed row that has no label for the
 current catalog version, in one `ask-many` batch. Its decisions log under
-`$RUVER_HOME/insights/.ruver-bulma/`, so `/bulma report --hook insight.classify`
+`$BULMA_HOME/insights/.bulma-core/`, so `/bulma report --hook insight.classify`
 shows agreement with the regex. The hook defaults to `shadow`, so labels are
 logged and the table stays regex-only. Promote it with
 `/bulma power balanced insight.classify` once the report shows the labels can be
@@ -71,8 +71,8 @@ depends on `lesson`, and falls back to `guard` when `lesson` is `-` or `mixed`:
 
 | `lesson` | Proposal goes to |
 |---|---|
-| `implementer` | The cluster's section in [LESSONS.md](../../ruver-feature-delivery/LESSONS.md), which the fd coder and fd reviewer load on every ticket. If the section is missing, add it. `lessons.py` only injects clusters that have a section |
-| `reviewer` | The `guard` section of `ruver-code-review` |
+| `implementer` | The cluster's section in [LESSONS.md](../../bulma-feature-delivery/LESSONS.md), which the fd coder and fd reviewer load on every ticket. If the section is missing, add it. `lessons.py` only injects clusters that have a section |
+| `reviewer` | The `guard` section of `bulma-code-review` |
 | `repo_rule` | The target repo's `CLAUDE.md` or `AGENTS.md`. Run `python3 scripts/lessons.py --repo <owner/repo> --kind repo_rule` for that repo's examples and draft one line per cluster from them |
 | `none` | Nothing. Say so once |
 

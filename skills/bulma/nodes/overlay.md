@@ -1,19 +1,19 @@
 # Node: overlay
 
 **Verb:** run the target under hooks
-**Capability:** `load_graph` (ruver-host), run `scripts/bulma.py ask`
+**Capability:** `load_graph` (bulma-host), run `scripts/bulma.py ask`
 
 ## Contract
 
-1. `load_graph <target>` (skill `ruver-<target>`, or `ruver-memory` for
+1. `load_graph <target>` (skill `bulma-<target>`, or `bulma-memory` for
    `memory`). Follow its SKILL.md and GRAPH.md exactly. Bulma stays loaded.
-2. When the target, or an engine it loads (`ruver-feature-delivery`,
-   `ruver-code-review`), enters a node listed in `../HOOKS.md`, and before
+2. When the target, or an engine it loads (`bulma-feature-delivery`,
+   `bulma-code-review`), enters a node listed in `../HOOKS.md`, and before
    writing the hooked field(s):
    - `review.risk` and `reviewer.failure_class`: use `ask <hook> --build`
      with the flags in HOOKS.md §State file. Otherwise build the state
      JSON from the recipe column, with its caps, and write it to
-     `.ruver-bulma/state/<hook>-<UTC ts>.json`;
+     `.bulma-core/state/<hook>-<UTC ts>.json`;
    - run `python3 scripts/bulma.py ask <hook> --state <file> --line --context repo=… --context pr=… --context sha=… --context ticket=…`
      plus `--graph-answer <q>=<v>` for every question whose graph rule you
      already evaluated (always under `shadow`), and `--power <level>` when

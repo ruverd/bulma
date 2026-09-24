@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bulma: ask TypeSafe Jev at ruver graph forks and log every answer.
+"""Bulma: ask TypeSafe Jev at bulma graph forks and log every answer.
 
 Stdlib only. Subcommands: catalog, power, tune, model, doctor, state, ask,
 ask-many, outcome, report, dispatch. Never prints TYPESAFE_API_KEY.
@@ -62,7 +62,7 @@ REQUIREMENT = (
     "  missing: TYPESAFE_API_KEY  (create one at https://console.typesafe.ai)\n"
     "  python3: {py}\n"
     "Set the key, then run /bulma again.\n"
-    "Without Jev, run the graph directly: /developer, /qa, /reviewer, /lstm, /ruver-triage."
+    "Without Jev, run the graph directly: /developer, /qa, /reviewer, /lstm, /bulma-triage."
 )
 
 
@@ -74,18 +74,14 @@ class BulmaError(Exception):
 
 # --- disk -------------------------------------------------------------------
 
-def ruver_home():
-    env = os.environ.get("RUVER_HOME")
+def bulma_home():
+    env = os.environ.get("BULMA_HOME")
     if env:
         return Path(env)
-    home = Path.home() / ".ruver"
-    grok = Path.home() / ".grok" / "ruver"
-    if not home.exists() and grok.is_dir():
-        return grok
-    return home
+    return Path.home() / ".bulma"
 
 
-def ruver_root(override=None):
+def bulma_root(override=None):
     if override:
         return Path(override)
     try:
@@ -96,11 +92,11 @@ def ruver_root(override=None):
     except (subprocess.CalledProcessError, FileNotFoundError):
         top = os.getcwd()
     slug = top.lstrip("/").replace("/", "-")
-    return ruver_home() / slug
+    return bulma_home() / slug
 
 
 def config_path():
-    return ruver_home() / "bulma.json"
+    return bulma_home() / "bulma.json"
 
 
 def load_config():
@@ -292,7 +288,7 @@ def post_json(path, body, timeout=20):
     data = json.dumps(body).encode("utf-8")
     request = urllib.request.Request(
         API + path, data=data, method="POST",
-        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "ruver-bulma"},
+        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "bulma"},
     )
     delays = [1, 2, 4]
     for attempt in range(4):
@@ -358,7 +354,7 @@ def clean(value):
 
 
 def ledger_path(root):
-    return Path(root) / ".ruver-bulma" / "DECISIONS.tsv"
+    return Path(root) / ".bulma-core" / "DECISIONS.tsv"
 
 
 def append_rows(root, rows, path=None, columns=TSV_COLUMNS):
@@ -565,7 +561,7 @@ def trim_world(world):
 
 
 def load_world(args, root):
-    path = Path(args.world) if args.world else root / ".ruver-bulma" / "world.json"
+    path = Path(args.world) if args.world else root / ".bulma-core" / "world.json"
     if not path.exists():
         raise BulmaError(4, "no world.json at %s; run scripts/world.sh first" % path)
     return load_json_file(path)
@@ -649,8 +645,8 @@ BUILDERS = {
 
 
 def save_state(root, hook_id, state, criteria):
-    """Write the state (and dynamic criteria) under .ruver-bulma/state/, kept for humans."""
-    folder = Path(root) / ".ruver-bulma" / "state"
+    """Write the state (and dynamic criteria) under .bulma-core/state/, kept for humans."""
+    folder = Path(root) / ".bulma-core" / "state"
     folder.mkdir(parents=True, exist_ok=True)
     stamp = "%s-%s" % (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"), uuid.uuid4().hex[:4])
     state_path = folder / ("%s-%s.json" % (hook_id, stamp))
@@ -672,7 +668,7 @@ def build_state(hook_id, args, root):
 
 def cmd_state(args):
     load_catalog()
-    state_path, criteria_path = build_state(args.hook, args, ruver_root(args.ruver_root))
+    state_path, criteria_path = build_state(args.hook, args, bulma_root(args.bulma_root))
     print(state_path)
     if criteria_path:
         print(criteria_path)
@@ -740,7 +736,7 @@ def find_hook(catalog, hook_id):
 def cmd_ask(args):
     catalog = load_catalog()
     hook = find_hook(catalog, args.hook)
-    root = ruver_root(args.ruver_root)
+    root = bulma_root(args.bulma_root)
     if args.build:
         if args.state or args.criteria:
             raise BulmaError(4, "--build writes the state itself; drop --state and --criteria")
@@ -803,7 +799,7 @@ def cmd_ask_many(args):
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         results = list(pool.map(lambda job: (job[0],) + ask_one(*job[1:]), jobs))
     rows = [row for _, _, item_rows, _ in results for row in item_rows]
-    append_rows(ruver_root(args.ruver_root), rows)
+    append_rows(bulma_root(args.bulma_root), rows)
     code = max(item_code for _, _, _, item_code in results)
     if args.json:
         print(json.dumps([dict(doc, id=item_id) for item_id, doc, _, _ in results], indent=2, ensure_ascii=False))
@@ -820,7 +816,7 @@ def python_ok():
 def get_models(timeout=5):
     request = urllib.request.Request(
         API + "/models", method="GET",
-        headers={"Authorization": "Bearer " + api_key(), "User-Agent": "ruver-bulma"},
+        headers={"Authorization": "Bearer " + api_key(), "User-Agent": "bulma"},
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -903,7 +899,7 @@ def set_outcome(root, decision_id, question, value, note=""):
 
 
 def cmd_outcome(args):
-    set_outcome(ruver_root(args.ruver_root), args.decision_id, args.question, args.value, args.note)
+    set_outcome(bulma_root(args.bulma_root), args.decision_id, args.question, args.value, args.note)
     print("updated %s %s outcome=%s" % (args.decision_id, args.question, args.value))
     return 0
 
@@ -962,8 +958,8 @@ def suggest_threshold(rows, current):
 
 
 def cmd_report(args):
-    root = ruver_root(args.ruver_root)
-    paths = [ledger_path(root)] if args.repo_only else sorted(ruver_home().glob("*/.ruver-bulma/DECISIONS.tsv"))
+    root = bulma_root(args.bulma_root)
+    paths = [ledger_path(root)] if args.repo_only else sorted(bulma_home().glob("*/.bulma-core/DECISIONS.tsv"))
     rows = []
     for path in paths:
         rows.extend(read_rows(path))
@@ -973,7 +969,7 @@ def cmd_report(args):
     if args.hook:
         rows = [r for r in rows if r["hook"] == args.hook]
     if not rows:
-        print("no decisions found under %s" % (root if args.repo_only else ruver_home()))
+        print("no decisions found under %s" % (root if args.repo_only else bulma_home()))
         return 0
     groups = {}
     for row in rows:
@@ -1013,7 +1009,7 @@ def cmd_report(args):
 
 def add_builder_args(p):
     p.add_argument("--args", default="", help="raw /bulma args (entry.*)")
-    p.add_argument("--world", help="world.json path; default .ruver-bulma/world.json")
+    p.add_argument("--world", help="world.json path; default .bulma-core/world.json")
     p.add_argument("--resume", action="store_true", help="entry.next_step: keep only resume:* candidates")
     p.add_argument("--pr", help="PR number or URL for gh pr view")
     p.add_argument("--pr-json", help="gh pr view --json output, instead of calling gh")
@@ -1040,7 +1036,7 @@ def build_parser():
     p = sub.add_parser("state", help="build a hook's state file from world.json / gh and print its path")
     p.add_argument("hook")
     add_builder_args(p)
-    p.add_argument("--ruver-root")
+    p.add_argument("--bulma-root")
     p.set_defaults(func=cmd_state)
 
     p = sub.add_parser("ask", help="ask Jev one hook's questions")
@@ -1056,7 +1052,7 @@ def build_parser():
     p.add_argument("--context", action="append", default=[])
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--replay")
-    p.add_argument("--ruver-root")
+    p.add_argument("--bulma-root")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_ask)
 
@@ -1066,7 +1062,7 @@ def build_parser():
     p.add_argument("--model")
     p.add_argument("--context", action="append", default=[])
     p.add_argument("--workers", type=int, default=8)
-    p.add_argument("--ruver-root")
+    p.add_argument("--bulma-root")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_ask_many)
 
@@ -1080,14 +1076,14 @@ def build_parser():
     p.add_argument("question")
     p.add_argument("value")
     p.add_argument("--note", default="")
-    p.add_argument("--ruver-root")
+    p.add_argument("--bulma-root")
     p.set_defaults(func=cmd_outcome)
 
     p = sub.add_parser("report", help="calibration table from DECISIONS.tsv")
     p.add_argument("--hook")
     p.add_argument("--since", type=int)
     p.add_argument("--repo-only", action="store_true")
-    p.add_argument("--ruver-root")
+    p.add_argument("--bulma-root")
     p.set_defaults(func=cmd_report)
 
     p = sub.add_parser("tune", help="override act_at for one question")

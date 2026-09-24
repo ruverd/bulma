@@ -1,10 +1,10 @@
 # Dispatch tier
 
 Which model a worker runs on. Without `/bulma` every worker inherits the
-session model (`session_model` in [ruver-host](../ruver-host/SKILL.md)). Under
+session model (`session_model` in [bulma-host](../bulma-host/SKILL.md)). Under
 the overlay, `dispatch.tier` lets simple units run cheaper and measures
 whether quality held. Graph files never name a model; the mapping lives in
-`$RUVER_HOME/bulma.json`.
+`$BULMA_HOME/bulma.json`.
 
 ## Unit
 
@@ -29,7 +29,7 @@ Gates never get a weaker model. Under `shadow` every role prints `heavy`.
 
 1. `shadow`, Jev undecided, or Jev down -> `heavy`.
 2. `light` with `risk=elevated`, or any file that
-   `../ruver-code-review/scripts/classify-risk.py` calls high -> `standard`.
+   `../bulma-code-review/scripts/classify-risk.py` calls high -> `standard`.
 3. Review, test or CI fail -> `dispatch result <unit> fail --stage <s>`
    prints the next tier (light -> standard -> heavy). The re-dispatch uses
    it. Loop caps stay as they are: escalation spends a loop, never adds one.
@@ -61,12 +61,12 @@ the user maps it.
 ## Hosts
 
 What each host can apply per worker call lives in
-[ruver-host](../ruver-host/SKILL.md) §Worker tier. `dispatch map` rejects
+[bulma-host](../bulma-host/SKILL.md) §Worker tier. `dispatch map` rejects
 keys the host cannot take.
 
 `agent=<name>` means spawn that worker definition instead of the default
 one. Use it for what a host cannot take per call: on Claude Code, a copy of
-`ruver-fd-coder` with `effort: low`. Keep such definitions in the user's
+`bulma-fd-coder` with `effort: low`. Keep such definitions in the user's
 host config, not in this repo, so no model name lands in git.
 
 Starting points (tune from `dispatch report`, not from this table):
@@ -86,7 +86,7 @@ no saving.
 
 ## Measurement
 
-`.ruver-bulma/DISPATCH.tsv`, one row per unit: `tier_jev`, `tier_run`,
+`.bulma-core/DISPATCH.tsv`, one row per unit: `tier_jev`, `tier_run`,
 `clamp`, `first_pass`, `loops_used`, `escalated_to`, `worker_tokens`,
 `outcome`, `criteria_version`, and the state file path. The Jev answer also
 lands in `DECISIONS.tsv` as usual.

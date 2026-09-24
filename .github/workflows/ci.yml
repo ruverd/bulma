@@ -25,10 +25,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash tests/repo.sh
       - run: bash tests/before-and-after.sh
-      - run: bash tests/ruver-qa.sh
-      - run: bash tests/ruver-code-review.sh
-      - run: bash tests/ruver-developer.sh
-      - run: bash tests/ruver-lstm.sh
+      - run: bash tests/bulma-qa.sh
+      - run: bash tests/bulma-code-review.sh
+      - run: bash tests/bulma-developer.sh
+      - run: bash tests/bulma-lstm.sh
       - run: bash tests/bulma.sh
 
   cli:

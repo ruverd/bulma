@@ -1,11 +1,11 @@
 # Node: admit
 
 **Verb:** gate
-**Capability:** run `scripts/bulma.py`, write `.ruver-bulma/STATE.md`
+**Capability:** run `scripts/bulma.py`, write `.bulma-core/STATE.md`
 
 ## Steps
 
-1. Load `ruver-memory` (both files). Resolve `$RUVER_ROOT` (DISK.md).
+1. Load `bulma-memory` (both files). Resolve `$BULMA_ROOT` (DISK.md).
 2. Parse args with `../ARGS.md`. `power`, `tune`, `model` → **power**.
    `report`, `status`, `doctor` → **report**. `watch` → **watch**. `lookback` →
    **lookback**. These need no key.
@@ -16,7 +16,7 @@
    - exit 4 → same, quoting the catalog or config error.
 4. `python3 scripts/bulma.py power` → `power`, `power_source`. A `--power`
    flag in args wins for this run; pass it to every `ask`.
-5. Init `.ruver-bulma/STATE.md` from `../templates/STATE.md` unless a live
+5. Init `.bulma-core/STATE.md` from `../templates/STATE.md` unless a live
    one exists (then keep `decision_ids` and counts). Write `args`, `power`,
    `power_source`, `model` (`bulma.py model`), `updated_at`.
 

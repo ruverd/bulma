@@ -14,35 +14,35 @@ Need = namedtuple("Need", "skill node after before extra_files")
 
 NEEDS = [
     Need(
-        skill="ruver-feature-delivery",
+        skill="bulma-feature-delivery",
         node="evidence",
         after="tester",
         before="quality",
         extra_files=("templates/PR_BODY.md",),
     ),
     Need(
-        skill="ruver-feature-delivery",
+        skill="bulma-feature-delivery",
         node="plan_critic",
         after="tickets",
         before="implement",
         extra_files=(),
     ),
     Need(
-        skill="ruver-developer",
+        skill="bulma-developer",
         node="bot_review",
         after="mergeable",
         before="request_qa",
         extra_files=(),
     ),
     Need(
-        skill="ruver-lstm",
+        skill="bulma-lstm",
         node="prove",
         after="patch",
         before="reply",
         extra_files=(),
     ),
     Need(
-        skill="ruver-code-review",
+        skill="bulma-code-review",
         node="critic",
         after="review",
         before="publish",

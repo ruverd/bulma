@@ -2,10 +2,11 @@
 *.zip
 *.bak
 *.bak.*
-.ruver-*/
+.bulma-*/
 .grok/
 .claude/*
 !.claude/settings.json
 .cursor/
 node_modules/
 .worktrees/
+__pycache__/

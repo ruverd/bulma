@@ -4,8 +4,8 @@
 Reads the same observations and label cache as lookback.py, keeps the misses
 from --repo, and ranks clusters by distinct PRs. With --kind implementer
 (default) it prints the rule for each top cluster from
-../../ruver-feature-delivery/LESSONS.md plus one example from this repo, ready
-to paste into the ruver-fd-coder prompt. With --kind repo_rule it lists the
+../../bulma-feature-delivery/LESSONS.md plus one example from this repo, ready
+to paste into the bulma-fd-coder prompt. With --kind repo_rule it lists the
 clusters whose lesson belongs in the repo's own CLAUDE.md, with examples to
 draft that rule from.
 
@@ -30,7 +30,7 @@ sys.dont_write_bytecode = True  # no __pycache__ inside the installed skill
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lookback as lb  # noqa: E402
 
-LESSONS_MD = lb.HERE.parent.parent / "ruver-feature-delivery" / "LESSONS.md"
+LESSONS_MD = lb.HERE.parent.parent / "bulma-feature-delivery" / "LESSONS.md"
 UI_EXT = (".tsx", ".jsx", ".vue", ".svelte")
 UI_ONLY = {"effect lifecycle"}  # only worth a line when the ticket touches UI files
 EXAMPLE_CAP = 140
@@ -114,7 +114,7 @@ def main():
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
-    path = Path(args.file) if args.file else lb.ruver_home() / "insights" / "observations.jsonl"
+    path = Path(args.file) if args.file else lb.bulma_home() / "insights" / "observations.jsonl"
     rows = lb.load(path)
     labels = lb.load_labels(path.with_name("labels.jsonl"), lb.catalog_version())
     files = [f.strip() for f in args.files.split(",") if f.strip()]

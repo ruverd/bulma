@@ -10,7 +10,7 @@ import sys
 
 PRUNE = {".git", ".worktrees", "node_modules"}
 
-# Old recipes that produced ruverd/dev-4525 instead of feature/dev-4525.
+# Old recipes that produced octocat/dev-4525 instead of feature/dev-4525.
 FORBIDDEN = [
     (
         "do not prefer tracker gitBranchName over feature/<id-lowercase>",
@@ -61,12 +61,12 @@ def files(root):
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "."
     errors = []
-    jobs = os.path.join(root, "skills/ruver-bus/JOBS.md")
+    jobs = os.path.join(root, "skills/bulma-bus/JOBS.md")
     with open(jobs, encoding="utf-8") as handle:
         jobs_text = handle.read()
     for needle in REQUIRED_JOBS:
         if needle not in jobs_text:
-            errors.append(f"skills/ruver-bus/JOBS.md: missing {needle!r}")
+            errors.append(f"skills/bulma-bus/JOBS.md: missing {needle!r}")
     for path, rel in files(root):
         with open(path, encoding="utf-8") as handle:
             for lineno, line in enumerate(handle, 1):

@@ -1,6 +1,6 @@
 {
-  "name": "skills",
-  "description": "Ruver agent graphs for delivery, QA, review, and incoming review comments.",
+  "name": "bulma",
+  "description": "Bulma agent graphs for delivery, QA, review, and incoming review comments.",
   "owner": {
     "name": "Ruver Dornelas",
     "email": "ruverd@gmail.com",
@@ -8,21 +8,21 @@
   },
   "plugins": [
     {
-      "name": "ruver",
-      "description": "Run /ruver-developer, /ruver-lstm, /ruver-qa and the graphs behind them.",
+      "name": "bulma",
+      "description": "Run /bulma-developer, /bulma-lstm, /bulma-qa and the graphs behind them.",
       "version": "0.9.1",
       "author": {
         "name": "Ruver Dornelas",
         "email": "ruverd@gmail.com"
       },
-      "homepage": "https://github.com/ruverd/skills",
+      "homepage": "https://github.com/ruverd/bulma",
       "source": {
         "type": "local",
         "path": "./"
       },
       "category": "development",
       "tags": [
-        "ruver",
+        "bulma",
         "tdd",
         "qa",
         "review",
@@ -30,9 +30,9 @@
         "agent-browser"
       ],
       "keywords": [
-        "ruver-developer",
-        "ruver-lstm",
-        "ruver-qa"
+        "bulma-developer",
+        "bulma-lstm",
+        "bulma-qa"
       ]
     }
   ]

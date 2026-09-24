@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma QA"
+  short_description: "QA a PR with product-level evidence"
+  default_prompt: "Use $bulma-qa to QA this PR and publish evidence."

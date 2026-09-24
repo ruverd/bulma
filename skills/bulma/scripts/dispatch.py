@@ -53,17 +53,17 @@ GATE_REVERSED = 0.10
 # it in code; results escalate it; DISPATCH.tsv measures cost and quality.
 
 def dispatch_path(root):
-    return Path(root) / ".ruver-bulma" / "DISPATCH.tsv"
+    return Path(root) / ".bulma-core" / "DISPATCH.tsv"
 
 
 _RISK_SCRIPT = None
 
 
 def high_risk_path(path):
-    """classify-risk.py from ruver-code-review decides high surfaces. Missing script -> high."""
+    """classify-risk.py from bulma-code-review decides high surfaces. Missing script -> high."""
     global _RISK_SCRIPT
     if _RISK_SCRIPT is None:
-        script = core.SKILL_DIR.parent / "ruver-code-review" / "scripts" / "classify-risk.py"
+        script = core.SKILL_DIR.parent / "bulma-code-review" / "scripts" / "classify-risk.py"
         _RISK_SCRIPT = False
         if script.is_file():
             spec = importlib.util.spec_from_file_location("classify_risk", script)
@@ -191,7 +191,7 @@ def criteria_version(hook):
 def cmd_dispatch_plan(args):
     catalog = core.load_catalog()
     hook = core.find_hook(catalog, "dispatch.tier")
-    root = core.ruver_root(args.ruver_root)
+    root = core.bulma_root(args.bulma_root)
     cfg = core.load_config()
     model = args.model or cfg.get("model") or core.DEFAULT_MODEL
     context = core.parse_kv(args.context)
@@ -276,7 +276,7 @@ def jev_owned(unit):
 
 
 def cmd_dispatch_result(args):
-    root = core.ruver_root(args.ruver_root)
+    root = core.bulma_root(args.bulma_root)
     path, rows = load_units(root)
     unit = find_unit(rows, args.unit_id, path)
     if args.tokens is not None:
@@ -306,7 +306,7 @@ def cmd_dispatch_result(args):
 
 def cmd_dispatch_reverse(args):
     """A later signal (CI, QA PR_BUG, lstm should-fix) lands on a unit's files."""
-    root = core.ruver_root(args.ruver_root)
+    root = core.bulma_root(args.bulma_root)
     path, rows = load_units(root)
     if args.unit_id:
         targets = [find_unit(rows, args.unit_id, path)]
@@ -334,7 +334,7 @@ def pct(part, whole):
 
 
 def dispatch_rows(args):
-    paths = [dispatch_path(core.ruver_root(args.ruver_root))] if args.repo_only else sorted(core.ruver_home().glob("*/.ruver-bulma/DISPATCH.tsv"))
+    paths = [dispatch_path(core.bulma_root(args.bulma_root))] if args.repo_only else sorted(core.bulma_home().glob("*/.bulma-core/DISPATCH.tsv"))
     rows = []
     for path in paths:
         rows.extend(core.read_rows(path, COLUMNS))
@@ -481,7 +481,7 @@ def register(sub, bulma):
     q.add_argument("--model")
     q.add_argument("--replay")
     q.add_argument("--context", action="append", default=[])
-    q.add_argument("--ruver-root")
+    q.add_argument("--bulma-root")
     q.add_argument("--json", action="store_true")
     q.set_defaults(func=cmd_dispatch_plan)
 
@@ -497,7 +497,7 @@ def register(sub, bulma):
     q.add_argument("--stage", default="review", choices=["review", "test", "ci"])
     q.add_argument("--tokens", type=int, help="worker tokens the host reported for this round")
     q.add_argument("--host")
-    q.add_argument("--ruver-root")
+    q.add_argument("--bulma-root")
     q.set_defaults(func=cmd_dispatch_result)
 
     q = dsub.add_parser("reverse", help="a later CI fail, QA PR_BUG or lstm should-fix hit a unit")
@@ -505,7 +505,7 @@ def register(sub, bulma):
     q.add_argument("--file", action="append", help="match units that touched this path (repeatable)")
     q.add_argument("--pr", help="with --file: only units logged for this PR")
     q.add_argument("--source", required=True, choices=["ci", "qa", "lstm", "user"])
-    q.add_argument("--ruver-root")
+    q.add_argument("--bulma-root")
     q.set_defaults(func=cmd_dispatch_reverse)
 
     for name, func, text in (("report", cmd_dispatch_report, "cost and quality per tier, plus the promotion gate"),
@@ -513,7 +513,7 @@ def register(sub, bulma):
         q = dsub.add_parser(name, help=text)
         q.add_argument("--since", type=int)
         q.add_argument("--repo-only", action="store_true")
-        q.add_argument("--ruver-root")
+        q.add_argument("--bulma-root")
         q.set_defaults(func=func)
 
     q = dsub.add_parser("map", help="print or set the host tier mapping in bulma.json")

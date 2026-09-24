@@ -15,6 +15,6 @@
 ## If this touches a skill
 
 - [ ] No link leaves the skill's own directory
-- [ ] Host specifics live in `ruver-host`, not in the skill
+- [ ] Host specifics live in `bulma-host`, not in the skill
 - [ ] No model id, agent home path, or personal handle hardcoded
 - [ ] Listed in `plugin.json` and `.claude-plugin/plugin.json` if new

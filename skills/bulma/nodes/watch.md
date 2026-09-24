@@ -1,8 +1,8 @@
 # Node: watch
 
 **Verb:** observe every workspace
-**Capability:** read `$RUVER_HOME/*/.ruver-*/STATE.md`, `gh` read-only, write
-`$RUVER_HOME/bulma-watch.json`
+**Capability:** read `$BULMA_HOME/*/.bulma-*/STATE.md`, `gh` read-only, write
+`$BULMA_HOME/bulma-watch.json`
 
 The watchdog. Runs finish outside the graph all the time: the PR merges while
 the job sits in `ci_watching`, or the worktree is deleted. This node finds what

@@ -18,7 +18,7 @@ if grep -F -q -- '--restore' "$ROOT/skills/before-and-after/SKILL.md"; then
   fail "browser capture uses unsupported agent-browser --restore"
 fi
 
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/ruver-baa.XXXXXX")"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/bulma-baa.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 cd "$TMP"
 
@@ -34,8 +34,8 @@ Path("new.png").write_bytes(png)
 PY
 
 out="$("$FMT" --before before.png --after after.png --label Desktop)"
-echo "$out" | grep -q '<!-- ruver-before-and-after:start -->' || fail "missing start marker"
-echo "$out" | grep -q '<!-- ruver-before-and-after:end -->' || fail "missing end marker"
+echo "$out" | grep -q '<!-- bulma-before-and-after:start -->' || fail "missing start marker"
+echo "$out" | grep -q '<!-- bulma-before-and-after:end -->' || fail "missing end marker"
 echo "$out" | grep -q '| Before (Desktop) | After (Desktop) |' || fail "pair heading"
 echo "$out" | grep -q '!\[Before\](./before.png)' || fail "before image ref"
 echo "$out" | grep -q '!\[After\](./after.png)' || fail "after image ref"
@@ -64,9 +64,9 @@ ok attach-list
 "$FMT" --body-file body.md --after new.png >body-next.md
 grep -q '# Title' body-next.md || fail "body lost title"
 grep -q 'Intro prose.' body-next.md || fail "body lost prose"
-grep -q '<!-- ruver-before-and-after:start -->' body-next.md || fail "body missing block"
+grep -q '<!-- bulma-before-and-after:start -->' body-next.md || fail "body missing block"
 "$FMT" --body-file body-next.md --after new.png --label Again >body-2.md
-count="$(grep -c 'ruver-before-and-after:start' body-2.md || true)"
+count="$(grep -c 'bulma-before-and-after:start' body-2.md || true)"
 [[ "$count" == "1" ]] || fail "marker not replaced (count=$count)"
 grep -q 'Preview (Again)' body-2.md || fail "second format did not update"
 ok replace-block
@@ -95,20 +95,20 @@ set -e
 [[ "$got" -ne 0 ]] || fail "whitespace path should fail"
 ok whitespace-path
 
-# ensure-session: git remote, no gh. Shared dir is under RUVER_HOME, not the worktree.
+# ensure-session: git remote, no gh. Shared dir is under BULMA_HOME, not the worktree.
 HOME_FAKE="$TMP/home"
 mkdir -p "$HOME_FAKE"
 git init -q repo
 git -C repo remote add origin git@github.com:Acme/App.git
 out="$(
   cd "$TMP/repo" &&
-  HOME="$HOME_FAKE" RUVER_HOME="$HOME_FAKE/.ruver" \
+  HOME="$HOME_FAKE" BULMA_HOME="$HOME_FAKE/.bulma" \
     "$SES"
 )"
-echo "$out" | grep -q 'SESSION=ruver-acme-app' || fail "session id from git remote: $out"
-echo "$out" | grep -q "STATE_DIR=$HOME_FAKE/.ruver/agent-browser/ruver-acme-app" || fail "state dir: $out"
-echo "$out" | grep -q "CAPTURE_DIR=$HOME_FAKE/.ruver/agent-browser/ruver-acme-app/captures" || fail "capture dir: $out"
-[[ -d "$HOME_FAKE/.ruver/agent-browser/ruver-acme-app/captures" ]] || fail "did not mkdir captures"
+echo "$out" | grep -q 'SESSION=bulma-acme-app' || fail "session id from git remote: $out"
+echo "$out" | grep -q "STATE_DIR=$HOME_FAKE/.bulma/agent-browser/bulma-acme-app" || fail "state dir: $out"
+echo "$out" | grep -q "CAPTURE_DIR=$HOME_FAKE/.bulma/agent-browser/bulma-acme-app/captures" || fail "capture dir: $out"
+[[ -d "$HOME_FAKE/.bulma/agent-browser/bulma-acme-app/captures" ]] || fail "did not mkdir captures"
 ok ensure-session
 
 echo "all passed"

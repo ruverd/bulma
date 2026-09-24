@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Reviewer"
+  short_description: "Review a PR or branch and diagnose CI"
+  default_prompt: "Use $bulma-reviewer to review this PR or branch."

@@ -11,7 +11,7 @@ Decision: one new graph, `bulma`, loads the target graph on the main thread
 and asks TypeSafe Jev a typed question at nine named forks
 (`skills/bulma/decisions.json`). Jev returns a choice or a probability with
 calibrated confidence; bulma acts when confidence clears a threshold the
-user tunes (`$RUVER_HOME/bulma.json`), else the graph's own rule applies.
+user tunes (`$BULMA_HOME/bulma.json`), else the graph's own rule applies.
 Every answer is logged with the graph's answer, so thresholds come from
 data (`bulma.py report`).
 
@@ -21,7 +21,7 @@ caps, the code-review verdict and the deterministic tables (`goal.step`,
 bulma and a test keeps catalog enums equal to graph enums. Jev is optional
 everywhere else; `/bulma` stops with a requirement message without a key.
 
-Naming: the skill id is `bulma`, not `ruver-bulma`. It is a product name the
-user chose; the `ruver-*` rule stays for the graphs it drives. Its state dir
-is `.ruver-bulma/` so `DISK.md`, `ruver status` and `ruver report` still see
-it.
+Naming: the router's skill id is `bulma`, the product name. The graphs it
+drives are `bulma-*`. Its state dir is `.bulma-core/`, so it does not collide
+with `$BULMA_HOME` itself and `DISK.md`, `bulma status` and `bulma report`
+still see it.

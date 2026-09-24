@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma Bus"
+  short_description: "Inspect or resume graph handoffs"
+  default_prompt: "Use $bulma-bus to inspect or resume the current graph handoff."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ruver Bus"
-  short_description: "Inspect or resume graph handoffs"
-  default_prompt: "Use $ruver-bus to inspect or resume the current graph handoff."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bulma LSTM"
+  short_description: "Resolve incoming PR review feedback"
+  default_prompt: "Use $bulma-lstm to verify and address this PR feedback."

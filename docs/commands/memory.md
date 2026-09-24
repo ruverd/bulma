@@ -1,20 +1,20 @@
-# `/ruver-memory`
+# `/bulma-memory`
 
 Alias: **`/memory`**. Durable prefs **outside git**. Not a graph.
 Does not walk STATE. Does not open a PR.
 
-Skill: [`../../skills/ruver-memory`](../../skills/ruver-memory).
-Disk: [`../../skills/ruver-bus/DISK.md`](../../skills/ruver-bus/DISK.md).
+Skill: [`../../skills/bulma-memory`](../../skills/bulma-memory).
+Disk: [`../../skills/bulma-bus/DISK.md`](../../skills/bulma-bus/DISK.md).
 
 ## When
 
-- `/memory` — show `$RUVER_HOME/memory.md` and `$RUVER_ROOT/memory.md`
+- `/memory` — show `$BULMA_HOME/memory.md` and `$BULMA_ROOT/memory.md`
 - `/memory me responder em PT-BR` — home `## Chat`
 - `/memory --project reviewers: alice, bob` — this repo's confirmed reviewers
-- A ruver graph starts (admit / fd / code-review) — **read**, do not wait
+- A bulma graph starts (admit / fd / code-review) — **read**, do not wait
 
 Reviewer fallback when `AGENTS.md` and `CODEOWNERS` are empty:
-[PRODUCT.md](../../skills/ruver-feature-delivery/PRODUCT.md) §6.
+[PRODUCT.md](../../skills/bulma-feature-delivery/PRODUCT.md) §6.
 Ship requests. `/reviewer` does not.
 
 ## Never
@@ -25,5 +25,5 @@ Ship requests. `/reviewer` does not.
 
 ## Related
 
-[`/ruver-developer`](ruver-developer.md) ·
-[PRODUCT.md](../../skills/ruver-feature-delivery/PRODUCT.md)
+[`/bulma-developer`](bulma-developer.md) ·
+[PRODUCT.md](../../skills/bulma-feature-delivery/PRODUCT.md)
