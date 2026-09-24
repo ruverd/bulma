@@ -29,6 +29,8 @@ All `.ruver-*` paths in ruver skills are **under `$RUVER_ROOT`**:
 ```
 $RUVER_HOME/
   memory.md                 # you (every repo). ruver-memory
+  insights/
+    observations.jsonl      # human-review observations. INSIGHTS.md
   <slug>/                   # = $RUVER_ROOT
     memory.md               # this git toplevel. ruver-memory
     .ruver-bus/

@@ -59,4 +59,5 @@ Short, chat language (`ruver-memory`): `S: bus <from>→<to> <type>` ·
 `P: active graph` · `qa_active` / queue.
 
 Timing, laps, and host token totals: [LEDGER.md](LEDGER.md).
-`ruver report` reads them.
+`ruver report` reads them. Human-review observations for lookbacks:
+[INSIGHTS.md](INSIGHTS.md).
