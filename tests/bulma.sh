@@ -399,6 +399,52 @@ ids="$(python3 -c 'import json,sys; print(" ".join(c["id"] for c in json.load(op
 [[ ! -e "$FIX/world/.ruver-bulma/world.json" ]] || fail "world.sh wrote into the fixture root despite --out"
 ok world
 
+# --- watch.py: every workspace, terminal dropped, gh reconcile, orphan ---
+WATCH="$SKILL/scripts/watch.py"
+WH="$TMP/watch-home"
+WTREE="$TMP/wt/live"
+mkdir -p "$WTREE"
+mkstate() {  # workspace graph age_hours body
+  mkdir -p "$WH/$1/.ruver-$2"
+  printf '%s\n' "$4" >"$WH/$1/.ruver-$2/STATE.md"
+  touch -t "$(python3 -c 'import sys,time; print(time.strftime("%Y%m%d%H%M", time.localtime(time.time()-float(sys.argv[1])*3600)))' "$3")" "$WH/$1/.ruver-$2/STATE.md"
+}
+mkstate ws-merged feature-delivery 72 $'---\nstatus: ci_watching\npr_url: https://github.com/o/r/pull/1\n---'
+mkstate ws-stuck lstm 72 $'# LSTM STATE\n\nstatus: patching\npr_url: https://github.com/o/r/pull/2\nworktree: '"$WTREE"$'\n\n## Dispositions'
+mkstate ws-done reviewer 72 $'# Reviewer STATE\n\nstatus: done\npr_url: https://github.com/o/r/pull/3'
+mkstate ws-mirror developer 72 $'---\nstatus: done\npr_url: https://github.com/o/r/pull/4\n---'
+mkstate ws-mirror feature-delivery 72 $'---\nstatus: shipping\n---'
+mkstate ws-fresh lstm 1 $'---\nstatus: patching\npr_url: https://github.com/o/r/pull/5\n---'
+mkstate ws-ask developer 1 $'---\nstatus: waiting_user\nwaiting_user: Which tenant?\nworktree: '"$WTREE"$'\n---'
+mkstate ws-gone qa 72 $'---\nstatus: qa_execute\npr_url: https://github.com/o/r/pull/6\nworktree: /nonexistent/wt\n---'
+mkdir -p "$TMP/watch-bin"
+cat >"$TMP/watch-bin/gh" <<'SH'
+#!/usr/bin/env bash
+echo "$3" >>"$(dirname "$0")/calls"
+case "$3" in
+  */pull/1) echo '{"state":"MERGED","isDraft":false,"mergeable":"UNKNOWN","statusCheckRollup":[]}' ;;
+  *) echo '{"state":"OPEN","isDraft":true,"mergeable":"MERGEABLE","statusCheckRollup":[{"conclusion":"FAILURE"}]}' ;;
+esac
+SH
+chmod +x "$TMP/watch-bin/gh"
+out="$(PATH="$TMP/watch-bin:$PATH" python3 "$WATCH" --home "$WH" --json)"
+bucket() { python3 -c 'import json,sys; d=json.loads(sys.argv[1]); print({w["workspace"]: w["bucket"] for w in d["workspaces"]}.get(sys.argv[2], "absent"))' "$out" "$1"; }
+[[ "$(bucket ws-merged)" == "closed" ]] || fail "watch: merged PR must reconcile to closed"
+[[ "$(bucket ws-stuck)" == "stalled" ]] || fail "watch: old live job must be stalled"
+[[ "$(bucket ws-done)" == "absent" ]] || fail "watch: terminal STATE without frontmatter must drop"
+[[ "$(bucket ws-mirror)" == "absent" ]] || fail "watch: fd mirror after developer done must drop"
+[[ "$(bucket ws-fresh)" == "absent" ]] || fail "watch: recent write is not stalled"
+[[ "$(bucket ws-ask)" == "needs_you" ]] || fail "watch: waiting_user is needs_you at any age"
+[[ "$(bucket ws-gone)" == "orphaned" ]] || fail "watch: missing worktree is orphaned"
+grep -F -q "CI red: cd $WTREE && /bulma https://github.com/o/r/pull/2" <<<"$out" || fail "watch: next step for red CI: $out"
+grep -F -q '"https://github.com/o/r/pull/1": "MERGED"' "$WH/bulma-watch.json" || fail "watch: closed PR must be cached"
+: >"$TMP/watch-bin/calls"
+PATH="$TMP/watch-bin:$PATH" python3 "$WATCH" --home "$WH" >/dev/null
+! grep -F -q '/pull/1' "$TMP/watch-bin/calls" || fail "watch: cached closed PR must skip gh"
+out="$(PATH="/nonexistent:$PATH" python3 "$WATCH" --home "$WH" --summary)"
+[[ "$out" == "watch: 1 need you, 1 stalled, 1 orphaned elsewhere (/bulma watch)" ]] || fail "watch summary: $out"
+ok watch
+
 # --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---
 SR="$TMP/sroot"
 PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh for builders"
