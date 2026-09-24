@@ -1,7 +1,8 @@
 # `/bulma`
 
-One entry point. Looks at the world, picks the graph, and while that graph
-runs asks TypeSafe Jev at its forks. Skill: [`../../skills/bulma`](../../skills/bulma).
+The one command most people need. It looks at your open work, picks the
+stage to run, and asks TypeSafe Jev at the judgment calls while that stage
+runs. New to Bulma? Start with [Getting started](../getting-started.md). Skill: [`../../skills/bulma`](../../skills/bulma).
 
 ```text
 /bulma
@@ -26,12 +27,14 @@ command keeps working without Jev.
 | ticket id or tracker URL | [developer](bulma-developer.md), no Jev call for routing |
 | PR or MR URL, free text | Jev picks developer / qa / reviewer / lstm / triage / memory, or `none` |
 
-While the chosen graph runs, ten hooks fire
-([HOOKS.md](../../skills/bulma/HOOKS.md)): fd triage path and risk, ASK vs
-DECIDE at grill forks, the QA unambiguous-FAIL gate, triage class per
-finding, lstm claim and fix checks per comment, reviewer failure class, the
-code-review high-risk critic, and the worker tier per coder spawn
-([DISPATCH.md](../../skills/bulma/DISPATCH.md)). Jev picks among the node's own options;
+Two hooks pick the target (`entry.route` and `entry.next_step`). Eight more
+fire while the chosen graph runs ([HOOKS.md](../../skills/bulma/HOOKS.md)):
+fd triage path and risk, ASK vs DECIDE at grill forks, the QA
+unambiguous-FAIL gate, triage class per finding, lstm claim and fix checks
+per comment, reviewer failure class, the code-review high-risk critic, and
+the worker tier per coder spawn ([DISPATCH.md](../../skills/bulma/DISPATCH.md)).
+`/bulma lookback --classify` uses one more, `insight.classify`, to group
+review misses. Jev picks among the node's own options;
 edges, loop caps and verdicts stay in the graphs. The review verdict is
 never a Jev call.
 

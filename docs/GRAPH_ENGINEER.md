@@ -1,5 +1,8 @@
 # Graph engineer
 
+This page is for contributors who write or change a stage. For the overview,
+read [How Bulma works](how-it-works.md) first.
+
 A graph engineer writes **how the agent works**. Not the product.
 
 The main thread of `/bulma-developer`, `/bulma-qa`, `/bulma-triage`,
@@ -26,10 +29,10 @@ product leaking in.
 
 For each graph:
 
-- `SKILL.md` — when to run, invariants, what the orchestrator never does
-- `GRAPH.md` — nodes and edges
+- `SKILL.md`: when to run, invariants, what the orchestrator never does
+- `GRAPH.md`: nodes and edges
 - `STATE.schema.md` + `templates/STATE.md`
-- `nodes/*.md` — one file per node
+- `nodes/*.md`: one file per node
 - bus types, if it talks to another graph ([PROTOCOL.md](../skills/bulma-bus/PROTOCOL.md))
 
 Worker contracts (`agents/bulma-fd-coder.md`, …) are **not** graphs.

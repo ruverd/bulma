@@ -1,7 +1,8 @@
 # `/bulma-lstm`
 
-Alias: **`/lstm`**. Looks shit to me. Graph engineer on the **author**
-side of a review.
+Alias: **`/lstm`**. The name is short for "looks shit to me", a joke on
+LGTM. Graph engineer on the **author** side of a review: use it when a
+reviewer left comments on your pull request.
 
 Ingest a PR / review / comment URL. Patch should-fix on the **same
 branch**. Rebase conflicts. 👍 + unslopped reply on every comment,

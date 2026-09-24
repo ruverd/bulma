@@ -1,16 +1,20 @@
 # Commands
 
-Every slash command the graph engineer runs. Skill ids stay `bulma-*`.
-Short aliases (`/developer`, `/reviewer`, `/lstm`, `/qa`) are command
-files.
+One page per command. Most people only need [`/bulma`](bulma.md). It picks
+the right stage for you. Call a stage directly when you want to run one step
+by itself, or when you have no TypeSafe API key.
 
-Claude and Grok use commands below exactly as written. Codex reserves direct
-`/name` entries for built-ins, so use `$bulma-developer` or `/skills`.
+Claude Code and Grok accept every command below as written, including the
+short aliases (`/developer`, `/qa`, `/reviewer`, `/lstm`, `/goal`, `/memory`).
+Cursor accepts the full `/bulma-*` names. Codex rejects custom `/` commands,
+so type `$bulma-developer` or pick the skill from `/skills`.
+
+Unfamiliar term? See the [glossary](../glossary.md).
 
 ## Graphs (main thread)
 
-These **are** the graph engineer. They walk a GRAPH. They do not
-implement product code.
+Each stage follows its own graph of steps on the chat thread. None of them
+writes product code itself. Workers do.
 
 | Command | Short | When | Page |
 |---|---|---|---|
@@ -20,7 +24,7 @@ implement product code.
 | `/bulma-reviewer` | `/reviewer` | Review a PR / diagnose CI | [bulma-reviewer](bulma-reviewer.md) |
 | `/bulma-lstm` | `/lstm` | Incoming review comments | [bulma-lstm](bulma-lstm.md) |
 | `/bulma-goal` | — | Keep going until QA evidence | [bulma-goal](bulma-goal.md) |
-| `/bulma` | — | Pick the graph, gate its forks with Jev (needs `TYPESAFE_API_KEY`) | [bulma](bulma.md) |
+| `/bulma` | — | Start here. Picks the stage and asks Jev at its judgment calls (needs `TYPESAFE_API_KEY`) | [bulma](bulma.md) |
 | `/bulma-memory` | `/memory` | Durable prefs outside git | [memory](memory.md) |
 
 ## Protocol
