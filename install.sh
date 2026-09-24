@@ -484,7 +484,7 @@ install_for_hosts() {
   fi
   if [[ "${#agents_dirs[@]}" -gt 0 ]]; then
     install_tree "$REPO/agents" "${agents_dirs[@]}"
-    install_tree "$REPO/commands" "${commands_dirs[@]}"
+    install_commands "${commands_dirs[@]}"
   fi
   if [[ "$UNINSTALL" -ne 1 ]]; then
     if [[ "${#skills_dirs[@]}" -gt 0 ]]; then
@@ -1284,6 +1284,28 @@ install_tree() {
     for dest_dir in "${dest_dirs[@]}"; do
       dest="$dest_dir/$name"
       if [[ "$UNINSTALL" -eq 1 ]]; then
+        unlink_one "$dest"
+      else
+        link_one "$src" "$dest"
+      fi
+    done
+  done
+}
+
+# Claude Code lists a skill and a command of the same name as two menu
+# entries, so there commands/<name>.md is skipped (and an old link removed)
+# when skills/<name>/ exists. Grok still gets every command.
+install_commands() {
+  local dest_dirs=("$@")
+  local src dest dest_dir name
+  for src in "$REPO/commands"/*.md; do
+    [[ -e "$src" ]] || continue
+    name="$(basename "$src" .md)"
+    for dest_dir in "${dest_dirs[@]}"; do
+      dest="$dest_dir/$name.md"
+      if [[ "$UNINSTALL" -eq 1 ]]; then
+        unlink_one "$dest"
+      elif [[ "$dest_dir" == "$HOME/.claude/commands" && -f "$REPO/skills/$name/SKILL.md" ]]; then
         unlink_one "$dest"
       else
         link_one "$src" "$dest"
