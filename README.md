@@ -59,6 +59,8 @@ You need:
 - `git`, `curl`, and `python3` 3.9 or newer
 - [GitHub CLI](https://cli.github.com/) (`gh`) 2.99 or newer, signed in. Use
   `glab` for GitLab.
+- [agent-browser](https://agent-browser.dev/), with its Chrome for Testing.
+  The installer adds it for you, and setup fails until it works
 - A coding agent: Claude Code, Codex, Cursor, or Grok
 - A TypeSafe API key for `/bulma` itself. Create one at
   [console.typesafe.ai](https://console.typesafe.ai).
@@ -71,7 +73,21 @@ curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
 
 The installer clones Bulma, adds its skills to every coding agent it finds, and
 puts the `bulma` command on your `PATH`. It also installs
-[agent-browser](https://agent-browser.dev/) and Chrome for browser QA.
+[agent-browser](https://agent-browser.dev/) and downloads its Chrome for
+Testing. If that step fails, setup exits with an error and prints the command
+to install agent-browser yourself.
+
+### Why agent-browser is required
+
+Browser work belongs to agent-browser. Uploads belong to `gh --attach`. Bulma
+owns the workflow between them: what to test, the verdict, and the comment.
+
+agent-browser runs headless in its own copy of Chrome, with its own cookies
+under `~/.bulma/agent-browser/`. It never opens a window or touches your Google
+Chrome profile, and it records the clips that QA attaches to the pull request.
+QA uses no other browser, even when your agent offers one: no browser MCP
+server, no browser extension, and no other plugin's browser skill. If
+agent-browser does not work, QA stops with `BLOCKED` instead of switching tools.
 
 To read the installer before it changes anything, clone the repo and run
 `./install.sh setup --dry-run`. It prints every action and writes nothing.

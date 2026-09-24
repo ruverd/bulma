@@ -81,7 +81,7 @@ To set this repo's reviewers without editing the repo, use memory:
 | `BULMA_POWER` | none | Overrides `power` and `power_by_hook` for this shell |
 | `BULMA_FRONTEND`, `BULMA_BACKEND` | none | Paths to the matching frontend or backend repo for full-stack work |
 | `BULMA_CI_LOCAL_SKIP` | none | Checks to leave to CI instead of running on your machine |
-| `BULMA_SKIP_DEPS` | `0` | Set to `1` to stop `bulma setup` from installing agent-browser |
+| `BULMA_SKIP_DEPS` | `0` | Set to `1` to stop `bulma setup` from installing and checking agent-browser. QA still needs it |
 
 ## Commands in your coding agent
 
@@ -153,3 +153,8 @@ Bulma never writes run state inside your repo. Everything lives under
 
 Browser logins for QA are saved in
 `~/.bulma/agent-browser/bulma-<owner>-<repo>/` and reused until they expire.
+
+QA runs agent-browser with `~/.bulma/agent-browser/config.json`, which sets
+`{"headed": false}`. Bulma rewrites this file at the start of each QA session.
+While it is in use, agent-browser ignores `~/.agent-browser/config.json` and
+any `agent-browser.json` in your repo.

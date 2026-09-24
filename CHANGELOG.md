@@ -26,6 +26,21 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- agent-browser is required. `bulma setup` (and `bulma update`) installs it
+  with Homebrew, npm, or Cargo, downloads its Chrome for Testing, and checks
+  it with `agent-browser doctor --offline --quick`. When any step fails, setup
+  still links the skills but exits 1 and prints the install command from
+  https://agent-browser.dev/installation. `BULMA_SKIP_DEPS=1` still skips it.
+- QA and PR stills drive agent-browser and nothing else. `bulma-qa` and
+  `before-and-after` now say that rule wins over any other skill, plugin, or
+  MCP server that offers a browser, and a failed `agent-browser doctor` on a
+  UI PR is `BLOCKED`, never a switch to another tool.
+- `ensure-session.sh` pins agent-browser to `$BULMA_HOME/agent-browser/config.json`
+  (`{"headed": false}`) through `AGENT_BROWSER_CONFIG` and unsets
+  `AGENT_BROWSER_HEADED`, `AGENT_BROWSER_AUTO_CONNECT`,
+  `AGENT_BROWSER_EXECUTABLE_PATH`, `AGENT_BROWSER_PROVIDER`, and
+  `AGENT_BROWSER_EXTENSIONS`. Before, a `./agent-browser.json` with
+  `"headed": true` in the repo under test opened a visible Chrome window.
 - The fd coder learns from past reviews, not only the reviewer.
   `bulma-feature-delivery/LESSONS.md` holds one implementer rule per recurring
   cluster (sibling paths, tests that cannot fail, multi-store writes, AC

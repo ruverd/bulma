@@ -97,6 +97,10 @@ sent and what is removed first.
 
 ## What QA accepts as proof
 
+QA drives [agent-browser](https://agent-browser.dev/) and nothing else. It
+runs headless in agent-browser's own Chrome for Testing, so it never opens a
+window or uses your Chrome profile.
+
 A pull request that changes a screen gets two kinds of evidence:
 
 1. **Before and after screenshots** on the pull request description, taken when

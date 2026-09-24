@@ -9,6 +9,35 @@ stills on API. UI stills go on the PR body
 
 Skill: [`../../skills/bulma-qa`](../../skills/bulma-qa).
 
+Browser work belongs to [agent-browser](https://agent-browser.dev/) and its
+bundled Chrome for Testing. Uploads belong to `gh --attach`. This graph owns
+the plan, the walk, the verdict, and the comment between them.
+
+## Requires
+
+- `agent-browser`, with its Chrome for Testing downloaded. `bulma setup`
+  installs both and fails until they work. To install it yourself:
+  `npm install -g agent-browser && agent-browser install`
+  ([other methods](https://agent-browser.dev/installation)).
+- GitHub CLI 2.99 or newer, for `gh pr comment --attach`.
+
+Check the browser with `agent-browser doctor --offline --quick`. A UI PR
+with a failing doctor is `BLOCKED`. QA never falls back to another browser.
+
+## Why agent-browser only
+
+agent-browser runs headless in its own Chrome for Testing, with its own
+cookies under `~/.bulma/agent-browser/`. It never opens a window, never
+touches your Google Chrome profile, and records clips the QA comment can
+attach. A browser MCP server, a browser extension, or another plugin's
+browser skill drives your real Chrome instead. So QA uses none of them,
+even when the host offers them.
+
+`ensure-session.sh` pins agent-browser to Bulma's own headless config through
+`AGENT_BROWSER_CONFIG`. A `~/.agent-browser/config.json` or a repo's
+`agent-browser.json` cannot turn on `headed`, a Chrome profile, or attach to
+a running Chrome during QA.
+
 ## When
 
 - `/qa https://github.com/org/repo/pull/99`
@@ -54,6 +83,12 @@ The graph engineer does **not** classify bugs. Suspicion →
 - PASS without evidence (FE video, or HTTP still / FE screens on API).
 - PASS on a happy-only walk. User-break steps are required.
 - Fall back to Playwright or a host browser MCP.
+
+## Scope
+
+Does not run the app's Playwright or Cypress suite (that stays in CI), does
+not install browsers at QA time, and does not use any browser other than
+agent-browser.
 
 ## Related
 

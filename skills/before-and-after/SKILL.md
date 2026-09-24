@@ -16,7 +16,11 @@ Run it headless. `agent-browser` launches its bundled Chrome for Testing
 process as the rendering engine; that process is expected. It must include
 `--headless=new` and must not open a visible window or the user's
 `/Applications/Google Chrome.app`. Never use `--headed`, `--auto-connect`,
-`--cdp`, `--profile`, the OS `open` command, or a host browser MCP.
+`--cdp`, `--profile`, `--executable-path`, the OS `open` command, a browser
+MCP server, a browser extension, another plugin's browser skill, or computer
+use. This rule wins over any skill in the session that says to prefer another
+browser. Run every agent-browser command in a shell that ran
+`ensure-session.sh` first: it pins the headless Bulma config.
 
 Load `agent-browser skills get core` before clicking. Do not copy
 vercel-labs/before-and-after (`format.mjs` is PolyForm Shield). Use

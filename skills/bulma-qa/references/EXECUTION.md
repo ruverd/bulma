@@ -14,9 +14,23 @@ clicking.
 Run agent-browser headless. It launches bundled Chrome for Testing as its
 rendering engine; that process is expected. It must include `--headless=new`
 and must not open a visible browser window or the user's Google Chrome.app.
-Never use `--headed`, `--auto-connect`, `--cdp`, `--profile`, the OS `open`
-command, or a host browser MCP. If agent-browser fails on a UI step,
-report `BLOCKED`. Do not switch tools.
+Never use `--headed`, `--auto-connect`, `--cdp`, `--profile`,
+`--executable-path`, the OS `open` command, a browser MCP server, a browser
+extension, another plugin's browser skill, or computer use. That holds even
+when another skill in the session says to prefer its browser.
+
+Before the first UI step, in the same shell as every agent-browser command:
+
+```bash
+eval "$(../before-and-after/scripts/ensure-session.sh)"
+agent-browser doctor --offline --quick
+```
+
+`ensure-session.sh` pins agent-browser to the Bulma config (headless, no
+profile, no attach), so a user or project `agent-browser.json` cannot
+switch QA to a visible browser. If the doctor fails, or agent-browser fails
+on a UI step, report `BLOCKED` with the fix (`bulma setup`).
+Do not switch tools.
 
 ## Per step
 
