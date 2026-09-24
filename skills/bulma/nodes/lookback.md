@@ -47,6 +47,13 @@ Under the current power, a label counts only where it clears the threshold:
   `prev per PR`. Raw counts mislead when review volume changes.
 - `trend`: `down` or `up` means a change of 25% or more. `need data` means
   either window has fewer than 10 PRs. Do not conclude anything from it.
+- `gate` is how many times the fd reviewer or quality gate caught this cluster
+  before a PR existed (`source: fd` rows). Read it next to `per PR`:
+  - high human misses and `gate` 0: a blind spot. The gates never look for it.
+  - high on both: the coder keeps making the mistake and the gates catch only
+    part of it. This is an implementer lesson.
+  - high `gate` and low human misses: the gate works, but it costs review laps.
+    An implementer rule would save those laps.
 - `lesson` says where the fix belongs. `implementer` means a rule for the coder
   and the fd reviewer, not only a review check. `repo_rule` means the target
   repo's `CLAUDE.md`. Prefer it over `guard` when they disagree: `guard` says

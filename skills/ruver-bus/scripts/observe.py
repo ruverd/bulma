@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Append one human-review observation to $RUVER_HOME/insights/observations.jsonl.
+"""Append one review observation to $RUVER_HOME/insights/observations.jsonl.
 
-Contract: ../INSIGHTS.md. Validates every field, derives caught_by_ours from
-the ruver-review marker's open= list, skips an id already in the file, and
-appends under an exclusive lock so parallel workers never interleave lines.
+Contract: ../INSIGHTS.md. Human comments come from lstm and reviewer; fd
+rows record a defect our own gates caught before the PR. Validates every
+field, derives caught_by_ours from the ruver-review marker's open= list
+(fd rows are "self"), skips an id already in the file, and appends under
+an exclusive lock so parallel workers never interleave lines.
 
 exit 0 written or duplicate (prints which), 4 invalid input.
 """
@@ -22,7 +24,10 @@ AXES = ("spec", "tests", "correctness", "contract", "security", "standards",
         "perf", "a11y", "deps", "other")
 SEVERITIES = ("critical", "important", "nice_to_have")
 CLAIMS = ("yes", "no", "unknown")
-SOURCES = ("lstm", "reviewer")
+SOURCES = ("lstm", "reviewer", "fd")
+# fd rows are our own gates catching a defect before the PR exists.
+FD_REVIEWERS = ("ruver-fd-reviewer", "ruver-fd-quality")
+SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
 PATTERN_CAP = 300
 KEYWORDS_MAX = 6
 LINE_WINDOW = 10
@@ -56,10 +61,21 @@ def caught_by_ours(open_list: str | None, path: str, line: int | None) -> str:
 
 def build(args: argparse.Namespace) -> dict:
     errors = []
-    if BOT_LOGIN.search(args.reviewer):
-        errors.append("reviewer %r is a bot; observations are human review only" % args.reviewer)
-    if not PR_REF.match(args.pr_ref):
-        errors.append("--pr-ref must be owner/repo#number")
+    fd = args.source == "fd"
+    if fd:
+        if args.reviewer not in FD_REVIEWERS:
+            errors.append("--source fd needs --reviewer %s" % " or ".join(FD_REVIEWERS))
+        if not args.job or not SLUG.match(args.finding_id or ""):
+            errors.append("--source fd needs --job and a kebab-case --finding-id")
+        if args.pr_ref and not PR_REF.match(args.pr_ref):
+            errors.append("--pr-ref must be owner/repo#number")
+    else:
+        if BOT_LOGIN.search(args.reviewer):
+            errors.append("reviewer %r is a bot; observations are human review only" % args.reviewer)
+        if args.comment_id is None or not args.sha:
+            errors.append("--source %s needs --comment-id and --sha" % args.source)
+        if not PR_REF.match(args.pr_ref or ""):
+            errors.append("--pr-ref must be owner/repo#number")
     pattern = " ".join(args.pattern.split())
     if not pattern:
         errors.append("--pattern is empty")
@@ -72,10 +88,11 @@ def build(args: argparse.Namespace) -> dict:
         for e in errors:
             print("observe: " + e, file=sys.stderr)
         raise SystemExit(4)
-    caught = caught_by_ours(args.ours_open, args.path, args.line)
+    caught = "self" if fd else caught_by_ours(args.ours_open, args.path, args.line)
     return {
-        "id": "gh-%s" % args.comment_id,
-        "pr_ref": args.pr_ref,
+        "id": "fd-%s-%s" % (args.job, args.finding_id) if fd else "gh-%s" % args.comment_id,
+        "pr_ref": args.pr_ref or "",
+        "job": args.job or "",
         "head_sha": args.sha,
         "reviewer": args.reviewer,
         "source": args.source,
@@ -111,9 +128,11 @@ def append(row: dict, target: Path) -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--comment-id", required=True, type=int, help="GitHub review, inline, or issue comment id")
-    ap.add_argument("--pr-ref", required=True, help="owner/repo#number")
-    ap.add_argument("--sha", required=True, help="PR head sha at observation time")
+    ap.add_argument("--comment-id", type=int, default=None, help="GitHub review, inline, or issue comment id (lstm, reviewer)")
+    ap.add_argument("--pr-ref", default="", help="owner/repo#number; optional for fd, which runs before the PR")
+    ap.add_argument("--sha", default="", help="head sha at observation time")
+    ap.add_argument("--job", default="", help="fd: STATE job_id, e.g. dev-abc-123")
+    ap.add_argument("--finding-id", default="", help="fd: kebab-case slug, stable across review laps")
     ap.add_argument("--reviewer", required=True, help="comment author login")
     ap.add_argument("--source", required=True, choices=SOURCES)
     ap.add_argument("--axis", required=True, choices=AXES)

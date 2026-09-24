@@ -19,7 +19,8 @@ Follow:
 2. Run thermo-nuclear audit on the change set.
 3. **Fix all** actionable maintainability findings (code judo, spaghetti, 1k-line, boundaries).
 4. Preserve behavior and TDD; re-run typecheck/unit for touched area.
-5. Update STATE `## Quality (thermo-nuclear)`.
+5. Record each fixed finding with `ruver-bus/scripts/observe.py --source fd` (node step 5).
+   Update STATE `## Quality (thermo-nuclear)`.
 6. **Do not** commit, push, or open PR — shipper does that only after you return `result=ok`.
 7. If you cannot fix a structural blocker safely, `result=blocked` with clear notes for the user in English.
 

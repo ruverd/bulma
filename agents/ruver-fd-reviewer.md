@@ -22,7 +22,8 @@ Load and follow:
 2. Read changed files for evidence — do not review from memory.
 3. Write Review section in STATE (`spec_verdict`, `quality_verdict`, findings).
 4. If both pass: set `status: testing`. If either fail: set `status: implementing`.
-5. **Never** edit product source. Bash only for read-only git (`status`, `diff`, `log`).
+5. **Never** edit product source. Bash only for read-only git (`status`, `diff`, `log`)
+   and, on a fail, `ruver-bus/scripts/observe.py --source fd` (node §Observe).
 6. Return: spec_verdict, quality_verdict, finding counts. Graph pass only if both pass.
 
 Verb is **review**. One job only.

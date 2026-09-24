@@ -28,7 +28,12 @@ Before **shipper**. Thermo `fix all` is still required before any PR.
    - Apply **every** quality fix in the code (code judo, decomposition, anti-spaghetti, etc.).
    - Preserve behavior and **TDD** (if you touch logic, keep tests green; adjust tests if needed without weakening them).
 4. Re-run the cheap hard gate (typecheck + unit of the area) after the fixes.
-5. Update STATE:
+5. Record each finding you fixed with
+   `../ruver-bus/scripts/observe.py --source fd --reviewer ruver-fd-quality`
+   (path from this skill's directory; fields in
+   [INSIGHTS.md](../../ruver-bus/INSIGHTS.md)). A failed write is a chat
+   note, never a reason to block.
+6. Update STATE:
    - `## Quality (thermo-nuclear)`
    - findings → fixed / remaining
    - if a residual structural **blocker** has no safe fix → `result=blocked` (do not open a PR)

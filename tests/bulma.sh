@@ -548,6 +548,29 @@ assert d["one_off"] == 10 and d["missed"] == 0, d
 PY
 ok lookback-classify
 
+# --- lookback gate column: fd rows count as catches, never as misses or PRs ---
+mkdir -p "$TMP/gate"
+GO="$TMP/gate/observations.jsonl"
+python3 - "$LO" "$GO" <<'PY'
+import json, sys
+rows = [json.loads(l) for l in open(sys.argv[1]) if l.startswith("{")]
+rows = [r for r in rows if r["timestamp"].startswith("2026-09")]
+for i in range(3):
+    rows.append({"id": "fd-dev-%d-sibling" % i, "source": "fd", "reviewer": "ruver-fd-reviewer", "job": "dev-%d" % i,
+                 "timestamp": "2026-09-12T10:00:00Z", "caught_by_ours": "self", "claim_true": "yes",
+                 "generalized_pattern": "Guard added on one path, sibling path lacks it"})
+open(sys.argv[2], "w").write("\n".join(json.dumps(r) for r in rows) + "\n")
+PY
+out="$(python3 "$LB" --file "$GO" --since 2026-09-01 --until 2026-09-30 --json)"
+python3 - "$out" <<'PY' || fail "lookback gate column: $out"
+import json, sys
+d = json.loads(sys.argv[1])
+assert d["gate_total"] == 3 and d["prs"] == 12 and d["missed"] == 10, d   # fd rows add no PRs, no misses
+row = next(c for c in d["clusters"] if c["cluster"] == "sibling-path parity")
+assert row["gate"] == 3 and row["obs"] == 5, row
+PY
+ok lookback-gate
+
 # --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---
 SR="$TMP/sroot"
 PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh for builders"

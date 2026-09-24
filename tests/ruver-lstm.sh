@@ -100,4 +100,23 @@ rc=0; observe --comment-id 6 --reviewer alice --pr-ref not-a-ref 2>/dev/null || 
 grep -F -q '"would_existing_agent_catch_it": "yes"' "$OBS" || fail "observe must keep the legacy field"
 ok observations
 
+fd() {
+  python3 "$OBSERVE" --file "$OBS" --source fd --axis tests --severity important --claim-true yes \
+    --pattern "Test sets up its spy inside the try it tests" --path src/a.test.ts --line 3 "$@"
+}
+out="$(fd --reviewer ruver-fd-reviewer --job dev-abc-1 --finding-id spy-in-try)"
+[[ "$out" == "written fd-dev-abc-1-spy-in-try caught_by_ours=self" ]] || fail "observe fd: $out"
+out="$(fd --reviewer ruver-fd-quality --job dev-abc-1 --finding-id spy-in-try)"
+[[ "$out" == duplicate* ]] || fail "observe fd must dedup a finding across laps: $out"
+rc=0; fd --reviewer alice --job dev-abc-1 --finding-id x 2>/dev/null || rc=$?
+[[ "$rc" == "4" ]] || fail "observe fd must refuse a non-gate reviewer (rc=$rc)"
+rc=0; fd --reviewer ruver-fd-reviewer --job dev-abc-1 --finding-id "Not A Slug" 2>/dev/null || rc=$?
+[[ "$rc" == "4" ]] || fail "observe fd must require a kebab finding id (rc=$rc)"
+rc=0; python3 "$OBSERVE" --file "$OBS" --source lstm --reviewer alice --pr-ref acme/app#7 --axis tests \
+  --severity important --claim-true yes --pattern "x" 2>/dev/null || rc=$?
+[[ "$rc" == "4" ]] || fail "observe lstm must still require comment id and sha (rc=$rc)"
+has 'observe.py --source fd --reviewer ruver-fd-reviewer' "$ROOT/skills/ruver-feature-delivery/nodes/reviewer.md"
+has 'observe.py --source fd --reviewer ruver-fd-quality' "$ROOT/skills/ruver-feature-delivery/nodes/quality.md"
+ok observations-fd
+
 echo "all passed"

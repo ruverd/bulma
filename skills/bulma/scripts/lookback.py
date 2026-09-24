@@ -172,9 +172,21 @@ def window(since, until):
     return (start, end), (prev_end - timedelta(days=span - 1), prev_end)
 
 
-def in_window(rows, win):
+def in_window(rows, win, source=None):
+    """Human rows in the window, or with source="fd" our gates' own catches."""
     lo, hi = win[0].isoformat(), win[1].isoformat()
-    return [r for r in rows if lo <= day(r) <= hi and is_human(r)]
+    inside = [r for r in rows if lo <= day(r) <= hi]
+    if source == "fd":
+        return [r for r in inside if r.get("source") == "fd"]
+    return [r for r in inside if is_human(r) and r.get("source") != "fd"]
+
+
+def names_for(row, labels, level, act_at):
+    """Clusters for one row: an acted label wins, else the regex."""
+    cluster, _, _ = judged(labels.get(row.get("id")), level, act_at)
+    if cluster:
+        return [] if cluster == OTHER else [cluster]
+    return regex_clusters(row)
 
 
 def classify(rows, labels, labels_path, version, replay):
@@ -256,7 +268,9 @@ def tally(rows, win, labels, level, act_at):
                 lessons.setdefault(name, Counter())[lesson] += 1
         if not names:
             unclustered.append(row)
+    gate = Counter(n for r in in_window(rows, win, "fd") for n in names_for(r, labels, level, act_at))
     return {"human": len(inside), "prs": len(prs), "missed": len(miss) - one_off, "one_off": one_off,
+            "gate": gate, "gate_total": len(in_window(rows, win, "fd")),
             "jev_used": jev_used, "clusters": clusters, "lessons": lessons, "unclustered": unclustered}
 
 
@@ -305,7 +319,8 @@ def main():
     labels = load_labels(labels_path, version)
     note = ""
     if args.classify:
-        todo = [r for r in in_window(rows, cur_win) + in_window(rows, prev_win) if missed(r)]
+        todo = [r for w in (cur_win, prev_win) for r in in_window(rows, w) if missed(r)]
+        todo += [r for w in (cur_win, prev_win) for r in in_window(rows, w, "fd")]
         written, note = classify(todo, labels, labels_path, version, args.replay)
         note = "classify: %d new labels%s" % (written, "; " + note if note else "")
     level, act_at = gate(args.power)
@@ -315,7 +330,7 @@ def main():
     for name, guard, _ in CLUSTERS:
         now_rows = cur["clusters"].get(name, [])
         prev_n = len(prev["clusters"].get(name, []))
-        if not now_rows and not prev_n:
+        if not now_rows and not prev_n and not cur["gate"].get(name):
             continue
         table.append({
             "cluster": name, "guard": guard, "obs": len(now_rows),
@@ -325,6 +340,7 @@ def main():
             "prev_per_pr": round(prev_n / prev["prs"], 2) if prev["prs"] else 0.0,
             "trend": trend(len(now_rows), prev_n, cur["prs"], prev["prs"]),
             "lesson": lesson_of(cur["lessons"].get(name)),
+            "gate": cur["gate"].get(name, 0),
             "examples": [r.get("generalized_pattern", "")[:140] for r in now_rows[:3]],
         })
     table.sort(key=lambda t: (-t["obs"], t["cluster"]))
@@ -334,7 +350,8 @@ def main():
         print(json.dumps({"window": [d.isoformat() for d in cur_win], "previous": [d.isoformat() for d in prev_win],
                           "human": cur["human"], "prs": cur["prs"], "missed": cur["missed"],
                           "one_off": cur["one_off"], "jev_clustered": cur["jev_used"], "power": level,
-                          "prev_prs": prev["prs"], "prev_missed": prev["missed"], "clusters": table,
+                          "prev_prs": prev["prs"], "prev_missed": prev["missed"], "gate_total": cur["gate_total"],
+                          "clusters": table,
                           "unclustered": len(cur["unclustered"]),
                           "unclustered_keywords": keywords.most_common(10), "note": note}, indent=2))
         return 0
@@ -344,6 +361,8 @@ def main():
     print("lookback %s..%s vs %s..%s" % (cur_win[0], cur_win[1], prev_win[0], prev_win[1]))
     print("human comments %d on %d PRs, missed %d  |  previous: %d missed on %d PRs" % (
         cur["human"], cur["prs"], cur["missed"], prev["missed"], prev["prs"]))
+    if cur["gate_total"]:
+        print("fd gates caught %d defects before a PR existed" % cur["gate_total"])
     labeled = sum(1 for r in in_window(rows, cur_win) if missed(r) and r.get("id") in labels)
     if labeled:
         print("jev (%s): %d of %d misses labeled, %d clustered by label, %d dropped as one-off%s" % (
@@ -353,12 +372,12 @@ def main():
         print("no clustered misses in either window")
     else:
         print()
-        print("| cluster | obs | PRs | crit | per PR | prev per PR | trend | lesson | guard |")
-        print("|---|---|---|---|---|---|---|---|---|")
+        print("| cluster | obs | PRs | crit | per PR | prev per PR | trend | gate | lesson | guard |")
+        print("|---|---|---|---|---|---|---|---|---|---|")
         for t in table:
-            print("| %s | %d | %d | %d | %.2f | %.2f | %s | %s | %s |" % (
+            print("| %s | %d | %d | %d | %.2f | %.2f | %s | %d | %s | %s |" % (
                 t["cluster"], t["obs"], t["prs"], t["critical"], t["per_pr"], t["prev_per_pr"],
-                t["trend"], t["lesson"], t["guard"]))
+                t["trend"], t["gate"], t["lesson"], t["guard"]))
     if cur["unclustered"]:
         print()
         print("unclustered: %d missed rows match no cluster. Top keywords: %s" % (

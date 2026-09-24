@@ -45,6 +45,15 @@ Pass only if both pass. Either fail → **implement** (same ticket) while
 
 Do not spawn a second reviewer.
 
+## Observe
+
+On a `fail`, record each finding behind it with
+`../ruver-bus/scripts/observe.py --source fd --reviewer ruver-fd-reviewer`
+(path from this skill's directory), passing STATE `job_id` as `--job` and a
+kebab-case `--finding-id` that stays the same when a later lap finds the same
+defect. [INSIGHTS.md](../../ruver-bus/INSIGHTS.md) has the fields. A failed
+write is a chat note and never changes a verdict. A `pass` records nothing.
+
 ## Output
 
 Review section in STATE: `spec_verdict`, `quality_verdict`, findings.
