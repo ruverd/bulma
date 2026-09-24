@@ -1,0 +1,9 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "cluster": {"type": "choice", "choice": "test that cannot fail", "confidence": 0.9},
+    "generalizable": {"type": "noul", "noul": 0.9},
+    "lesson_for": {"type": "choice", "choice": "implementer", "confidence": 0.85}
+  },
+  "usage": {"input_tokens": 300, "output_tokens": 0}
+}

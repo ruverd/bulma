@@ -14,10 +14,32 @@ shrink, and proposes the next change.
 | `lookback` | `python3 scripts/lookback.py` (last 30 days vs the 30 before) |
 | `lookback --since N` | last N days vs the N before |
 | `lookback --since YYYY-MM-DD [--until YYYY-MM-DD]` | explicit window, e.g. since a skill change merged |
+| `lookback --classify` | first label the unlabeled misses in both windows with Jev, then report |
 
 Rows come from `ruver-lstm` and `ruver-reviewer`
 ([INSIGHTS.md](../../ruver-bus/INSIGHTS.md)). Only human comments count, and a
 comment that lstm verified as wrong (`claim_true: no`) is dropped.
+
+## Labels
+
+Without `--classify`, clusters come from regexes and cached labels, and no key
+is needed. `--classify` needs `TYPESAFE_API_KEY`. It asks the `insight.classify`
+hook ([HOOKS.md](../HOOKS.md)) once per missed row that has no label for the
+current catalog version, in one `ask-many` batch. Its decisions log under
+`$RUVER_HOME/insights/.ruver-bulma/`, so `/bulma report --hook insight.classify`
+shows agreement with the regex. The hook defaults to `shadow`, so labels are
+logged and the table stays regex-only. Promote it with
+`/bulma power balanced insight.classify` once the report shows the labels can be
+trusted. The cache keeps the raw answers, so labels made under `shadow` start
+counting after promotion without a new call.
+
+Under the current power, a label counts only where it clears the threshold:
+
+- `cluster` replaces the regex match for that row.
+- `generalizable` decisive-no drops the row as a one-off. The header prints how
+  many.
+- `lesson_for` fills the `lesson` column: `implementer`, `reviewer`,
+  `repo_rule`, `none`, `mixed` (no majority), or `-` (no acted label).
 
 ## Read the table
 
@@ -25,6 +47,10 @@ comment that lstm verified as wrong (`claim_true: no`) is dropped.
   `prev per PR`. Raw counts mislead when review volume changes.
 - `trend`: `down` or `up` means a change of 25% or more. `need data` means
   either window has fewer than 10 PRs. Do not conclude anything from it.
+- `lesson` says where the fix belongs. `implementer` means a rule for the coder
+  and the fd reviewer, not only a review check. `repo_rule` means the target
+  repo's `CLAUDE.md`. Prefer it over `guard` when they disagree: `guard` says
+  what exists today, `lesson` says where the lesson should live.
 - `guard` names the skill section that should make the cluster shrink.
   `repo rule` means the fix belongs in the target repo's `CLAUDE.md` or
   `AGENTS.md`, not in a skill.

@@ -311,7 +311,7 @@ out="$(TYPESAFE_API_KEY=apikey_testtesttesttesttest python3 "$BULMA" doctor --of
 set -e
 [[ "$code" -eq 0 ]] || fail "doctor --offline with a key must exit 0, got $code: $out"
 if grep -F -q 'apikey_testtesttesttesttest' <<<"$out"; then fail "doctor printed the key"; fi
-grep -F -q 'catalog  ok (10 hooks)' <<<"$out" || fail "doctor catalog line: $out"
+grep -F -q 'catalog  ok (11 hooks)' <<<"$out" || fail "doctor catalog line: $out"
 ok doctor
 
 # --- tune and model write config; ask reads the override ---
@@ -505,6 +505,48 @@ grep -F -q 'no observations' <<<"$out" || fail "lookback without file: $out"
 rc=0; python3 "$LB" --file "$LO" --since yesterday >/dev/null 2>&1 || rc=$?
 [[ "$rc" == "4" ]] || fail "lookback bad --since must exit 4 (rc=$rc)"
 ok lookback
+
+# --- lookback --classify: insight.classify labels, cache, power at read time ---
+LBL="$(dirname "$LO")/labels.jsonl"
+rm -f "$LBL"
+LBW=(--file "$LO" --since 2026-09-01 --until 2026-09-30)
+out="$(python3 "$LB" "${LBW[@]}" --classify --replay "$FIX/replay-insight.json" --json)"
+python3 - "$out" <<'PY' || fail "classify under default shadow: $out"
+import json, sys
+d = json.loads(sys.argv[1])
+assert d["power"] == "shadow", d["power"]             # hook default
+assert d["note"].startswith("classify: 30 new labels"), d["note"]   # both windows' misses
+assert d["jev_clustered"] == 0, d                      # shadow counts none
+row = next(c for c in d["clusters"] if c["cluster"] == "sibling-path parity")
+assert row["obs"] == 5 and row["lesson"] == "-", row   # regex still decides
+PY
+[[ "$(wc -l < "$LBL" | tr -d ' ')" == "30" ]] || fail "labels cached: $(wc -l < "$LBL")"
+out="$(python3 "$LB" "${LBW[@]}" --classify --replay "$FIX/replay-insight.json" --json)"
+grep -F -q '"note": "classify: 0 new labels"' <<<"$out" || fail "cached labels must not be asked again: $out"
+out="$(python3 "$LB" "${LBW[@]}" --power balanced --json)"
+python3 - "$out" <<'PY' || fail "cached labels under balanced: $out"
+import json, sys
+d = json.loads(sys.argv[1])
+assert d["jev_clustered"] == 10 and d["one_off"] == 0, d
+names = [c["cluster"] for c in d["clusters"] if c["obs"]]
+assert names == ["test that cannot fail"], names       # label replaced the regex
+row = d["clusters"][0]
+assert row["obs"] == 10 and row["lesson"] == "implementer", row
+PY
+mkdir -p "$TMP/oneoff"
+python3 - "$LO" "$TMP/oneoff/observations.jsonl" <<'PY'
+import json, sys
+rows = [json.loads(l) for l in open(sys.argv[1]) if l.startswith("{")]
+with open(sys.argv[2], "w") as fh:
+    fh.write("\n".join(json.dumps(r) for r in rows if r["timestamp"].startswith("2026-09")) + "\n")
+PY
+out="$(python3 "$LB" --file "$TMP/oneoff/observations.jsonl" --since 2026-09-01 --until 2026-09-30 --classify --replay "$FIX/replay-insight-oneoff.json" --power bold --json)"
+python3 - "$out" <<'PY' || fail "one-off drop: $out"
+import json, sys
+d = json.loads(sys.argv[1])
+assert d["one_off"] == 10 and d["missed"] == 0, d
+PY
+ok lookback-classify
 
 # --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---
 SR="$TMP/sroot"
