@@ -6,7 +6,12 @@ exactly one place. It may appear only between the `legacy layout migration
 (begin)` and `(end)` markers in install.sh and tests/install.sh, which move an
 old install to the new layout. Every other tracked file, and every tracked
 path, must be free of it, case-insensitively.
+
+Identity is not branding: the author name, email, and owner URL in
+plugin.json, and the repository slug, are removed from each line before the
+check, so the maintainer can still sign the license and be the contact.
 """
+import json
 import os
 import re
 import subprocess
@@ -25,10 +30,21 @@ def legacy_word(root):
     return match.group(1)
 
 
+def identity(root):
+    """Exact strings plugin.json declares as the maintainer and the repo, longest first."""
+    data = json.load(open(os.path.join(root, "plugin.json"), encoding="utf-8"))
+    author = data.get("author", {})
+    repo = data.get("repository", "")
+    slug = re.sub(r"^https://github\.com/", "", repo).removesuffix(".git")
+    found = [author.get("name", ""), author.get("email", ""), author.get("url", ""), repo, slug]
+    return sorted({v for v in found if v}, key=len, reverse=True)
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "."
     word = legacy_word(root)
     pattern = re.compile(re.escape(word), re.I)
+    allowed = identity(root)
     tracked = subprocess.run(["git", "-C", root, "ls-files", "-z"], capture_output=True, text=True, check=True)
     errors = []
     for rel in filter(None, tracked.stdout.split("\0")):
@@ -43,7 +59,10 @@ def main():
         for lineno, line in enumerate(lines, 1):
             if rel in BLOCK_FILES and BEGIN in line:
                 inside = True
-            if not inside and pattern.search(line):
+            bare = line
+            for value in allowed:
+                bare = bare.replace(value, "")
+            if not inside and pattern.search(bare):
                 errors.append("%s:%d: legacy name -> %s" % (rel, lineno, line.strip()[:100]))
             if rel in BLOCK_FILES and END in line:
                 inside = False

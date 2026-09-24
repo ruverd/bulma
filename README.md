@@ -130,7 +130,7 @@ target repo: [PRODUCT.md](skills/bulma-feature-delivery/PRODUCT.md).
 ## Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
 ```
 
 Needs `git` and `curl`. macOS, Linux, and WSL. `bulma setup` also
@@ -172,17 +172,17 @@ then install `bulma` from it:
 
 ```bash
 # Claude Code
-claude plugin marketplace add ruverd/skills
-claude plugin install bulma@skills
+claude plugin marketplace add ruverd/bulma
+claude plugin install bulma@bulma
 
 # Grok
-grok plugin marketplace add ruverd/skills
+grok plugin marketplace add ruverd/bulma
 grok plugin install bulma --trust
 ```
 
 Inside a Claude Code session the same two steps are `/plugin marketplace add
-ruverd/skills` then `/plugin install bulma@skills`. `skills` is the marketplace
-name from `.claude-plugin/marketplace.json`; `bulma` is the plugin in it.
+ruverd/bulma` then `/plugin install bulma@bulma`. The marketplace and the plugin are both named `bulma`
+(`.claude-plugin/marketplace.json`).
 
 The plugin route auto-updates through the host, but it does not flatten skills
 into slash names the way `bulma setup` does. Do not combine plugin and

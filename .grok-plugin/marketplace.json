@@ -1,5 +1,5 @@
 {
-  "name": "skills",
+  "name": "bulma",
   "description": "Bulma agent graphs for delivery, QA, review, and incoming review comments.",
   "owner": {
     "name": "Ruver Dornelas",
@@ -15,7 +15,7 @@
         "name": "Ruver Dornelas",
         "email": "ruverd@gmail.com"
       },
-      "homepage": "https://github.com/ruverd/skills",
+      "homepage": "https://github.com/ruverd/bulma",
       "source": {
         "type": "local",
         "path": "./"

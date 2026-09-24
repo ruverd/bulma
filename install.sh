@@ -2,7 +2,7 @@
 # Install and update Bulma skills (flatten into agent homes).
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
 #   ./install.sh setup
 #   bulma update
 #   bulma status
@@ -38,7 +38,7 @@ Options:
   -V, --version   Print the version
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
   bulma setup
   bulma update
   bulma status
@@ -91,9 +91,9 @@ while [[ $# -gt 0 ]]; do
     --uninstall) CMD="uninstall"; UNINSTALL=1; shift ;;
     --plugin|--grok-plugin)
       echo "Plugin install is not part of bulma. Add the marketplace first:" >&2
-      echo "  claude plugin marketplace add ruverd/skills" >&2
-      echo "  claude plugin install bulma@skills" >&2
-      echo "  grok plugin marketplace add ruverd/skills" >&2
+      echo "  claude plugin marketplace add ruverd/bulma" >&2
+      echo "  claude plugin install bulma@bulma" >&2
+      echo "  grok plugin marketplace add ruverd/bulma" >&2
       echo "  grok plugin install bulma --trust" >&2
       exit 1
       ;;
@@ -148,7 +148,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/bulma"
 CONFIG_FILE="$CONFIG_DIR/config"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 MANAGED_REPO="$DATA_HOME/bulma/repo"
-DEFAULT_ORIGIN="https://github.com/ruverd/skills.git"
+DEFAULT_ORIGIN="https://github.com/ruverd/bulma.git"
 BIN_DIR="$HOME/.local/bin"
 BIN_LINK="$BIN_DIR/bulma"
 
@@ -956,7 +956,7 @@ check_symlinks() {
 need_bin() {
   command -v "$1" >/dev/null 2>&1 && return 0
   echo "missing $1" >&2
-  echo "  curl -fsSL https://raw.githubusercontent.com/ruverd/skills/main/install.sh | bash" >&2
+  echo "  curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash" >&2
   exit 1
 }
 

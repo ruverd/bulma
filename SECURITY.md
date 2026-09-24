@@ -2,7 +2,7 @@
 
 ## Reporting
 
-Open a [security advisory](https://github.com/ruverd/skills/security/advisories/new)
+Open a [security advisory](https://github.com/ruverd/bulma/security/advisories/new)
 or email ruverd@gmail.com. Please do not open a public issue for anything
 exploitable. Expect a first reply within a week.
 

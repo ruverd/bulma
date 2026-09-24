@@ -21,7 +21,7 @@ SKILL_LISTS = ["plugin.json", ".claude-plugin/plugin.json"]
 INDEX = ".grok-plugin/plugin-index.json"
 # One marketplace, one plugin in it, on every host. A host that reads a
 # different name installs something the docs never mention.
-MARKETPLACE_NAME = "skills"
+MARKETPLACE_NAME = "bulma"
 PLUGIN_NAME = "bulma"
 MARKETPLACES = [
     ".claude-plugin/marketplace.json",

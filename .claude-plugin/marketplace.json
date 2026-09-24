@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "skills",
+  "name": "bulma",
   "description": "Bulma agent graphs for delivery, QA, review, and incoming review comments.",
   "owner": {
     "name": "Ruver Dornelas",
