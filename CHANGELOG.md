@@ -8,6 +8,10 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- `ruver-code-review` checks four gaps a lookback over human review found:
+  sibling paths missing a guard the PR adds, multi-store writes on partial
+  failure or redelivery, tests that cannot fail, and unvalidated input into
+  typed columns. ADR 0005 records the self-improving loop behind it.
 - `/bulma` pins `jev-1.13.0` by default instead of the moving
   `jev-latest` alias, since the catalog thresholds were tuned against it.
   `DECISIONS.tsv` gains `input_tokens` and `latency_ms`. Older ledgers are
