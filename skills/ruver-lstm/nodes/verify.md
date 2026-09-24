@@ -57,3 +57,12 @@ id | path:line | claim_true | fix_ok_here | risk | disposition | evidence
 ```
 
 `dispositions` rollup: fix/skip/unclear counts.
+
+## Observe
+
+After the table, record each human comment in it with
+`../ruver-bus/scripts/observe.py --source lstm` (path from this skill's
+directory), passing the row's `claim_true`.
+[INSIGHTS.md](../../ruver-bus/INSIGHTS.md) defines who counts as human, the
+fields, and the `--ours-open` marker lookup. A failed write is a chat note,
+never a reason to change a disposition.
