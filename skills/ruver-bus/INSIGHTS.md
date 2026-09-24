@@ -2,13 +2,16 @@
 
 `$RUVER_HOME/insights/observations.jsonl`. Global, one file for every repo,
 outside git. Append-only. One line per **human** review comment a graph
-processed. An **observation, not a gate**: no node reads it to decide
+processed, plus one line per defect our own feature-delivery gates caught
+before the PR existed (`source: fd`). An **observation, not a gate**: no node reads it to decide
 anything. It exists so a lookback can count what human reviewers catch and
 the agents miss, and later check whether a skill change made that count
 drop.
 
-Writers: `ruver-lstm` `verify` and `ruver-reviewer` `code_review`. Nothing
-else writes here.
+Writers: `ruver-lstm` `verify` and `ruver-reviewer` `code_review` (human
+comments), and `ruver-feature-delivery` `reviewer` and `quality` (our own
+catches). Nothing else writes here. The lookback compares the two: what the
+gates catch before the PR against what humans still catch after it.
 
 ## Who counts as human
 
@@ -50,7 +53,34 @@ comment id is already in the file, so re-running a PR never inflates counts.
 ## Never
 
 - Write raw comment text. The pattern is the only free text.
-- Write an observation for a bot, our own review, or the PR author.
+- Write a human-comment row (`lstm`, `reviewer`) for a bot, our own GitHub
+  review (the `ruver-review` marker), or the PR author. Our gates write
+  `source: fd` rows instead.
 - Edit or delete lines. A wrong line stays; the next lookback outvotes it.
 - Stop or change a disposition because writing failed. Note it in chat and
   continue.
+
+## Our own catches (`source: fd`)
+
+The fd `reviewer` node writes one row per finding behind a `fail` verdict. The
+`quality` node writes one row per finding it fixed. There is no comment and
+often no PR yet, so the row is keyed by job and finding:
+
+```bash
+python3 ../ruver-bus/scripts/observe.py --source fd \
+  --reviewer ruver-fd-reviewer|ruver-fd-quality \
+  --job <STATE job_id> --finding-id <kebab-slug> [--pr-ref <owner/repo#n>] \
+  --axis <axis> --severity critical|important|nice_to_have --claim-true yes \
+  --pattern "<one generalized sentence>" --path <path> --line <n>
+```
+
+- `--finding-id` stays the same across review laps for the same defect, so a
+  lap that finds it again prints `duplicate`. Use a new slug only for a new
+  defect.
+- The `--pattern` rule is the same as for human comments: the reusable
+  lesson, with no repo, file, or people names.
+- The row is stored with `caught_by_ours: self`. The lookback never counts it
+  as a miss and never counts its job as a reviewed PR.
+- Record only defects: spec misses, missing tests, and quality or security
+  findings. Do not record style nits the gate waived.
+

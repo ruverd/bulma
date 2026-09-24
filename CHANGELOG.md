@@ -8,6 +8,11 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- The fd `reviewer` and `quality` gates record each defect they catch in
+  `observations.jsonl` as `source: fd`, keyed by job and a finding slug that
+  stays the same across laps. `/bulma lookback` shows a `gate` column per
+  cluster: what our gates caught before the PR, next to what humans still
+  caught after it. fd rows never count as misses or as reviewed PRs.
 - `/bulma lookback --classify`: a new hook, `insight.classify`, has Jev label
   each missed observation with a cluster, whether the lesson generalizes, and
   where it should live (`implementer`, `reviewer`, `repo_rule`, `none`). Raw
