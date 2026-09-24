@@ -31,6 +31,36 @@ The installer puts `bulma` in `~/.local/bin` and adds that folder to `PATH` in
 Without a key, you can still run each stage directly: `/developer`, `/qa`,
 `/reviewer`, `/lstm`, and `/bulma-triage`.
 
+## Setup fails with `agent-browser is required`
+
+QA and the pull request screenshots use agent-browser and no other browser, so
+setup does not finish without it. Setup tries Homebrew, npm, and Cargo in that
+order. If none is installed, or the Chrome for Testing download fails, install
+agent-browser yourself and run setup again:
+
+```bash
+npm install -g agent-browser
+agent-browser install     # downloads Chrome for Testing
+agent-browser doctor --offline --quick
+bulma setup
+```
+
+On Linux, run `agent-browser install --with-deps` to add the system libraries
+Chrome needs. Other install methods are on the
+[agent-browser install page](https://agent-browser.dev/installation).
+
+## QA opened my Google Chrome
+
+QA must run headless in agent-browser's own Chrome for Testing. If your own
+Chrome window opened, one of these happened:
+
+- The agent used a different browser tool, such as a browser MCP server or
+  another plugin's browser skill. Run `bulma update` to get the rule that forbids
+  this, and tell the agent to use agent-browser only.
+- An `agent-browser.json` in your repo or `~/.agent-browser/config.json` turned
+  on `headed`. Bulma's QA session pins its own headless config and ignores both
+  files. Run `bulma update` if your install is older.
+
 ## `bulma status` warns that the plugin and setup are both installed
 
 You installed Bulma twice on one agent: once as a plugin and once with
@@ -57,8 +87,9 @@ describe the work in plain words: `/developer <what to build>`.
 Attaching files to a pull request needs `gh` 2.99 or newer. Run `gh --version`
 and upgrade if it is older. `bulma setup` warns about this.
 
-For browser QA, `agent-browser` and Chrome must be installed. `bulma setup`
-installs both. If you set `BULMA_SKIP_DEPS=1`, install them yourself.
+For browser QA, agent-browser and its Chrome for Testing must work. Check with
+`agent-browser doctor --offline --quick`. If you set `BULMA_SKIP_DEPS=1`,
+install them yourself.
 
 ## QA waits and never starts
 
