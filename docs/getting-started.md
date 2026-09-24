@@ -20,6 +20,9 @@ gh auth status        # signed in to GitHub
 If `gh auth status` says you are not signed in, run `gh auth login`. If your
 repo is on GitLab, install and sign in to `glab` instead.
 
+The installer adds [agent-browser](https://agent-browser.dev/), which QA uses
+to test your app in a headless browser. You do not need to install it first.
+
 You also need a TypeSafe API key. Create one at
 [console.typesafe.ai](https://console.typesafe.ai). TypeSafe runs Jev, the
 model `/bulma` asks when it has to pick between options. The
@@ -34,13 +37,17 @@ best for a first run: a copy change, a missing validation, or a small bug.
 curl -fsSL https://raw.githubusercontent.com/ruverd/bulma/main/install.sh | bash
 ```
 
-The installer prints each file it creates. At the end, check the install:
+The installer prints each file it creates. It ends with `done. restart the
+agent session`. If it ends with an agent-browser error instead, see
+[Troubleshooting](troubleshooting.md#setup-fails-with-agent-browser-is-required).
+Then check the install:
 
 ```bash
 bulma status
 ```
 
-You see the Bulma version and the coding agents it found. Each agent you use
+You see the Bulma version, the agent-browser path, and the coding agents it
+found. Each agent you use
 should appear in the list. If one is missing, see
 [Troubleshooting](troubleshooting.md#my-agent-does-not-show-the-bulma-commands).
 
