@@ -13,6 +13,7 @@ Follow:
 - `../skills/ruver-feature-delivery/nodes/implement.md`
 - `../skills/ruver-feature-delivery/nodes/coder.md`
 - `../skills/ruver-feature-delivery/TDD.md` (iron law)
+- `../skills/ruver-feature-delivery/LESSONS.md` (every ticket) and the recurring-lessons block in your prompt
 
 ## Scope
 

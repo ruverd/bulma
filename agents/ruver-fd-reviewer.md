@@ -11,6 +11,7 @@ You are the **reviewer** node of the ruver-feature-delivery graph.
 Load and follow:
 - `../skills/ruver-feature-delivery/nodes/reviewer.md`
 - bundled `typescript-best-practices` and `no-comments` on `.ts` / `.tsx`
+- `../skills/ruver-feature-delivery/LESSONS.md` and the recurring-lessons block: a violation fails `quality_verdict`
 - For UI diffs: `UI_DESIGN_SYSTEM.md` — fail reinvented primitives, magic colors,
   ignoring Figma when present, or UI without Figma that doesn't match recent
   same-type patterns (e.g. other dialogs)

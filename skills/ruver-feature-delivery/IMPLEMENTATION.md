@@ -13,6 +13,13 @@ ticket. Re-fix of the same ticket reuses that coder except on the last
 - Neighbor file paths
 - If UI: DS paths + 2–5 recent same-type screens
 - Review/test findings when re-fixing
+- **Recurring lessons**: the output of
+  `python3 ../bulma/scripts/lessons.py --repo <STATE repo> --files <ticket files, comma list>`
+  (path from this skill's directory), pasted as-is. It prints at most five of
+  this repo's recurring review misses, each with its rule from
+  [LESSONS.md](LESSONS.md). Empty output means paste nothing. A failed run is
+  a chat note, never a reason to hold the spawn. Run it once per ticket, not
+  on every re-fix.
 
 Keep the prompt to about one or two screens. Do not paste GRAPH.md,
 `why`, or the parent tool catalog.
@@ -30,7 +37,8 @@ If the coder wants a different design: `NEEDS_CONTEXT`. Parent DECIDE from spec 
 ## After each ticket
 
 1. Orchestrator runs the ticket's test command. Exit code into `.ruver-feature-delivery/gates.log`. Red → re-dispatch coder (≤ `test_fix_loops`).
-2. Fresh `ruver-fd-reviewer`. Diff + done criteria + `gates.log`. Either
+2. Fresh `ruver-fd-reviewer`. Diff + done criteria + `gates.log` + the same
+   recurring-lessons block the coder got. Either
    `spec_verdict` or `quality_verdict` fail → same ticket (≤ `review_fix_loops`).
    Graph pass only if both pass. Last remaining loop: **fresh** coder.
    Earlier loops re-dispatch the same coder.

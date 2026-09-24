@@ -571,6 +571,61 @@ assert row["gate"] == 3 and row["obs"] == 5, row
 PY
 ok lookback-gate
 
+# --- lessons.py: per-repo ranking, LESSONS.md rules, UI filter, repo_rule, labels ---
+LS="$SKILL/scripts/lessons.py"
+mkdir -p "$TMP/lessons"
+LSO="$TMP/lessons/observations.jsonl"
+python3 - "$LSO" <<'PY'
+import json, sys
+from datetime import datetime, timedelta, timezone
+today = datetime.now(timezone.utc).date()
+rows = []
+def add(i, repo, pattern, days=5, **kw):
+    row = {"id": "gh-%d" % i, "pr_ref": "%s#%d" % (repo, i), "reviewer": "alice", "caught_by_ours": "no",
+           "timestamp": (today - timedelta(days=days)).isoformat() + "T10:00:00Z", "generalized_pattern": pattern,
+           "severity_inferred": "important"}
+    row.update(kw)
+    rows.append(row)
+for i in range(4):
+    add(i, "acme/api", "Guard added on one path, sibling path lacks it")
+for i in range(4, 6):
+    add(i, "acme/api", "Test sets up its spy inside the try it tests, so it is vacuous")
+add(6, "acme/api", "useEffect subscription has no cleanup and leaks")
+add(7, "acme/api", "Unvalidated uuid param reaches a typed column and throws a 500")
+add(8, "acme/api", "Guard added on one path, sibling path lacks it", days=400)   # outside --since
+add(9, "other/repo", "Guard added on one path, sibling path lacks it")            # other repo
+add(10, "acme/api", "Guard added on one path, sibling path lacks it", reviewer="coderabbitai[bot]")
+open(sys.argv[1], "w").write("\n".join(json.dumps(r) for r in rows) + "\n")
+PY
+VERSION="$(python3 -c 'import sys; sys.dont_write_bytecode=True; sys.path.insert(0, sys.argv[1]); import lookback; print(lookback.catalog_version())' "$SKILL/scripts")"
+printf '{"id": "gh-7", "version": "%s", "cluster": "unvalidated input into typed column", "cluster_conf": 0.9, "lesson_for": "repo_rule", "lesson_conf": 0.9}\n' "$VERSION" >"$TMP/lessons/labels.jsonl"
+out="$(python3 "$LS" --file "$LSO" --repo acme/api --files src/x.ts --json)"
+python3 - "$out" <<'PY' || fail "lessons implementer: $out"
+import json, sys
+d = json.loads(sys.argv[1])
+names = [l["cluster"] for l in d["lessons"]]
+assert names == ["sibling-path parity", "test that cannot fail"], names   # ranked by PRs; no UI lesson for .ts
+assert d["lessons"][0]["prs"] == 4, d["lessons"][0]                       # old, other-repo, and bot rows dropped
+assert d["lessons"][0]["rule"].startswith("Before calling a guard"), d["lessons"][0]
+PY
+out="$(python3 "$LS" --file "$LSO" --repo acme/api --files src/x.tsx --json)"
+grep -F -q '"effect lifecycle"' <<<"$out" || fail "lessons: UI files must include effect lifecycle: $out"
+out="$(python3 "$LS" --file "$LSO" --repo acme/api --kind repo_rule)"
+grep -F -q '**unvalidated input into typed column** (1 PRs' <<<"$out" || fail "lessons repo_rule from label: $out"
+out="$(python3 "$LS" --file "$LSO" --repo acme/api --files src/x.ts)"
+grep -F -q '## Recurring review lessons in acme/api' <<<"$out" || fail "lessons brief header: $out"
+[[ -z "$(python3 "$LS" --file "$LSO" --repo nobody/none)" ]] || fail "lessons must print nothing for an unknown repo"
+[[ ! -d "$SKILL/scripts/__pycache__" ]] || fail "lessons.py must not write __pycache__ into the skill"
+python3 - "$SKILL/scripts" <<'PY' || fail "LESSONS.md headings must be lookback cluster names"
+import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, sys.argv[1])
+import lookback, lessons
+extra = set(lessons.rules()) - {name for name, _, _ in lookback.CLUSTERS}
+assert not extra, extra
+PY
+ok lessons
+
 # --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---
 SR="$TMP/sroot"
 PATH="$FIX/bin:$PATH" bash "$WORLD" --ruver-root "$FIX/world" --out "$W" >/dev/null || fail "world.sh for builders"

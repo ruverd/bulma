@@ -43,7 +43,10 @@ Decision, in order:
    while writing the code goes to the coder, not only to review. Jev is
    used per observation, where volume allows calibration, and not to
    decide whether a whole cluster deserves a change: that stays a
-   threshold plus the user's yes.
+   threshold plus the user's yes. Implementer lessons live in
+   `ruver-feature-delivery/LESSONS.md`, and each coder brief carries the
+   current repo's top recurring misses (`bulma/scripts/lessons.py`), so
+   the loop prevents the defect as well as catching it.
 2. **Collection.** `ruver-lstm` and `ruver-reviewer` append one
    observation per human comment they process, using the existing schema.
    Without this, step 1 has nothing to verify against.
