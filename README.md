@@ -1,42 +1,131 @@
-# Skills
+# Bulma
 
-Skills for coding agents. Give one a ticket or a local goal and it
-writes the code, opens a draft PR, exercises the change (agent-browser
-or HTTP), and handles review.
-
-The session you talk to is a **graph engineer**, not an implementer.
-It walks a GRAPH (nodes + edges). It writes state under `~/.ruver`.
-When a node must touch product code, it spawns a **worker**. Graphs
-talk through files on a bus. They never nest as child agents. They
-never merge.
-
-TDD on behavior change. ASK the user only as a last resort.
+A software factory for coding agents. You type one command, `/bulma`. It
+picks the next piece of work, walks it through delivery, review, and QA,
+and keeps checking whether it is getting better at that.
 
 ```text
-/developer ABC-123
-/qa https://github.com/org/repo/pull/99
-/reviewer https://github.com/org/repo/pull/99
-/lstm https://github.com/org/repo/pull/99
+/bulma                    # what should happen next, across every repo
+/bulma ABC-123            # deliver a ticket
+/bulma https://github.com/org/repo/pull/99
+/bulma watch              # what is stuck, and the command that unsticks it
+/bulma lookback           # what human review keeps catching that we miss
 ```
 
-| You type | What happens |
+Bulma never merges and never writes product code on the thread you talk to.
+Code comes from fresh workers under TDD. Every PR stays a draft until CI is
+green, it is MERGEABLE, and QA evidence exists for the head SHA.
+
+## The loop
+
+```mermaid
+flowchart LR
+  you["/bulma"] --> route{"route<br/>deterministic first,<br/>Jev second"}
+  route -->|ticket or goal| dev["developer<br/>grill · spec · TDD<br/>draft PR · CI green"]
+  route -->|someone else's PR| rev["reviewer<br/>code review · CI diagnosis"]
+  route -->|review on your PR| lstm["lstm<br/>verify each comment<br/>patch same branch"]
+  dev --> qa["qa<br/>agent-browser or HTTP<br/>video on the PR"]
+  qa -->|product error| triage["triage<br/>PR_BUG · EXISTING · NEW"]
+  triage -->|PR_BUG| dev
+  qa -->|PASS| human["you merge"]
+  rev -. human comments .-> obs[("observations")]
+  lstm -. human comments .-> obs
+  obs --> lookback["/bulma lookback<br/>misses per PR, window vs window"]
+  lookback -->|you say yes| skillpr["draft PR to a skill"]
+  state[("run state<br/>every workspace")] --> watch["/bulma watch<br/>reconcile with GitHub"]
+  watch -->|next command| you
+```
+
+The stages (`developer`, `reviewer`, `lstm`, `qa`, `triage`) are graphs that
+bulma loads on the same thread. At each fork listed in
+[HOOKS.md](skills/bulma/HOOKS.md), bulma asks TypeSafe Jev a typed question and
+acts only when the confidence clears a threshold you control. Below that
+threshold, the graph's own rule decides. Jev never adds an edge or skips a gate.
+
+## At a glance
+
+| You type | What happens | Solves for |
+|---|---|---|
+| `/bulma` | Snapshots open PRs, run state, and the QA queue, then picks the next item or asks you with the top three | Deciding what to do next across many PRs |
+| `/bulma <ticket or URL>` | Ticket → developer. Your PR → QA. Someone else's PR → review. No Jev call | Typing the right command for each kind of work |
+| `/bulma <free text>` | Jev routes the text to one stage, or answers in chat | Work that does not fit a ticket |
+| `/bulma resume` | Continues the run that stopped on a question or escalation | Losing context between sessions |
+| `/bulma watch` | Scans every workspace, drops PRs that already merged or closed on GitHub, and lists what needs you, what stalled, and what is orphaned | Runs that quietly stopped halfway, and state that says "shipping" for a PR merged a week ago |
+| `/bulma lookback` | Counts what human reviewers caught and the stages missed, by cluster, per PR, against the previous window | The same class of defect coming back after it looked fixed |
+| `/bulma report` | Jev calibration: agree %, reversals, the suggested threshold per question | Knowing whether Jev deserves more authority |
+| `/bulma power <level>` · `tune` · `model` | Sets how much Jev decides | Trusting automation one fork at a time |
+
+`watch`, `lookback`, `report`, `power`, `tune`, `model`, `status`, and `doctor`
+run without a key. Routing and the forks need `TYPESAFE_API_KEY`. Without it,
+`/bulma` prints the requirement and stops.
+
+## Self-improving
+
+Two loops sit on top of delivery. Neither edits anything by itself.
+
+**Watch** keeps the factory honest about what is actually running. Graph state
+goes stale whenever a run ends outside the graph: a PR merges while delivery
+sits in `ci_watching`, or someone deletes the worktree. `/bulma watch` checks
+every PR against GitHub, caches the closed ones, and prints the next command for
+the rest. On its first real run, most of the jobs that looked stalled were PRs
+that had already merged or closed.
+
+**Lookback** keeps the stages honest about quality. `lstm` and `reviewer` record
+one generalized sentence per human review comment, with no raw text, and whether
+our own review had already flagged the same lines. `/bulma lookback` clusters the
+misses. Each cluster names the skill section meant to stop it. If a cluster does
+not shrink per PR after that section changed, the change failed, and the next
+step is to reword it, not to add another rule. When you say yes, bulma opens a
+draft PR against the skill.
+
+**Calibration** keeps Jev honest. Every answer is logged next to the graph's own
+answer. `/bulma report` shows agreement and reversals, and a threshold moves only
+through `/bulma tune`.
+
+Design record: [ADR 0005](docs/adr/0005-self-improving-loop.md).
+
+## Start small
+
+1. **Shadow.** `/bulma power shadow`. Jev answers every fork and logs it, and the
+   graphs decide alone. Use `/bulma` as a router and check what it picks.
+2. **Balanced.** After about 20 decisions per question, run `/bulma report`.
+   Raise authority one hook at a time: `/bulma power balanced fd.triage`.
+3. **Watch on a schedule.** Once `/bulma watch` shows only things that really
+   need you, schedule it through your host, for example `/loop 6h /bulma watch`
+   in Claude Code.
+4. **Lookback by hand.** Run `/bulma lookback --since <date>` after a skill
+   change has seen about 30 reviewed PRs. Schedule it only after the proposals
+   it makes are ones you would accept.
+
+Automate a step only after you have run it by hand long enough to trust its
+output.
+
+## Configuration at a glance
+
+Everything lives in `~/.ruver/bulma.json`. `bulma.py` writes it, so do not edit
+it by hand. It is shared by every repo on the machine.
+
+```json
+{
+  "power": "balanced",
+  "power_by_hook": { "qa.gate": "shadow", "dispatch.tier": "shadow" },
+  "act_at": { "fd.triage.path": 0.70 },
+  "model": "jev-1.13.0",
+  "tiers": { "claude": { "light": { "model": "haiku" } } }
+}
+```
+
+| Key | Meaning |
 |---|---|
-| `/developer` | Grill, spec, tickets, TDD, draft PR, CI, then QA |
-| `/qa` | Exercise the PR (agent-browser or HTTP). Comment with video (UI) or an HTTP still (API) |
-| `/reviewer` | Review the PR. Diagnose CI |
-| `/lstm` | Incoming review. Patch the same branch |
-| `/goal` | Keep going until QA evidence lands on the head SHA |
-| `/ruver-triage` | Classify a QA finding. Not a ticket bot |
-| `/memory` | Durable prefs outside git (chat language, reviewers) |
-| `/bulma` | Pick the graph for you and gate its forks with Jev. Optional; needs `TYPESAFE_API_KEY` |
+| `power` | `shadow` · `cautious` · `balanced` · `bold`. Offset on every threshold |
+| `power_by_hook` | Same, for one hook |
+| `act_at` | Override one question's threshold |
+| `model` | Pinned Jev model. Change it under `shadow` and compare in `/bulma report` |
+| `tiers` | Maps worker tiers to host spawn args for `dispatch.tier` |
 
-Short slashes (`/developer`, `/qa`, `/reviewer`, `/lstm`, `/goal`,
-`/memory`) are
-aliases of `/ruver-*`. Skill ids stay `ruver-*`. This repo is those
-graphs, not a dump of every third-party skill on a machine.
-
-`/bulma` needs a TypeSafe Jev key (`TYPESAFE_API_KEY`). Nothing else does.
-Without it `/bulma` prints the requirement and stops.
+Details: [POWER.md](skills/bulma/POWER.md) · [DISPATCH.md](skills/bulma/DISPATCH.md).
+Per-repo product policy (test commands, reviewers, sibling repos) stays in the
+target repo: [PRODUCT.md](skills/ruver-feature-delivery/PRODUCT.md).
 
 ## Installation
 
@@ -105,10 +194,11 @@ setup links `~/.ruver` to it so live jobs keep running.
 
 ### Restart the session
 
-Then run a graph:
+Then:
 
 ```text
-/developer
+/bulma doctor
+/bulma
 ```
 
 ## Dependencies
@@ -184,6 +274,11 @@ Command pages: [docs/commands](docs/commands/README.md).
 
 ## Reference
 
+`/bulma` is the entry point. The stages below still have their own slash
+commands (`/developer`, `/qa`, `/reviewer`, `/lstm`, `/goal`, `/ruver-triage`),
+which run without Jev and without a key. They are useful for debugging a single
+stage, but bulma is what ties them together.
+
 These split on one axis: who can invoke them. **User-invoked** skills
 are reachable when you type them (e.g. `/ruver-developer`); their job
 is to orchestrate. **Model-invoked** skills can be invoked by you *or*
@@ -200,7 +295,11 @@ comes from Codex's command parser, not skill installation.
 
 ### Graphs
 
-Main-thread graph engineer. `category: graph`. Source: [`skills/`](skills/README.md).
+**Entry point**
+
+- **[bulma](skills/bulma/SKILL.md)** (`/bulma`): Routes work to a stage, gates its forks with Jev, and runs `watch` and `lookback`.
+
+**Stages.** Main-thread graph engineer. `category: graph`. Source: [`skills/`](skills/README.md).
 
 **User-invoked**
 
@@ -245,8 +344,12 @@ when CI / mergeability need a graph around the engine.
 
 ## How the graphs fit
 
+Bulma loads one stage at a time on the same thread and stays loaded as an
+overlay. It is never on the bus stack. Below it, the stages hand off through
+bus files:
+
 ```
-          /ruver-developer
+          developer
                  │
                  ▼
         ruver-feature-delivery
@@ -254,14 +357,14 @@ when CI / mergeability need a graph around the engine.
            draft PR, CI green
                  │
                  ▼
-             /ruver-qa  ──►  /ruver-triage
+                qa  ──►  triage
                  │                │
             QA_RESULT        PR_BUG ──► developer (fix)
                  │
             PASS → ready
 
-/ruver-reviewer ──► /ruver-code-review ──► GitHub review
-/ruver-lstm     ──► patch the same PR
+reviewer ──► ruver-code-review ──► GitHub review
+lstm     ──► patch the same PR
 ```
 
 They talk through **ruver-bus** files, not nested graph agents.
@@ -311,12 +414,16 @@ Runtime state:
 
 ```text
 ~/.ruver/memory.md                       # you, every repo
+~/.ruver/bulma.json                      # power, thresholds, model, tiers
+~/.ruver/bulma-watch.json                # PRs watch saw merged or closed
+~/.ruver/insights/observations.jsonl     # human-review observations
 ~/.ruver/<slug>/memory.md                # this git toplevel
 ~/.ruver/<slug>/.ruver-bus/
                   STACK.md               # which graph is active
                   ENVELOPE.md            # the message being handed over
                   JOBS.md                # workers + the QA lease
                   RUN_LOG.tsv            # transitions, timing, laps
+~/.ruver/<slug>/.ruver-bulma/            # route, decisions ledger, world.json
 ~/.ruver/<slug>/.ruver-developer/        # one dir per graph or engine
 ~/.ruver/<slug>/.ruver-qa/               # .ruver-triage, -reviewer, -lstm,
                                          # -goal, -code-review,
