@@ -6,6 +6,9 @@ mergeability, optionally buses a `REVIEW_RESULT`.
 
 Never merges. Not the fd worker `bulma-fd-reviewer`.
 
+Approval and changes-requested bodies include a `Model` row with the executing
+reviewer's runtime model name or id. If unavailable, the value is `unknown`.
+
 Skill: [`../../skills/bulma-reviewer`](../../skills/bulma-reviewer).
 
 ## When

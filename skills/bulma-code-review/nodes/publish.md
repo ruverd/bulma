@@ -19,6 +19,13 @@ gh api "repos/$REPO/pulls/$PR/reviews" -X POST --input "$PAYLOAD"
 
 Section order is fixed. The words inside are Voice, not labels pasted as the comment.
 
+Every APPROVE and REQUEST_CHANGES body must include the `Model` row below,
+filled from this pass's `reviewer_model`. Keep it in DEFER bodies, dry-run
+payloads, and the `422` retry too. It identifies the reviewer responsible for
+the verdict, not the orchestrator or critic. Use `unknown` when the host exposes
+no identity; never omit the row or invent a model name or version. Escape any
+Markdown table delimiters or line breaks in the value before rendering it.
+
 ```markdown
 ## ✅ Approved: <repo>#<pr>
 
@@ -26,6 +33,7 @@ Adds the company seat picker. I did not find a merge blocker.
 
 | | |
 |---|---|
+| Model | <reviewer_model> |
 | Pass | deep, 1st review |
 | CI | green |
 | Coverage | 12 of 12 changed files |

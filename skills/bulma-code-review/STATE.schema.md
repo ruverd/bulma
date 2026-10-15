@@ -18,6 +18,7 @@ init | waiting_ci | reviewing | published | deferred | done
 | `pr` | `<owner>/<repo>#<N>` |
 | `pr_url` | full URL |
 | `sha` | head SHA at the time of the pass |
+| `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
 | `ci` | pending \| green \| red |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
 | `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER |

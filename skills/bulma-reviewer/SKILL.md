@@ -19,6 +19,8 @@ bus PROTOCOL.md · skill `bulma-code-review` · `bulma-memory` ·
 
 Init `.bulma-reviewer/STATE.md`. Walk GRAPH (**admit** first).
 `code_review` is the engine: spec-first, patch bind, high-risk critic.
+Its approval and changes-requested bodies include a `Model` row identifying
+the executing reviewer, or `unknown` when the runtime exposes no identity.
 Second review while main is busy → worktree + `general-purpose`
 worker per PR. `--force` if CI red. Pending required CI waits 5m
 (no PR comment) via `wait_ci`. Draft / conflict / CI-red DEFER is

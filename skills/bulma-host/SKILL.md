@@ -33,6 +33,18 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
 
+## Review model identity
+
+For review attribution, read the executing session's model identity from host
+runtime metadata or explicit system-provided identity. Keep the reported model
+name or id, including its version. Do not infer it from the host name, a default
+in config, a requested worker tier, or a parent's model. If only a family or
+alias is exposed, keep that value without adding a version. If no identity is
+exposed, return `unknown`. This lookup does not select or change a model.
+
+Each review worker resolves its own identity. A critic's model does not replace
+the model of the worker responsible for the verdict.
+
 ## spawn_worker
 
 Pass, and nothing else:
