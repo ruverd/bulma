@@ -12,6 +12,11 @@ ME=$(gh api user --jq .login)
 
 Load `bulma-memory` before the first chat sentence.
 
+Before gates, resolve `reviewer_model` using
+[bulma-host](../../bulma-host/SKILL.md) §Review model identity and record it in
+this pass's STATE. Refresh it for each pass, including a resumed CI wait.
+Each worker resolves its own value; never reuse a prior pass's model identity.
+
 Flags: `--deep` force deep, `--light` force light, `--dry-run` run everything and
 print to chat but post nothing, `--force` review despite non-green CI. `--deep` and
 `--light` override §2 only; nothing but `--force` relaxes a §3 gate, and it relaxes

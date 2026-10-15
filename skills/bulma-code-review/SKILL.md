@@ -34,6 +34,8 @@ waits 5m and does **not** post. Red CI still DEFERS.
 6. **Voice.** GitHub text and chat follow **Voice** (just above §9). Teammate
    English on the PR. Chat: `bulma-memory`. Never caveman. Never a form.
 7. **Fixed output template** (§9). Section order never changes; empty sections vanish.
+   Every verdict body includes the executing reviewer's model in the `Model`
+   row. Resolve identity through `bulma-host`; use `unknown` if unavailable.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Other reviewers' state is ignored.** An open CHANGES_REQUESTED from someone
    else is never a gate, never a DEFER reason, and never enters the body. Teams
