@@ -12,6 +12,14 @@ outside the diff. Open concerns or our own Critical/High block approval.
 Sensitive paths require human sign-off. Another review is never dismissed.
 On Codex, invoke `$bulma-reviewer` or select it through `/skills`.
 
+Review preserves existing worktrees and staged changes. Local checks run in an
+isolated checkout after inspecting changed scripts. Regression evidence names
+the assertion and distinguishes source inspection from an executed failing
+and passing comparison. Tests that mock away the failing behavior do not prove
+the fix. Changes tied to another deployment also check counterpart revisions,
+intermediate version compatibility, merge/deploy order, flags and rollback.
+These checks share the engine's existing caps and single verdict.
+
 Approval and changes-requested bodies include a `Model` row with the executing
 reviewer's runtime model name or id. If unavailable, the value is `unknown`.
 

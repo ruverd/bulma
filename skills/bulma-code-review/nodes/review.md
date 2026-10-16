@@ -61,6 +61,11 @@ finding, `axis: spec`. Wording mismatches are nits — silent.
 
 Run **before** correctness. Tests state what the PR claims to do.
 
+Apply [EVIDENCE.md](../references/EVIDENCE.md), Tests that distinguish the
+defect. Trace assertions to production code, inspect weakened tests and record
+whether a regression comparison actually ran. Use isolated execution for
+local checks. Static inspection is not a runtime reproduction.
+
 New meaningful logic with no test is a **major**, `axis: tests`. Also: test
 asserts a mock instead of behaviour, error path untested, `it` description
 missing the `should` prefix (project rule), test disabled or skipped in the
@@ -129,6 +134,12 @@ A write that spans two stores, or an external provider and a local table: say
 what state is left when the second step fails, and what a retry or an
 at-least-once redelivery writes or emits again. An audit, event, or webhook
 emit gated on input presence instead of rows actually changed fires on replay.
+
+When compatibility depends on another deployment, apply
+[EVIDENCE.md](../references/EVIDENCE.md), Paired changes and rollout. Check
+intermediate version combinations, merge/deploy order, flags and rollback.
+Keep counterpart evidence and unavailable contracts in Coverage. Use existing
+read/query caps; required evidence left unchecked means incomplete coverage.
 
 Spreading the request body into a write is mass assignment. **Blocker** if that
 can set role, tenant, price, or a flag/permission. Otherwise drop.
