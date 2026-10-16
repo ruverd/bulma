@@ -15,17 +15,20 @@ Body-only review: 👍 on the review, then an unslopped COMMENT review
 after it.
 
 Enter this node only from GRAPH (**prove** pass, or verify skip-only).
-Do not dismiss a should-fix run that never passed **prove**.
+Never dismiss someone else's `CHANGES_REQUESTED`. Passing **prove** is evidence
+for the original reviewer, not permission to remove their block.
 
 Then:
 
 4. Resolve the conversation when a fix landed. Skip stays open after
    the skip reply unless that reply is enough to close it.
-5. Dismiss `CHANGES_REQUESTED` on those reviews.
-6. Re-request that reviewer when a fix landed.
+5. Preserve `CHANGES_REQUESTED` on those reviews.
+6. Re-request that reviewer when a fix landed, with the fix SHA and test evidence.
+   For a disputed or skip-only blocking review, explain the evidence and ask
+   the original reviewer to reconsider. Do not clear it yourself.
 
 Done only when every in-scope comment has 👍 + reply, every processed
-`CHANGES_REQUESTED` review is dismissed (or 403 noted), comment ids
+`CHANGES_REQUESTED` review remains owned by its reviewer, comment ids
 are in `processed_comment_ids`, and review ids are in
 `processed_review_ids`.
 

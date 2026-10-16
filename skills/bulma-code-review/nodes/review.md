@@ -37,7 +37,7 @@ you review: which axes you are running, which you skipped and why.
 |---|---|---|---|
 | 3. Requirements | ticket or AC exists | ✅ | only if new diff touches AC surface |
 | 4. Tests | diff adds logic | ✅ | ✅ |
-| 6. Contract & data | diff touches service, hook, type, endpoint, migration, schema | ✅ | ✅ |
+| 6. Contract & data | diff touches service, hook, type, endpoint, migration, schema, or a UI API consumer | ✅ | ✅ |
 | 7. Security & permissions | diff touches auth, RBAC, token, storage, user input, URL, upload, impersonation, SQL, `$queryRaw` | ✅ | ✅ |
 | 9. Perf | diff touches list, render path, query, effect, loop | ✅ | only if new diff is exactly that |
 | 9b. Accessibility | diff touches `tsx`, `jsx`, `vue`, `svelte`, `css`, `html` | ✅ | only if new diff is exactly that |
@@ -72,7 +72,13 @@ that no CI workflow turns on, a spy with no assertion on its calls.
 
 ### Phase 5 — Correctness & regression (never skipped)
 
-For each changed exported symbol, find who else uses it:
+For each changed exported symbol, find importers, callers and tests one hop
+outside the diff, even when tests in the diff pass. For changed API consumers,
+read the provider/serializer or shared client wrapper too. Use existing caps;
+if a required hop cannot be checked, declare incomplete coverage and DEFER.
+For config or workflow changes without exports, search for scripts/tests that
+assert the changed keys, action names or paths. A checkout-action replacement
+can break a security guard test outside the workflow diff.
 
 ```
 code_graph_explore  →  "<ChangedSymbol> <OtherSymbol> callers"
@@ -111,6 +117,13 @@ handled, pagination and default values, nullable field treated as required,
 migration reversibility and backfill, id or tenant scoping on every query that
 touches shared tables. User input reaching a typed column (uuid, int, enum)
 with no format check, so a bad value is a 500 instead of a 400 or 404.
+
+Trace provider → client wrapper → consumer and compare test mocks with that
+actual wire shape. For `{ success, data }`, identify exactly where the envelope
+is unwrapped. A mock returning a bare array cannot prove a consumer handles the
+real envelope. Read neighboring contract tests even if this diff has tests.
+Record the paths and shapes checked in Coverage. An unavailable external
+contract that could crash the feature is a blocker-level uncertainty.
 
 A write that spans two stores, or an external provider and a local table: say
 what state is left when the second step fails, and what a retry or an
@@ -218,6 +231,10 @@ python3 scripts/bind-findings.py \
 ```
 
 `scripts/` sits next to this skill's `SKILL.md`. Replace the ledger with
-`kept`. Count `dropped` for chat. Do not mention dropped findings on the PR.
+`kept`, plus proven diff-caused defects rejected only for inline placement.
+Keep those separately as body findings with their evidence path and causal
+changed hunk; do not pass them through the same inline filter again. Drop
+refuted or pre-existing claims. Count actual drops for chat. A placement drop
+must never erase a Critical/High and turn REQUEST_CHANGES into APPROVE.
 
 Then [critic.md](critic.md), then [verdict.md](verdict.md).

@@ -58,6 +58,14 @@ fi
 has 'CHANGES_REQUESTED' "$LSTM/nodes/prove.md"
 ok prove-before-reply
 
+has "Never dismiss someone else's" "$LSTM/nodes/reply.md"
+has '5. Preserve' "$LSTM/nodes/reply.md"
+has 'requested_reviewers' "$LSTM/references/GITHUB.md"
+if grep -R -E -q '/dismissals|event=.DISMISS' "$LSTM"; then
+  fail "LSTM must request re-review, never call the dismissal API"
+fi
+ok preserve-reviewer-block
+
 # --- last loop is a fresh coder ---
 
 grep -F -q 'fresh' "$LSTM/nodes/prove.md" || fail "prove.md must fresh-coder the last loop"

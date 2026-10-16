@@ -6,6 +6,12 @@ mergeability, optionally buses a `REVIEW_RESULT`.
 
 Never merges. Not the fd worker `bulma-fd-reviewer`.
 
+Engine preflight reads review discussions and AI QA, rechecks the live head
+before publication, proves CI ran on that commit, and checks caller contracts
+outside the diff. Open concerns or our own Critical/High block approval.
+Sensitive paths require human sign-off. Another review is never dismissed.
+On Codex, invoke `$bulma-reviewer` or select it through `/skills`.
+
 Approval and changes-requested bodies include a `Model` row with the executing
 reviewer's runtime model name or id. If unavailable, the value is `unknown`.
 

@@ -1,5 +1,10 @@
 # 9. Publish — one artifact, fixed template
 
+Run [PREFLIGHT.md](../references/PREFLIGHT.md) immediately before POST, including
+promotion and any retry. A changed head returns to review; refresh room and
+CI evidence too. Use the same checked SHA in `commit_id`, STATE and the marker.
+Never approve while body or inline comments raise a Critical/High.
+
 ### Review (APPROVE / REQUEST_CHANGES)
 
 One atomic call. Findings with `in_diff: true` become inline comments; every other
@@ -14,6 +19,8 @@ gh api "repos/$REPO/pulls/$PR/reviews" -X POST --input "$PAYLOAD"
 `422` means an invalid position and kills the whole review atomically. Retry
 **once** with `comments: []` and all findings in the body, then record
 `inline_failed` in the chat summary. No further retries.
+Re-run preflight before that retry and preserve severity/verdict. Do not retry
+an ambiguous network failure until checking whether the review was created.
 
 ### Body template — identical for all verdicts, only the header changes
 
@@ -27,15 +34,18 @@ no identity; never omit the row or invent a model name or version. Escape any
 Markdown table delimiters or line breaks in the value before rendering it.
 
 ```markdown
-## ✅ Approved: <repo>#<pr>
+## ❌ Changes requested: <repo>#<pr>
 
-Adds the company seat picker. I did not find a merge blocker.
+The seat picker has an unchecked seat cap and a retry-state defect.
 
 | | |
 |---|---|
 | Model | <reviewer_model> |
+| Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review |
-| CI | green |
+| CI | green on <sha>, <run links>; or CI did not run |
+| Review context | clear, or linked open concerns |
+| Human sign-off | not required, or needs human sign-off: <paths> |
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors |
 | Acceptance | 1 done · 1 missing |
@@ -75,9 +85,9 @@ Adds the company seat picker. I did not find a merge blocker.
 - Perf. No render, query or effect change in the diff.
 </details>
 
-<!-- bulma-review: v=1 pass=deep sha=abc1234 blockers=1 majors=2 reason=-
+<!-- bulma-review: v=1 pass=deep sha=<full reviewed_sha> blockers=1 majors=2 reason=-
      open=src/x.ts:42:unreset-retry-count|src/y.ts:10:missing-empty-list-test|src/a.ts:42:seat-cap-not-rechecked
-     risk=low critic=skip -->
+     risk=low critic=skip preflight=1 -->
 ```
 
 The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
@@ -120,8 +130,13 @@ Never call `gh pr review` on a DEFER.
 ### Post-verify
 
 ```bash
-gh api "repos/$REPO/pulls/$PR/reviews" --jq '.[-1] | {user: .user.login, state, commit_id}'
+gh api "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID" --jq '{user: .user.login, state, commit_id}'
+gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid
 ```
+
+`REVIEW_ID` comes from the POST response, never from the last review in a list.
+Compare `commit_id` and the live head with `reviewed_sha`. A concurrent push
+makes this review stale; report it and require review of the new head.
 
 DEFER: print the comment URL instead. `--dry-run`: print the payload, post nothing,
 and label the chat summary `DRY-RUN`.

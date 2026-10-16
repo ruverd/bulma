@@ -46,7 +46,10 @@ reason to drop.
    PII in logs.
 
 For each bound blocker or major: keep it only if a lens's hunk proves the
-trigger. Drop it if the refutation holds or the line is not the bug.
+trigger. Drop it if the refutation holds. If the line is not the bug but the
+defect is proven, correct its anchor or preserve it as a body finding. Apply
+the same rule to the parent's separate body findings; include their one-hop
+evidence in the bounded excerpts. Placement cannot erase a proven defect.
 
 Then look for at most **2** missed **blockers** across the whitelist.
 Contract break, data loss, or missing permission only. No nits. No new
@@ -60,7 +63,8 @@ Caps: 4 extra Reads, 3 codegraph queries, 2 added blockers.
 ## After the worker
 
 Pipe `kept` + `added` through `scripts/bind-findings.py` with the same
-patch and allow-paths. Unbound drops. Nits from the first pass stay
+patch and allow-paths. Preserve proven unbound defects in the body ledger.
+Nits from the first pass stay
 bound as they were. STATE `critic=ran`.
 
 Spawn or script failure: keep the first-pass bound ledger, set

@@ -17,6 +17,7 @@ start (PR url / number / branch)
 | start | always | **resolve** |
 | resolve | CLOSED or MERGED | **stop** |
 | resolve | draft or conflict | **defer** |
+| resolve | room blocked or unknown | **defer** |
 | resolve | `ci_overall` pending | **wait_ci** |
 | resolve | `ci_overall` failure or unknown | **defer** |
 | resolve | `ci_overall` success | **review** |
@@ -26,11 +27,15 @@ start (PR url / number / branch)
 | wait_ci | CLOSED or MERGED | delete loop, **stop** |
 | review | always | **critic** |
 | critic | always | **publish** |
+| publish | head or base changed | **review** (fresh diff, repeat preflight) |
+| publish | approval gate blocked or unknown | **defer** |
 | publish | posted | delete loop, **stop** |
 | defer | posted | delete loop, **stop** |
 
 `--force` skips the CI rows (pending / failure / unknown) and goes to **review**.
 `--dry-run` never creates a loop and never posts.
+Room evidence is loaded before pass selection. All approval gates run again
+at publish, including promotion. See [PREFLIGHT.md](references/PREFLIGHT.md).
 
 ## Nodes
 

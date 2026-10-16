@@ -11,7 +11,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
   → grill?           # complicated should-fix only
   → patch            # bulma-fd-coder + TDD, same branch
   → prove            # spec_verdict + quality_verdict + tester
-  → reply            # 👍 + unslopped reply on every comment, resolve, dismiss CHANGES_REQUESTED, re-request
+  → reply            # 👍 + unslopped reply on every comment, resolve fixed threads, request re-review; never dismiss
   → report
 ```
 
