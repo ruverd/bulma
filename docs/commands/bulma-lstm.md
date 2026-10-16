@@ -6,7 +6,7 @@ reviewer left comments on your pull request.
 
 Ingest a PR / review / comment URL. Patch should-fix on the **same
 branch**. Rebase conflicts. 👍 + unslopped reply on every comment,
-resolve threads, dismiss `CHANGES_REQUESTED`, re-request.
+resolve fixed threads and request re-review. Never dismiss another review.
 
 Never opens a new PR. Draft stays draft.
 
@@ -31,7 +31,7 @@ URL | resume | LSTM_REQUEST
   → patch should-fix (bulma-fd-coder, TDD)
   → prove (spec + quality + tester)
   → 👍 + unslopped reply on every comment
-  → resolve threads + dismiss CHANGES_REQUESTED + re-request
+  → resolve fixed threads + preserve CHANGES_REQUESTED + re-request
 ```
 
 ## What the main thread does
@@ -44,7 +44,7 @@ URL | resume | LSTM_REQUEST
 5. **prove**: fd reviewer (`spec_verdict` = this comment,
    `quality_verdict` = TDD/DS) + tester. Fail → patch, do not dismiss.
 6. 👍 + unslopped reply on **every** comment (fix and skip). Then
-   resolve, dismiss `CHANGES_REQUESTED`, re-request if a fix landed.
+   resolve fixed threads, preserve `CHANGES_REQUESTED`, re-request if a fix landed.
 
 The graph engineer does not type the patch. The coder worker does.
 
@@ -59,7 +59,8 @@ Uses bundled `receiving-code-review` and `unslop` (`skills/receiving-code-review
 - Leave a comment without 👍 + reply.
 - POST a GitHub reply that skipped `unslop`.
 - Leave `CHANGES_REQUESTED` on a processed review.
-- Dismiss or reply on a should-fix run before **prove** passed.
+- Dismiss someone else's change request, even after **prove** passed.
+- Reply on a should-fix run before **prove** passed.
 
 ## Related
 

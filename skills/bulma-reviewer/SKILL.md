@@ -19,6 +19,10 @@ bus PROTOCOL.md · skill `bulma-code-review` · `bulma-memory` ·
 
 Init `.bulma-reviewer/STATE.md`. Walk GRAPH (**admit** first).
 `code_review` is the engine: spec-first, patch bind, high-risk critic.
+Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
+context before pass selection and again before publication, pins the reviewed
+head, verifies CI execution and requires human sign-off for sensitive changes.
+Never dismiss another review or approve over an open concern.
 Its approval and changes-requested bodies include a `Model` row identifying
 the executing reviewer, or `unknown` when the runtime exposes no identity.
 Second review while main is busy → worktree + `general-purpose`

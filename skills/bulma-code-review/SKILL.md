@@ -37,22 +37,31 @@ waits 5m and does **not** post. Red CI still DEFERS.
    Every verdict body includes the executing reviewer's model in the `Model`
    row. Resolve identity through `bulma-host`; use `unknown` if unavailable.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
-9. **Other reviewers' state is ignored.** An open CHANGES_REQUESTED from someone
-   else is never a gate, never a DEFER reason, and never enters the body. Teams
-   reply and push instead of dismissing, so that state is noise. Findings come from
-   the code at the head SHA, not from review history. Never fetch their threads:
-   a problem that still exists is found again by the axes; one that was fixed leaves
-   nothing to deduplicate.
+9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
+   before pass selection and again before publishing. Open change requests,
+   unresolved threads, unanswered questions and AI QA concerns block approval.
+   Never dismiss another review; ask its reviewer to re-review. Missing evidence
+   fails closed. `--force` cannot bypass these approval gates.
 10. **My own open findings never expire silently.** A prior finding of mine is
     dropped only after it is re-verified against the head SHA (§4.2).
 11. **Patch bind.** After Phase 10, every finding goes through
     `scripts/bind-findings.py`. A `path:line` that is not in this pass's patch
-    (or a carry-forward allow-path) is dropped in silence. A finding with no
-    `axis` is dropped the same way.
+    (or a carry-forward allow-path) cannot be inline. Preserve proven defects
+    caused by this diff as body findings with a changed-hunk reference; binding
+    failure is not evidence that a High disappeared. A finding with no `axis`
+    must be completed before publishing.
 12. **High-risk critic.** When `scripts/classify-risk.py` prints `high`, spawn
     the critic before verdict. The critic walks contracts, integration/state,
     and security/data-loss on one spawn, without voting findings off. When
     the script prints `low`, skip the spawn.
+13. **Approve the reviewed head only.** Pin the full reviewed SHA, re-review
+    any new commits, and verify CI execution on that SHA. Skipped or missing
+    build/test jobs are not green. Recheck before promotion and retry too.
+14. **Own Critical/High means no approval.** Reconcile body, inline comments,
+    carried findings and critic output with the verdict before POST.
+15. **Sensitive paths need human sign-off.** Workflows, Terraform, auth,
+    billing/seats and secrets never receive auto-approval. Use the full PR
+    file list, including renames, even during light review.
 
 ## Caps
 
@@ -62,7 +71,7 @@ waits 5m and does **not** post. Red CI still DEFERS.
 | Codegraph / caller queries | 8 | 3 |
 | Findings published | 10 (blockers first) | 10 |
 | Nits published | 5, collapsed block, never inline | 5 |
-| Neighbour test files | only when new logic has no test in the diff | same |
+| Neighbour test files | inspect changed exports' tests and API contract mocks, within existing file/query caps | same |
 | Critic (risk=high only) | 1 spawn, 4 Reads, 2 new blockers | same |
 
 Large PR (`additions + deletions > 2500` or `changedFiles > 25`): keep the caps,

@@ -8,11 +8,19 @@ Pending required checks never produce a GitHub artifact. Chat only.
 
 `ci_overall` uses **required** checks only:
 
-- Jobs from the workflow named `CI`
+- Build, test, lint and typecheck jobs from the repo's CI workflows, including
+  workflows named `Build`, `Playwright` or similar, not just a literal `CI`
 - Plus any check GitHub marks required on the branch
 
-Ignore review bots. A pending bot check does not start this loop and does not
-block APPROVE. Bot reviews wait in developer `bot_review`, not here.
+An empty branch-protection required-check list does not waive build/tests.
+Inspect workflow branch/path filters and skipped job/step conditions; only
+executed checks supply evidence. Optional unrelated jobs do not gate approval.
+
+Ignore review-bot check statuses for this CI loop. Their review comments and
+AI QA findings still gate approval through [PREFLIGHT.md](references/PREFLIGHT.md).
+Required-check success must include actual build/test execution on the reviewed
+head. Empty, skipped, neutral, stale or unverifiable jobs are `unknown`, never
+green. Check workflow filters against `baseRefName`, especially `feature/*`.
 
 ## State
 

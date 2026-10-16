@@ -33,7 +33,8 @@ left unverified because of a cap is declared and forces **DEFER**, never APPROVE
 
 ## 8. Verdict
 
-Reaching this section means §3 passed, so CI is green — unless `--force` was used.
+Refresh [PREFLIGHT.md](../references/PREFLIGHT.md). Reaching this section does
+not prove that earlier CI or review-context evidence is still current.
 
 Carried findings that still reproduce (§4.2) count exactly like new ones. APPROVE
 requires zero surviving findings, new **and** carried.
@@ -42,17 +43,26 @@ requires zero surviving findings, new **and** carried.
 |---|---|
 | ≥1 blocker (new or carried) | **REQUEST_CHANGES** |
 | ≥1 major (new or carried), 0 blocker | **REQUEST_CHANGES** |
-| clean, full coverage, CI green | **APPROVE** |
+| clean, room blocked or unknown | **DEFER** `reason=review_context\|review_context_unknown` |
+| clean, sensitive paths or behavior | **DEFER** `reason=human_signoff`, "needs human sign-off" |
+| head moved and delta not reviewed | re-review delta; if unable, **DEFER** `reason=head_changed` |
+| clean, full coverage, room clear, no human gate, CI proven on reviewed live head | **APPROVE** |
 | clean, full coverage, CI not green (`--force` run) | **DEFER** `reason=ci_red\|ci_pending\|ci_unknown`, marker keeps `pass=deep\|light` |
 | clean, coverage incomplete | **DEFER** `reason=coverage` |
 | blocker-level uncertainty | **DEFER** `reason=uncertainty` |
-| empty diff, CI green | **APPROVE**, body says no code changes |
+| empty diff, all approval gates above pass | **APPROVE**, body says no code changes |
+
+Critical/High maps to blocker/major, including any such finding in our inline
+comments or body. The final payload cannot contain those severities alongside
+APPROVE. Body findings rejected only for inline placement still count.
 
 ### 8.1 Promote
 
 All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*`, its
 marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0`, `open=-`. Then
-post APPROVE whose body links the earlier comment. First line: "I already
+re-run every approval gate, including room, human sign-off and head-bound CI.
+Older markers without preflight/one-hop evidence require a fresh deep pass.
+Only then post APPROVE whose body links the earlier comment. First line: "I already
 reviewed this SHA while CI was still running. Checks are green now, so this is
 the approve." Marker keeps the prior `pass=` and adds `reason=promote`.
 

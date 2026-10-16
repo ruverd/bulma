@@ -19,16 +19,22 @@ Write both under `$BULMA_ROOT/.bulma-code-review/`:
 gh pr diff "$PR" --repo "$REPO"
 ```
 
-**Light** — incremental diff only:
+Save the full PR path list as `PR_FILES.txt` for the human-signoff gate in
+[PREFLIGHT.md](../references/PREFLIGHT.md). Use paginated
+`gh api "repos/$REPO/pulls/$PR/files?per_page=100" --paginate`, including
+`previous_filename` for renames. Incomplete file evidence blocks approval.
+
+**Light** — incremental diff only, between exact commits:
 
 ```bash
-gh api "repos/$REPO/compare/$OLD_SHA...$HEAD_SHA" \
-  --jq '.files[] | {filename, status, additions, deletions, patch}'
+git diff "$OLD_SHA..$HEAD_SHA"
 ```
 
-Join the compare patches into `PATCH.diff` (same paths as `FILES.txt`).
-`404` or missing SHA (force-push, rebase) → fall back to the full `gh pr diff`,
-note `stale_base` in the chat summary, and treat the pass as light anyway.
+Fetch the exact commits into the review checkout first. Save the unified diff
+as `PATCH.diff` and its changed paths as `FILES.txt`. Missing old SHA or a
+force-push/rebase → full PR diff and **deep** pass, noting `stale_base` in chat.
+Read source from `HEAD_SHA`, never from a moving branch or unrelated checkout.
+Verify the PR head before and after fetching its diff; retry if it moved.
 
 ## 4.1 Risk
 

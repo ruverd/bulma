@@ -18,8 +18,13 @@ init | waiting_ci | reviewing | published | deferred | done
 | `pr` | `<owner>/<repo>#<N>` |
 | `pr_url` | full URL |
 | `sha` | head SHA at the time of the pass |
+| `reviewed_sha` | full SHA whose diff, callers and contracts were actually reviewed; never advance without reviewing the delta |
+| `base_sha` | base SHA used for this pass; a base change invalidates the full PR diff |
+| `review_context` | clear \| blocked \| unknown; evidence and concern URLs live in preflight files |
+| `human_signoff` | required \| not_required; sensitive paths from the full PR file list |
+| `ci_evidence` | run/check IDs, links, SHA and execution results; local tests recorded separately |
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
-| `ci` | pending \| green \| red |
+| `ci` | pending \| green \| red \| unknown |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
 | `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER |
 | `defer_reason` | set whenever `verdict=DEFER` (CI red, draft, conflict) |
@@ -43,8 +48,9 @@ skip | ran
 
 ## Rules
 
-- One artifact per PR per SHA. Re-running on an unchanged SHA does not publish
-  a second review.
+- One artifact per PR per pass. Re-running with an unchanged SHA and unchanged
+  evidence does not duplicate an artifact. New concerns, a legacy marker needing
+  revalidation, or a valid CI promotion can require a new verdict on that SHA.
 - `waiting_ci` never posts to the PR. It waits, then reviews on green.
 - A DEFER is recorded with its reason. It is not an APPROVE with caveats.
 

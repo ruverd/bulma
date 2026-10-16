@@ -43,6 +43,9 @@ assert_risk high src/auth/login.ts
 assert_risk high src/db/migrations/001_init.sql
 assert_risk high apps/api/src/billing/invoice.ts
 assert_risk high src/sessionStorage.ts
+assert_risk high .github/workflows/build.yml
+assert_risk high terraform/environments/dev/main.tf
+assert_risk high src/seatLimits.ts
 assert_risk low src/author/page.tsx
 assert_risk low src/components/Button.tsx
 assert_risk low README.md
@@ -82,6 +85,16 @@ diff --git a/src/db.ts b/src/db.ts
 EOF
 assert_risk low --files-from "$TMP/FILES.txt" --patch "$TMP/comment.patch"
 ok classify-risk
+
+python3 "$RISK" --human-signoff \
+  .github/workflows/build.yml terraform/dev/main.tf infra/main.tf.json \
+  src/auth/login.ts src/billing/plan.ts src/seatLimits.ts src/secrets.ts \
+  .env.production keys/deploy.pem src/author/page.tsx src/secretary.ts \
+  src/components/Button.tsx prisma/schema.prisma >"$TMP/human.json"
+assert_json "$TMP/human.json" "len(d) == 9 and 'src/seatLimits.ts' in d and 'src/author/page.tsx' not in d and 'prisma/schema.prisma' not in d"
+python3 "$RISK" --human-signoff --files-from "$TMP/FILES.txt" >"$TMP/no-human.json"
+assert_json "$TMP/no-human.json" "d == []"
+ok human-signoff-paths
 
 # --- bind-findings ---
 
@@ -176,5 +189,26 @@ grep -q 'Security / data loss' "$SKILL/nodes/critic.md" \
 grep -q 'Do not vote' "$SKILL/nodes/critic.md" || fail "critic.md must forbid voting findings off"
 grep -q -- '--churn' "$SKILL/nodes/fetch.md" || fail "fetch.md must pass churn into classify-risk"
 ok skill-contract
+
+python3 - "$SKILL" <<'PY' || fail "approval preflight contract"
+import pathlib, sys
+root = pathlib.Path(sys.argv[1])
+skill = (root / 'SKILL.md').read_text()
+assert "Other reviewers' state is ignored" not in skill
+preflight = (root / 'references/PREFLIGHT.md').read_text()
+for required in ('reviewThreads', 'pageInfo', 'in_reply_to_id', 'review_dismissed',
+                 'CI did not run', 'needs human sign-off', 'reviewed_sha == headRefOid',
+                 'Critical/High', '--paginate', 'PR_FILES.txt'):
+    assert required in preflight, required
+for node in ('pass_decision', 'gates', 'verdict', 'publish'):
+    assert 'PREFLIGHT.md' in (root / f'nodes/{node}.md').read_text(), node
+publish = (root / 'nodes/publish.md').read_text()
+assert publish.index('PREFLIGHT.md') < publish.index('-X POST')
+assert '## ✅ Approved:' not in publish.split('```markdown', 1)[1].split('```', 1)[0]
+assert 'reviews/$REVIEW_ID' in publish
+review = (root / 'nodes/review.md').read_text()
+assert '{ success, data }' in review and 'body findings' in review
+PY
+ok approval-preflight-contract
 
 echo "all passed"

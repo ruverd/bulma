@@ -1,20 +1,16 @@
 # 2. State → pass decision
 
 ```bash
-gh pr view "$PR" --repo "$REPO" --json number,title,body,state,isDraft,mergeStateStatus,headRefOid,baseRefName,headRefName,statusCheckRollup,additions,deletions,changedFiles
-
-gh api "repos/$REPO/pulls/$PR/reviews" --paginate \
-  --jq "[.[] | select(.user.login==\"$ME\") | {kind:\"review\", state, commit_id, at:.submitted_at, body}]"
-
-gh api "repos/$REPO/issues/$PR/comments" --paginate \
-  --jq "[.[] | select(.user.login==\"$ME\" and (.body|test(\"bulma-review:\"))) | {kind:\"comment\", state:\"DEFERRED\", at:.created_at, body}]"
+gh pr view "$PR" --repo "$REPO" --json number,title,body,state,isDraft,mergeStateStatus,headRefOid,baseRefName,baseRefOid,headRefName,reviewDecision,latestReviews,statusCheckRollup,additions,deletions,changedFiles
 ```
 
-Take the artifact with the latest timestamp. Parse its marker:
+Run [PREFLIGHT.md](../references/PREFLIGHT.md), then derive our prior artifacts
+from its cached reviews/comments. Filter by `$ME` only for this ledger, never
+for room evidence. Take our artifact with the latest timestamp. Parse its marker:
 
 ```
 <!-- bulma-review: v=1 pass=deep|light|none sha=<sha> blockers=<n> majors=<n> reason=<slug>
-     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran -->
+     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran preflight=1 -->
 ```
 
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
@@ -28,6 +24,9 @@ kebab-case labels of the finding title.
 
 A review without a marker (older tooling, manual review) still counts: use its
 `commit_id` as `sha` and its `state` as the verdict.
+Missing `preflight=1` or retained one-hop evidence cannot qualify for skip or
+promotion. Run a fresh deep pass under the new rules, preserving prior findings.
+`preflight=1` identifies this protocol; it does not mean the gates passed.
 
 | Last artifact | Decision |
 |---|---|
@@ -45,3 +44,7 @@ A second DEFER for a reason already posted on the same SHA is a duplicate artifa
 skip and report in chat instead. `ci_pending` is never posted; that path is wait_ci.
 
 Skip output is chat-only: state the reason and the SHA. Do not touch the PR.
+If fresh room evidence blocks a previous approval, do not silently skip: DEFER
+with the concern URLs. Reevaluate `review_context`, `review_context_unknown`,
+`human_signoff`, and `head_changed` deferrals on every run. Promotion always
+re-runs the full preflight, including sensitive paths and CI evidence.

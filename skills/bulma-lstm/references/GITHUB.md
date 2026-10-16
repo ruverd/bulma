@@ -1,6 +1,6 @@
 # GitHub (LSTM)
 
-One home for fetch / 👍 / reply / unslop / resolve / dismiss / re-request.
+One home for fetch / 👍 / reply / unslop / resolve / re-request.
 
 ## Fetch
 
@@ -34,7 +34,7 @@ reply.
 
 Load bundled `unslop`. Rewrite the body. Then POST. Never POST the
 first draft. English. Same rule for skip reasons, COMMENT reviews,
-and dismiss messages.
+and re-review requests.
 
 ## Reactions
 
@@ -90,24 +90,18 @@ mutation($id:ID!) {
 }' -F id="$THREAD_ID"
 ```
 
-## Dismiss CHANGES_REQUESTED
+## Preserve CHANGES_REQUESTED
 
-After 👍 + reply (and resolve if a fix landed), dismiss that review
-so required-review is not left `CHANGES_REQUESTED`.
-
-```bash
-gh api -X PUT "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID/dismissals" \
-  -f message="$MSG" \
-  -f event='DISMISS'
-```
-
-`$MSG` is unslopped and short. Example: `Addressed in the latest commits.`
-Only `CHANGES_REQUESTED`. `COMMENTED` cannot be dismissed. 403: note
-in the report. Do not fake success.
+Never dismiss someone else's review. This includes a proven fix, an author
+reply saying "fixed", and a skip-only run. Keep the blocking review in place
+and ask its author to re-review the pushed fix SHA and evidence. A resolved
+inline thread does not withdraw the parent review's change request.
 
 ## Re-request (fix landed)
 
-After dismiss.
+After the fix is pushed and **prove** passes, reply with the SHA and evidence,
+then request the original reviewer again. If GitHub rejects the request,
+report it and leave the block intact; do not use dismissal as a fallback.
 
 ```bash
 gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers" \
