@@ -23,6 +23,10 @@ Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
 context before pass selection and again before publication, pins the reviewed
 head, verifies CI execution and requires human sign-off for sensitive changes.
 Never dismiss another review or approve over an open concern.
+Review preserves the user's checkout. Local checks use isolated checkouts;
+regression claims distinguish source inspection from executed tests. Changes
+that depend on another deployment include counterpart and rollout checks via
+the engine's [evidence rules](../bulma-code-review/references/EVIDENCE.md).
 Its approval and changes-requested bodies include a `Model` row identifying
 the executing reviewer, or `unknown` when the runtime exposes no identity.
 Second review while main is busy → worktree + `general-purpose`

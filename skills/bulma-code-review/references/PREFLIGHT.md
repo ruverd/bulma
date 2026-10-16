@@ -92,8 +92,10 @@ Review-bot *statuses* are excluded from CI; their *comments* remain review
 evidence above.
 
 When CI did not execute, say **"CI did not run"**. Optionally run the relevant
-tests on the exact head and record command, exit code, SHA and scope as local
-test evidence. Local tests do not relabel CI as green or bypass required CI.
+tests on the exact head in an isolated checkout under
+[EVIDENCE.md](EVIDENCE.md), after inspecting changed execution paths. Record
+command, exit code, SHA and scope as local test evidence. Local tests do not
+relabel CI as green or bypass required CI.
 `--force` permits code inspection with unknown CI, never approval.
 
 ## Sensitive changes

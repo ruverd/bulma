@@ -62,6 +62,11 @@ waits 5m and does **not** post. Red CI still DEFERS.
 15. **Sensitive paths need human sign-off.** Workflows, Terraform, auth,
     billing/seats and secrets never receive auto-approval. Use the full PR
     file list, including renames, even during light review.
+16. **Preserve the checkout.** Review through pinned source reads. Never edit,
+    stage, switch, stash, reset, clean, rebase or move existing branches in the
+    user's checkout. Fetch commits and run checks in an isolated review
+    checkout. Inspect changed scripts and configuration before executing them.
+    Follow [EVIDENCE.md](references/EVIDENCE.md) for test and rollout proof.
 
 ## Caps
 
@@ -101,6 +106,7 @@ pass loads only what it needs.
 | Reference | File |
 |---|---|
 | Voice and wording | [references/VOICE.md](references/VOICE.md) |
+| Isolated checks, regression and rollout evidence | [references/EVIDENCE.md](references/EVIDENCE.md) |
 | Chat summary shape | [references/CHAT.md](references/CHAT.md) |
 | Failure modes | [references/FAILURES.md](references/FAILURES.md) |
 | Graph and edges | [GRAPH.md](GRAPH.md) |
