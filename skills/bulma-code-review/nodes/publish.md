@@ -4,6 +4,8 @@ Run [PREFLIGHT.md](../references/PREFLIGHT.md) immediately before POST, includin
 promotion and any retry. A changed head returns to review; refresh room and
 CI evidence too. Use the same checked SHA in `commit_id`, STATE and the marker.
 Never approve while body or inline comments raise a Critical/High.
+Pending CI returns to **wait_ci** without POST, even with findings or `--force`.
+A retained analysis is never approval authorization; preflight and gate.py still run.
 
 ### Review (APPROVE / REQUEST_CHANGES)
 

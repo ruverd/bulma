@@ -389,9 +389,12 @@ root = pathlib.Path(sys.argv[1])
 skill = (root / 'SKILL.md').read_text()
 assert "Other reviewers' state is ignored" not in skill
 preflight = (root / 'references/PREFLIGHT.md').read_text()
-for required in ('reviewThreads', 'pageInfo', 'in_reply_to_id', 'review_dismissed',
+collector = (root / 'scripts/snapshot.py').read_text()
+for required in ('reviewThreads', 'pageInfo', '--paginate'):
+    assert required in collector, required
+for required in ('in_reply_to_id', 'review_dismissed',
                  'CI did not run', 'needs human sign-off', 'reviewed_sha == headRefOid',
-                 'Critical/High', '--paginate', 'PR_FILES.txt'):
+                 'Critical/High', 'PR_FILES.txt'):
     assert required in preflight, required
 for node in ('pass_decision', 'gates', 'verdict', 'publish'):
     assert 'PREFLIGHT.md' in (root / f'nodes/{node}.md').read_text(), node
@@ -414,3 +417,5 @@ PY
 ok approval-preflight-contract
 
 echo "all passed"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_review_snapshot.py"

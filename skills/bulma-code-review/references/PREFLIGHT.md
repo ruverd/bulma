@@ -12,29 +12,17 @@ The §2 PR snapshot includes the full `headRefOid`, `baseRefName`,
 Fetch all authors, including AI QA and bots, not just `$ME`:
 
 ```bash
-REVIEW_DIR="$BULMA_ROOT/.bulma-code-review"
-mkdir -p "$REVIEW_DIR"
-gh api "repos/$REPO/pulls/$PR/reviews?per_page=100" --paginate --slurp > "$REVIEW_DIR/reviews.json"
-gh api "repos/$REPO/issues/$PR/comments?per_page=100" --paginate --slurp > "$REVIEW_DIR/comments.json"
-gh api "repos/$REPO/pulls/$PR/comments?per_page=100" --paginate --slurp > "$REVIEW_DIR/inline.json"
-gh api "repos/$REPO/issues/$PR/timeline?per_page=100" --paginate --slurp > "$REVIEW_DIR/timeline.json"
-OWNER=${REPO%%/*}
-NAME=${REPO#*/}
-gh api graphql --paginate --slurp -f owner="$OWNER" -f name="$NAME" -F number="$PR" -f query='
-query($owner:String!, $name:String!, $number:Int!, $endCursor:String) {
-  repository(owner:$owner, name:$name) {
-    pullRequest(number:$number) {
-      reviewThreads(first:100, after:$endCursor) {
-        pageInfo { hasNextPage endCursor }
-        nodes {
-          id isResolved isOutdated
-          comments(first:1) { nodes { databaseId url author { login } body } }
-        }
-      }
-    }
-  }
-}' > "$REVIEW_DIR/threads.json"
+REVIEW_DIR="$BULMA_ROOT/.bulma-code-review/$REPO/$PR"
+python3 scripts/snapshot.py collect --repo "$REPO" --pr "$PR" --dir "$REVIEW_DIR"
 ```
+
+The collector fetches independent paginated endpoints concurrently, verifies the
+head and base stayed fixed, and writes `snapshot.json` last. Failure means unknown
+context; never use an older snapshot after a failed collection. Reuse the batch
+throughout this pass. It includes full files, patch, checks, statuses and threads.
+Keep STATE's `review_dir` set to this per-PR directory. Run the collector again
+immediately before publication; its success does not replace semantic preflight.
+
 
 REST files are arrays of pages; flatten before selecting. The first thread
 comment identifies its root; join `databaseId` to the fully paginated inline
@@ -72,8 +60,7 @@ from review state alone.
 full `HEAD_SHA` and the required-check definition in [LOOP.md](../LOOP.md):
 
 ```bash
-gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" --paginate --slurp > "$REVIEW_DIR/checks.json"
-gh api "repos/$REPO/commits/$HEAD_SHA/statuses?per_page=100" --paginate --slurp > "$REVIEW_DIR/statuses.json"
+# checks.json and statuses.json are already in the collected snapshot.
 gh run list --repo "$REPO" --commit "$HEAD_SHA" --limit 100 \
   --json databaseId,headSha,workflowName,status,conclusion,url
 # Inspect relevant workflow runs, including every build/test job:
@@ -110,8 +97,8 @@ patch list; save the complete list separately as `PR_FILES.txt`.
 ```bash
 AUTHOR=$(gh pr view "$PR" --repo "$REPO" --json author --jq '.author.login')
 AUTHOR_TYPE=$(gh api "repos/$REPO/pulls/$PR" --jq '.user.type')
-gh pr diff "$PR" --repo "$REPO" > "$REVIEW_DIR/PR_PATCH.diff"
-python3 scripts/classify-risk.py --human-signoff --files-from PR_FILES.txt \
+# PR_PATCH.diff and PR_FILES.txt come from the full collected snapshot.
+python3 scripts/classify-risk.py --human-signoff --files-from "$REVIEW_DIR/PR_FILES.txt" \
   --patch "$REVIEW_DIR/PR_PATCH.diff" --author "$AUTHOR" --author-type "$AUTHOR_TYPE" \
   > "$REVIEW_DIR/signoff.json"
 ```
