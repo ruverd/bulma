@@ -128,3 +128,5 @@ has 'observe.py --source fd --reviewer bulma-fd-quality' "$ROOT/skills/bulma-fea
 ok observations-fd
 
 echo "all passed"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_fix_groups.py"

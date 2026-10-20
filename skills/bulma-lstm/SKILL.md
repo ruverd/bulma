@@ -30,7 +30,7 @@ Busy main or 2+ PRs → worktree + `general-purpose` worker per PR.
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 
 Orchestrator does **not** write product code. **patch** spawns
-`bulma-fd-coder` (TDD). **prove** runs the fd reviewer (spec + quality)
+`bulma-fd-coder` per evidenced cause group (TDD), preserving per-comment acceptance. **prove** runs the fd reviewer (spec + quality)
 and tester before **reply**. Grill only when the fix is complicated.
 ASK last resort: [DECISION_POLICY.md](../bulma-feature-delivery/DECISION_POLICY.md).
 

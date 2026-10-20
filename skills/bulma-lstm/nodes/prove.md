@@ -56,3 +56,13 @@ sha: <head>
 
 Pass only when every fix slice has both verdicts pass and tester pass.
 Then **reply**.
+
+## Final group proof
+
+Run one independent fd reviewer over the final combined patch with all fix
+comments and their acceptance criteria. Produce a spec result per comment and a
+quality result for the patch. Execute tester on the union of affected areas;
+reuse only evidence accepted by `runtime.py check` with a complete environment
+fingerprint. Every comment must pass at the final tree, including comments whose
+group ran earlier. Failed comments return their group to patch. A new final tree
+invalidates affected proof and evidence before reply. Keep existing retry limits.

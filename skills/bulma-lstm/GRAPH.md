@@ -34,7 +34,8 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | patch | complicated and grill not done | **grill** |
 | grill | frontier empty | **patch** (coder) |
 | grill | ASK last resort | **stop** (`waiting_user`) |
-| patch | coder DONE / pushed | **prove** |
+| patch | coder DONE, more groups | **patch** (next group, sequential) |
+| patch | all groups DONE / pushed | **prove** (final combined tree) |
 | patch | coder NEEDS_CONTEXT | DECIDE or ASK last resort |
 | prove | spec_verdict=pass and quality_verdict=pass and tester pass | **reply** |
 | prove | either fail + loops left | **patch** |
