@@ -66,3 +66,7 @@ pass, or after residuals are logged.
 - Do not reopen grill as an interview.
 - Do not invent AC.
 - Do not skip because the spec looks long.
+
+Resolve spec and tickets through STATE paths. Compact mode points both at the
+same canonical contract; read it once and critique its decisions without expanding
+it into a second plan. Risk still controls whether this node runs.

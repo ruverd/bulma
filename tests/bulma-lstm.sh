@@ -58,13 +58,12 @@ fi
 has 'CHANGES_REQUESTED' "$LSTM/nodes/prove.md"
 ok prove-before-reply
 
-has "Never dismiss someone else's" "$LSTM/nodes/reply.md"
-has '5. Preserve' "$LSTM/nodes/reply.md"
+has 'Never dismiss an APPROVED review' "$LSTM/nodes/reply.md"
+has 'whose entire feedback' "$LSTM/nodes/reply.md"
 has 'requested_reviewers' "$LSTM/references/GITHUB.md"
-if grep -R -E -q '/dismissals|event=.DISMISS' "$LSTM"; then
-  fail "LSTM must request re-review, never call the dismissal API"
-fi
-ok preserve-reviewer-block
+has '/dismissals' "$LSTM/references/GITHUB.md"
+has 'Skip-only runs' "$LSTM/nodes/reply.md"
+ok proved-review-lifecycle
 
 # --- last loop is a fresh coder ---
 
@@ -128,3 +127,7 @@ has 'observe.py --source fd --reviewer bulma-fd-quality' "$ROOT/skills/bulma-fea
 ok observations-fd
 
 echo "all passed"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_fix_groups.py"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_review_actions.py"

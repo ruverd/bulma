@@ -96,7 +96,8 @@ code_graph_explore  →  "<ChangedSymbol> <OtherSymbol> callers"
 ```
 
 `code_graph_explore` is an Optional MCP capability
-([bulma-host](../../bulma-host/SKILL.md)). Absent → `Grep` the symbol name,
+([bulma-host](../../bulma-host/SKILL.md)). Absent → use the host Trail Code adapter when a fresh map exists; otherwise
+`Grep` the symbol name,
 same cap. Then check (`axis: correctness`):
 
 - signature, prop, return-shape or enum change that its callers do not handle

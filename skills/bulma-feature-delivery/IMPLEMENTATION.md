@@ -36,20 +36,21 @@ If the coder wants a different design: `NEEDS_CONTEXT`. Parent DECIDE from spec 
 
 ## After each ticket
 
-1. Orchestrator runs the ticket's test command. Exit code into `.bulma-feature-delivery/gates.log`. Red → re-dispatch coder (≤ `test_fix_loops`).
-2. Fresh `bulma-fd-reviewer`. Diff + done criteria + `gates.log` + the same
-   recurring-lessons block the coder got. Either
-   `spec_verdict` or `quality_verdict` fail → same ticket (≤ `review_fix_loops`).
-   Graph pass only if both pass. Last remaining loop: **fresh** coder.
-   Earlier loops re-dispatch the same coder.
-3. Loops exhausted → ticket `blocked` + escalate. Never skip ahead.
-4. Tester hard gate after the ticket (or after the last ticket, per GRAPH).
-5. UI ticket (`qa_tool=agent-browser`) and `risk=elevated`: capture After
-   of this ticket's route ([evidence.md](nodes/evidence.md) §Ticket After)
-   before the next ticket. Missing After fails the ticket. Not a second QA
-   execute. Skip on `low` / `normal` and on non-UI.
-6. Next ticket only after this one passed review + tester (and ticket After
-   when step 5 applies).
+1. Run blast when required, then quality on the ticket's final implementation.
+   Focused mode reuses the coder; deep mode uses a quality worker.
+2. Fresh `bulma-fd-reviewer` receives diff, done criteria, existing TDD evidence
+   and recurring lessons. Either verdict fail returns to the same ticket within
+   `review_fix_loops`. Last remaining loop: **fresh** coder.
+3. Tester executes the required commands once on the reviewed tree. Identical
+   deterministic local checks may reuse evidence via bulma-bus PERFORMANCE.md.
+   A failed check returns to implement within `test_fix_loops`.
+4. UI + risk=elevated: capture Ticket After before the next ticket. Final evidence
+   is recaptured after all code changes, on the validated tree.
+5. Start the next ticket only after this ticket passed review and tester. Any
+   edit affecting an earlier ticket requires its acceptance to be rechecked.
+   After the last ticket, review affected cross-ticket contracts and validate
+   the combined tree before final evidence and shipper.
+6. Exhausted loops escalate. Never skip ahead or use stale evidence.
 
 ## MCP precondition
 

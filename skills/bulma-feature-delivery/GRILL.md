@@ -9,16 +9,26 @@ ASK is last resort: very important **and** high uncertainty, after lookup.
 
 ## Goal
 
-Walk the design tree until the frontier is empty. For each question: look it up, recommend, **apply**. Do not interview the user through the tree.
+Resolve decisions required to implement the acceptance criteria. Start with one
+bounded discovery pass on the touched subsystem. Do not interview through an
+open-ended design tree or explore alternatives with no implementation consequence.
 
 ## Loop
 
-1. Compute the frontier.
-2. For each item, look it up (`how`, the tracker, neighbor code, CLAUDE.md). Never ask a fact. Load `why` only if that still leaves a last-resort design fork.
-3. Write a recommendation.
-4. **DECIDE**, log, recompute frontier. Chat one line in the S/D/P rollup.
-5. ASK only if the last-resort test passes. One question. `waiting_user`. Next user message (or `/bulma-developer resume`) is the answer. Continue. Do not restart.
-6. Frontier empty → **spec**. Never "close the grill?".
+1. List acceptance criteria, existing patterns, contracts, risks and unresolved
+   implementation decisions. Read each relevant source once.
+2. Run `scripts/plan-shape.py --risk <risk> --files <estimated behavioral files>
+   --units <vertical slices>` with `--cross-contract`, `--structural` and
+   `--uncertain` when those facts apply. Unknown facts mean `--uncertain`.
+3. Write the selected design and test plan. DECIDE reversible details from repo
+   patterns. Record evidence in STATE decisions.
+4. Continue discovery only for a named unresolved decision that changes behavior,
+   a contract, testability or a hard-to-reverse choice. Record that decision and
+   the evidence sought before another lookup. No new round for wording or polish.
+5. ASK only under DECISION_POLICY when that decision remains important and highly
+   uncertain. Stop at `waiting_user`; otherwise resolve it and continue.
+6. Decisions needed for implementation resolved → **spec**. Budget exhaustion is
+   not resolution: escalate or ASK under policy if a blocking decision remains.
 
 Most runs never hit step 5.
 
@@ -68,5 +78,16 @@ Feel, layout, "one page or three": prototype, then DECIDE the smaller option tha
 
 ## Done
 
-Frontier empty → spec. Short chat-language rollup of decisions.
+Implementation decisions resolved → spec. Short chat-language rollup of decisions.
 Append rows to `decisions.tsv` (bundled `show-me-your-work` TSV format).
+
+## Compact contract
+
+For `plan_mode=compact`, keep one canonical `TICKETS.md` containing a short design
+preamble and one `## Ticket 1:` section in the standard ticket format. Include
+acceptance, reuse paths, contracts/risks, decisions, RED/GREEN and files. Set
+`spec_path` and `tickets_path` to this same file. Spec synthesizes it; tickets
+validates it without rewriting. Detailed mode retains separate SPEC and TICKETS.
+All downstream readers use STATE paths, including dispatch, plan critic and resume.
+Expand to detailed if discovery or implementation exposes another independent
+slice, unknown contract or elevated risk. Existing resumes keep their format.

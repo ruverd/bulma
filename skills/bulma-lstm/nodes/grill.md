@@ -13,7 +13,7 @@ Walk the tree internally. Look it up. **DECIDE**. Log in STATE
 after lookup. One question, English, `waiting_user`. Do not interview
 through the tree.
 
-This is not a feature delivery. Frontier empty → **patch**, never spec,
+This is not a feature delivery. Implementation decisions resolved → **patch**, never spec,
 never tickets, never a new PR.
 
 Load `how` for the subsystem you will touch, not the monorepo. `why`

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import os
 import re
@@ -24,6 +25,7 @@ from pathlib import Path
 
 # Skills install as plain folders: keep __pycache__ out of them.
 sys.dont_write_bytecode = True
+import decision_cache
 import dispatch  # noqa: E402  (sibling module, after the bytecode switch)
 
 API = "https://api.typesafe.ai/v1"
@@ -700,8 +702,20 @@ def prepare(hook, state, cfg, power_flag, model, criteria):
 def ask_one(hook, request, thresholds, doc, replay, graph_answers, context):
     """Send one prepared request (or read a replay). Returns (doc, ledger rows, exit code)."""
     started = time.monotonic()
+    policy = hashlib.sha256(CATALOG_PATH.read_bytes() + Path(__file__).read_bytes()
+                            + Path(decision_cache.__file__).read_bytes()).hexdigest()
+    key = None if replay else decision_cache.cache_key(
+        hook, request, thresholds, doc, graph_answers, context, policy)
+    folder = bulma_home() / "jev-cache"
+    response = decision_cache.read(folder, key)
+    if response is not None and not all(
+            isinstance((response.get("answers") or {}).get(qid), dict) for qid in hook["questions"]):
+        response = None
+    hit = response is not None
+    doc["cache_hit"] = hit
     try:
-        response = load_json_file(replay) if replay else post_json("/systemone", request)
+        if not hit:
+            response = load_json_file(replay) if replay else post_json("/systemone", request)
     except BulmaError as err:
         if err.code != 3:
             raise
@@ -722,8 +736,12 @@ def ask_one(hook, request, thresholds, doc, replay, graph_answers, context):
         if not judged["act"]:
             judged["fallback"] = hook["fallback"]
         doc["answers"][qid] = judged
-    doc["usage"] = response.get("usage", {})
-    return doc, rows_for(doc, hook, thresholds, graph_answers, context, "truncated" if doc["truncated"] else ""), 0
+    doc["usage"] = {"input_tokens": 0} if hit else response.get("usage", {})
+    complete = all(qid in (response.get("answers") or {}) for qid in hook["questions"])
+    if not hit and not replay and complete:
+        decision_cache.write(folder, key, response)
+    note = "cache_hit" if hit else "truncated" if doc["truncated"] else ""
+    return doc, rows_for(doc, hook, thresholds, graph_answers, context, note), 0
 
 
 def find_hook(catalog, hook_id):
@@ -973,7 +991,8 @@ def cmd_report(args):
         return 0
     groups = {}
     for row in rows:
-        groups.setdefault((row["hook"], row["question"]), []).append(row)
+        if row["note"] != "cache_hit":
+            groups.setdefault((row["hook"], row["question"]), []).append(row)
     print("| hook.question | n | acted% | conf | agree% | reversed | act_at | suggest |")
     print("|---|---|---|---|---|---|---|---|")
     for (hook, question), items in sorted(groups.items()):
@@ -994,6 +1013,9 @@ def cmd_report(args):
     calls = {}
     for row in rows:
         calls.setdefault(row["decision_id"], row)
+    cache_hits = sum(r["note"] == "cache_hit" for r in calls.values())
+    if cache_hits:
+        print("decision cache: %d hits, %d fresh/replayed decisions" % (cache_hits, len(calls) - cache_hits))
     tokens = [int(r["input_tokens"]) for r in calls.values() if r["input_tokens"].isdigit()]
     latencies = sorted(int(r["latency_ms"]) for r in calls.values() if r["latency_ms"].isdigit())
     if tokens or latencies:

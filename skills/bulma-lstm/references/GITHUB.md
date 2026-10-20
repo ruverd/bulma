@@ -90,20 +90,70 @@ mutation($id:ID!) {
 }' -F id="$THREAD_ID"
 ```
 
-## Preserve CHANGES_REQUESTED
+## Plan the remaining review actions
 
-Never dismiss someone else's review. This includes a proven fix, an author
-reply saying "fixed", and a skip-only run. Keep the blocking review in place
-and ask its author to re-review the pushed fix SHA and evidence. A resolved
-inline thread does not withdraw the parent review's change request.
+Build `review-actions.json` under the LSTM state directory from fresh fully
+paginated reviews, the live head, requested reviewers and prove output:
 
-## Re-request (fix landed)
+```json
+{
+  "pr_state": "OPEN",
+  "head": "full head SHA",
+  "proof_sha": "same full head SHA",
+  "proof_pass": true,
+  "code_changed": true,
+  "review_decision": "CHANGES_REQUESTED",
+  "original_reviewers": ["reviewer-login"],
+  "requested_reviewers": [],
+  "addressed_review_ids": [123],
+  "reviews": []
+}
+```
 
-After the fix is pushed and **prove** passes, reply with the SHA and evidence,
-then request the original reviewer again. If GitHub rejects the request,
-report it and leave the block intact; do not use dismissal as a fallback.
+`reviews` is the flattened REST list, including id, state, user.login and
+submitted_at. `code_changed` compares the run's starting code/tree with its
+pushed final tree, not merely two commit SHAs. `addressed_review_ids` includes
+only reviews whose complete body and inline findings have final proof. A scoped
+comment URL does not establish that its parent review is fully addressed.
 
 ```bash
-gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers" \
-  -f "reviewers[]=$LOGIN"
+python3 scripts/review-actions.py "$BULMA_ROOT/.bulma-lstm/review-actions.json"
 ```
+
+This prints a plan, not an authorization to use stale evidence. Re-fetch HEAD
+and each target review before a mutation; head drift returns to verify/prove.
+Permission denial stays pending. Never change branch protection to make it work.
+
+## Dismiss a fully addressed change request
+
+After replies, summary and resolved fixed conversations, dismiss each planned
+active CHANGES_REQUESTED review with a message citing fix SHA and proof:
+
+```bash
+gh api -X PUT "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID/dismissals"   -f message="$DISMISS_REASON"
+```
+
+Store confirmed DISMISSED review IDs. Never dismiss APPROVED reviews or unresolved
+feedback. A dismissal is administrative cleanup, not the original reviewer's
+approval. The review engine still requires that reviewer to clear their concern.
+
+## Re-request after changes, unless approved
+
+Refresh reviews and `reviewDecision` after dismissal. Recompute the action plan.
+Only request when code changed, prove passed, neither the original reviewer's
+latest decisive state nor overall reviewDecision is APPROVED, and no request is
+already pending. On resume also check the reviewer+SHA request ledger.
+
+```bash
+gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers"   -f "reviewers[]=$LOGIN"
+```
+
+Record failures and leave them pending; do not repeatedly notify or claim success.
+Do not send a new request for a skip-only run or for an approved reviewer.
+
+## Summary idempotency
+
+Use `<!-- bulma-lstm: sha=<full SHA> comments=<hash of sorted analyzed IDs> -->`
+in the COMMENT summary. Search existing review bodies and issue comments before
+POST on resume or uncertain network failure. Reuse the existing summary URL.
+Do not use this marker to skip missing per-comment replies or resolutions.

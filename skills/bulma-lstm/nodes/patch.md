@@ -28,10 +28,13 @@ Grill ASK → `waiting_user`, stop. Resume continues here.
 ## Coder
 
 Follow [implement.md](../../bulma-feature-delivery/nodes/implement.md) +
-[TDD.md](../../bulma-feature-delivery/TDD.md). One should-fix slice at a
-time. Fresh `bulma-fd-coder` per slice.
+[TDD.md](../../bulma-feature-delivery/TDD.md). One verified cause group at a time from `groups.json`. Fresh `bulma-fd-coder`
+per group; related comments share discovery and one coherent implementation.
+Groups execute sequentially on the same branch. Never parallelize overlapping
+writes. Reuse that coder for corrections, except the final retry uses a fresh one.
 
-Inject: finding + disposition, grill decisions if any, file whitelist,
+Inject: all group comments + dispositions + per-comment acceptance, cause evidence,
+grill decisions if any, file whitelist,
 TDD RED/GREEN, same branch. Spawn payload:
 [bulma-host](../../bulma-host/SKILL.md) `spawn_worker`. Forbidden:
 GRAPH.md, `why`, parent tool catalog, production code before RED,
@@ -48,3 +51,9 @@ Before → After section matches HEAD.
 [evidence.md](../../bulma-feature-delivery/nodes/evidence.md).
 
 Then **prove**. Do not **reply** from this node.
+
+Record the group's resulting tree, commands and evidence paths. A later group
+that changes an earlier group's code invalidates its affected proof. Complete
+all groups before final prove; proof checks every fix comment on the final tree.
+Use [runtime evidence](../../bulma-bus/PERFORMANCE.md) to reuse only identical
+local test executions. Grouping never marks a comment processed or replied.

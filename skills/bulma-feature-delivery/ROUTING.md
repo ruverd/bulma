@@ -70,8 +70,8 @@ On fullstack, `path` applies **per worker**.
 ### `full_feature`
 
 ```
-triage → grill → spec → tickets → plan_critic → implement* (TDD) → review → tester
-       → evidence → blast → quality (thermo) → shipper → ci_watch
+triage → grill → spec → tickets → plan_critic → implement* (TDD) → blast → quality → review → tester
+       → evidence → shipper → ci_watch
 ```
 
 `plan_critic` skips when `risk=low`. Main-thread scan when `normal`. Spawn when `elevated`.
@@ -81,18 +81,18 @@ Use when: new feature, multi-file design still open. Auth/billing/contract as **
 ### `debug_fix`
 
 ```
-triage → diagnose → one ticket (RED repro) → implement → review → tester
-       → evidence → blast → quality → shipper → ci_watch
+triage → diagnose → one ticket (RED repro) → implement → blast → quality → review → tester
+       → evidence → shipper → ci_watch
 ```
 
-Skip grill and multi-ticket split. Do **not** skip root cause, TDD, review, thermo.
+Skip grill and multi-ticket split. Do **not** skip root cause, TDD, review, quality.
 
 Iron law: no product fix before root cause.
 
 ### `light_change`
 
 ```
-triage → one ticket → implement → review → tester → evidence → quality → shipper
+triage → one ticket → implement → blast? → quality → review → tester → evidence → shipper
 ```
 
 Skip grill. Skip blast unless `risk=elevated`. Still a subagent for product code. Docs-only outside `src/` may be edited on the main thread.
@@ -115,7 +115,7 @@ Read-only diagnose. `done_report`. No PR. If it is a bug, re-route `debug_fix`. 
 | tester | yes | yes | yes |
 | evidence | yes | yes | yes |
 | blast-radius | yes | yes | no, unless `risk=elevated` |
-| thermo fix all | yes if ship | yes if ship | yes if ship |
+| quality before review | focused or deep by actual risk/structure | same | same |
 
 ## Anti-patterns
 
@@ -125,5 +125,5 @@ Read-only diagnose. `done_report`. No PR. If it is a bug, re-route `debug_fix`. 
 - Spawning plan_critic on a bug, or on every full_feature
 - Quick fix of a bug with no diagnose
 - Skipping TDD because "I reproduced it by hand"
-- Skipping thermo when a PR will open
+- Skipping independent review/tests because quality already ran
 - Staying on debug_fix after you found a missing feature

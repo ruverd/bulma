@@ -11,7 +11,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
   → grill?           # complicated should-fix only
   → patch            # bulma-fd-coder + TDD, same branch
   → prove            # spec_verdict + quality_verdict + tester
-  → reply            # 👍 + unslopped reply on every comment, resolve fixed threads, request re-review; never dismiss
+  → reply            # 👍 + unslopped reply on every comment, resolve fixed threads, dismiss proved change requests; re-request non-approved reviewers after changes
   → report
 ```
 
@@ -32,9 +32,10 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | verify | only skip / nits / nothing new | **reply** |
 | verify | unclear + last-resort ASK | **stop** (`waiting_user`) |
 | patch | complicated and grill not done | **grill** |
-| grill | frontier empty | **patch** (coder) |
+| grill | implementation decisions resolved | **patch** (coder) |
 | grill | ASK last resort | **stop** (`waiting_user`) |
-| patch | coder DONE / pushed | **prove** |
+| patch | coder DONE, more groups | **patch** (next group, sequential) |
+| patch | all groups DONE / pushed | **prove** (final combined tree) |
 | patch | coder NEEDS_CONTEXT | DECIDE or ASK last resort |
 | prove | spec_verdict=pass and quality_verdict=pass and tester pass | **reply** |
 | prove | either fail + loops left | **patch** |
