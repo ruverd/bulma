@@ -66,7 +66,7 @@ Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 | **light_change** | chore | one ticket → one coder |
 | **`scope: fullstack`** | FE and BE, sibling resolved | same branch, git worktrees ([FULLSTACK.md](FULLSTACK.md); Orca optional) |
 
-Ship: review → tester → evidence → blast (not light unless `risk=elevated`) → **thermo fix all** → commit → push → draft PR
+Ship: implement → blast when required → quality → review → tester → final evidence → commit → push → draft PR
 (reviewers and assignee: [PRODUCT.md](PRODUCT.md))
 → **CI 100% green** (only then **delivered**).
 
@@ -76,7 +76,7 @@ Ship: review → tester → evidence → blast (not light unless `risk=elevated`
 2. DECIDE micro-choices. ASK only last-resort policy.
 3. Bug: root cause **before** the fix. If it is a feature, re-route to grill.
 4. Implementation **only** in a subagent. Main does not edit product code.
-5. TDD on every behavior change. Thermo fix all before PR.
+5. TDD on every behavior change. Quality before independent review; deep thermo on elevated or structural changes.
 6. UI: DS of the repo; Figma if present; else copy recent same-type screens.
 7. Discover the repo first (PRODUCT.md). Critical tracker URL offline → error and stop. Local goal does not need a tracker.
 8. Blocker: advance what you can → Draft a tracker issue + contract comment → `waiting_blocker`.

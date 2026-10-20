@@ -6,6 +6,10 @@ Delivery **engine** inside [`/bulma-developer`](bulma-developer.md).
 Grill → spec → tickets → plan_critic (gated) → TDD implement → review → CI.
 The main thread still does not write product code.
 
+Small, known tasks use one canonical contract for spec and ticket. Elevated risk
+and structural changes use deep quality before independent review. Focused quality
+reuses the coder. On Codex, invoke `$bulma-feature-delivery` through its skill.
+
 Skill: [`../../skills/bulma-feature-delivery`](../../skills/bulma-feature-delivery).
 
 ## When
@@ -22,8 +26,8 @@ Prefer `/bulma-developer` when you also want MERGEABLE + QA after CI.
 ## Spine
 
 ```
-grill-with-docs → spec → tickets → plan_critic → implement (TDD) → review → tester
-  → blast (not light unless elevated) → quality → shipper → CI
+bounded decisions → spec → tickets → plan_critic → implement (TDD)
+  → blast when required → quality → review → tester → evidence → shipper → CI
 ```
 
 | Path | When |
@@ -49,7 +53,7 @@ Forge, tracker, toolchain, reviewers, assignee:
 - Merge.
 - Product edits on the main thread.
 - Skip TDD on a behavior change.
-- Skip quality `fix all` before the PR.
+- Edit product code after final validation without repeating affected checks.
 - Invent tracker AC when that URL cannot be read — stop. Local goal is fine without a tracker.
 
 ## Related

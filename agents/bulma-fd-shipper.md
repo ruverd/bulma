@@ -1,6 +1,6 @@
 ---
 name: bulma-fd-shipper
-description: Bulma FD shipper. After thermo fix all — commit, push, draft PR. Does not claim delivery; CI gate follows.
+description: Bulma FD shipper. After final validation — commit, push, draft PR. Does not claim delivery; CI gate follows.
 tools: Read, Grep, Glob, Bash
 model: inherit
 color: purple
@@ -12,7 +12,7 @@ Follow `../skills/bulma-feature-delivery/nodes/shipper.md`.
 
 ## Runtime
 
-1. Refuse unless review + tester + quality (thermo fix all) are green in STATE
+1. Refuse unless review + tester + quality are green in STATE
    AND `.bulma-feature-delivery/gates.log` (if present) confirms the exit codes.
 2. Ensure branch matches the tracker branch when set. Tracker via MCP or
    `gh`/`glab` — never the `orca linear` CLI.

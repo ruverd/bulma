@@ -162,8 +162,9 @@ Claude, Codex, Grok, and Cursor on one machine **share** that tree.
 ## Quality rubric
 
 `bulma-fd-quality` loads bundled
-`thermo-nuclear-code-quality-review` (`skills/thermo-nuclear-code-quality-review/`). Always run
-`fix all`. Do not skip.
+`thermo-nuclear-code-quality-review` in deep mode only. Follow
+[quality.md](../bulma-feature-delivery/nodes/quality.md) for depth and ordering.
+Focused quality reuses the coder; independent review and tester always follow.
 
 ## Product policy
 
