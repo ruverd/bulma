@@ -690,3 +690,5 @@ python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --repla
 ok ask-entry-no-autoroute
 
 echo "bulma gate: all green"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_decision_cache.py"
