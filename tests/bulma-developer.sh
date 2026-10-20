@@ -188,7 +188,7 @@ branch: feature/dev-1
 ---
 EOF
 out="$(bash "$WALK" "$TMP")"
-echo "$out" | grep -F -q '○blast' || fail "elevated light_change walk must include blast ($out)"
+echo "$out" | grep -F -q '✓blast' || fail "elevated light_change walk must include prior blast ($out)"
 if echo "$out" | grep -F -q 'plan_critic'; then
   fail "light_change walk must skip plan_critic ($out)"
 fi
@@ -215,3 +215,5 @@ grep -c '^### ' "$FDX/LESSONS.md" | grep -q -v '^0$' || fail "LESSONS.md has no 
 ok coder-lessons
 
 echo "all passed"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_feature_flow.py"

@@ -1,68 +1,43 @@
-# Node: quality (thermo-nuclear)
+# Node: quality
 
-**Verb:** harden
-**Capability:** read-write (fix code quality); **no** merge, **no** PR yet
-**Skill:** `thermo-nuclear-code-quality-review` + agent `thermo-nuclear-code-quality-review`
+**Verb:** harden the current ticket before independent review.
+**Capability:** coder or quality worker may edit; orchestrator never edits product code.
 
-## Mission
+Run after implement and blast when applicable, before review and tester. Scope
+is the current ticket's diff from its recorded starting tree plus affected
+contracts. Do not rescan unrelated completed tickets. A cross-ticket change
+invalidates their affected acceptance and requires final combined review.
 
-Before **any** final commit / push / PR: run the **thermo-nuclear code quality**
-audit on the branch diff and **apply every fix** (`fix all`).
-Only then does the shipper package.
+## Depth
 
-## When
+Run `scripts/plan-shape.py` on current diff facts, not just the original estimate.
+`risk=elevated`, changed cross-service/public contracts, structural boundary
+changes, or more than six touched behavioral files require `quality_mode=deep`.
+Missing classification evidence defaults to deep. Never downgrade risk from
+file count. Record mode and reason in STATE.
 
-After **blast** (or after **evidence** on `light_change`).
-Before **shipper**. Thermo `fix all` is still required before any PR.
+- `focused`: reuse the coder to check changed code against repository conventions,
+  remove duplication introduced by this ticket, and fix concrete defects. No
+  separate thermo worker or full-file structural audit. Independent review still
+  checks correctness, requirements, tests and applicable security/contracts.
+- `deep`: load bundled `thermo-nuclear-code-quality-review`, apply `fix all` to
+  actionable findings introduced or worsened by this change. One quality worker.
+  Keep unrelated refactors out of the task. Preserve behavior and TDD.
 
-## Steps
+Do not rerun the full tester here. Use targeted feedback while editing, then let
+review and tester validate the final result once. If a structural fix changes the
+implementation design, return NEEDS_CONTEXT to the orchestrator. A structural
+blocker with no safe correction returns blocked; never silently waive it.
 
-1. Load the branch diff and the touched files (orchestrator or this node):
-   - `git diff <base_branch>...HEAD` (and unstaged if not committed yet)
-   - contents of the touched files
-2. Invoke the thermo-nuclear review with the bundled skill
-   `thermo-nuclear-code-quality-review` (`skills/thermo-nuclear-code-quality-review/`). Always.
-   Do not skip.
-3. Required mode: **`fix all`**
-   - Do not only list findings.
-   - Apply **every** quality fix in the code (code judo, decomposition, anti-spaghetti, etc.).
-   - Preserve behavior and **TDD** (if you touch logic, keep tests green; adjust tests if needed without weakening them).
-4. Re-run the cheap hard gate (typecheck + unit of the area) after the fixes.
-5. Record each finding you fixed with
-   `../bulma-bus/scripts/observe.py --source fd --reviewer bulma-fd-quality`
-   (path from this skill's directory; fields in
-   [INSIGHTS.md](../../bulma-bus/INSIGHTS.md)). A failed write is a chat
-   note, never a reason to block.
-6. Update STATE:
-   - `## Quality (thermo-nuclear)`
-   - findings → fixed / remaining
-   - if a residual structural **blocker** has no safe fix → `result=blocked` (do not open a PR)
+Record each fixed finding with
+`../bulma-bus/scripts/observe.py --source fd --reviewer bulma-fd-quality`
+(path from this skill's directory; fields in
+[INSIGHTS.md](../../bulma-bus/INSIGHTS.md)). Observation failure never changes gates.
 
 ## Output
 
-```text
-result: ok | blocked
-findings_fixed: N
-findings_remaining: [...]
-hard_gate_after: pass | fail
-summary: ...
-```
-
-## Hard rules
-
-- **Forbidden** commit/push/PR in this node (shipper does that **after**).
-- **Forbidden** skipping with "lgtm without running".
-- **Forbidden** merge.
-- Do not invent features; structural quality on the diff only.
-- If `fix all` breaks tests and cannot recover in 1 cycle → blocked / back to coder (orchestrator).
-- Chat (`bulma-memory`) if you need to explain residual issues.
-
-## Orchestrator note
-
-Mental equivalent of what the user would run:
-
-```text
-/thermo-nuclear-code-quality-review fix all
-```
-
-Then: commit → push → draft PR (shipper).
+`result: ok | blocked`, `quality_mode: focused | deep`, reason,
+`findings_fixed`, remaining findings, and resulting tree identity.
+No commit, push, PR or merge here. Next node is independent **review**, then
+**tester**, then final **evidence**. Any subsequent product edit invalidates
+review, affected tests and visual evidence before shipping.

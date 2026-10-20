@@ -83,3 +83,10 @@ No preamble "I will now…".
 - MCP gate errors
 - Contract in the blocker comment
 - CI check names + links when red
+
+## Bounded execution
+
+Use plan-shape.py and GRILL.md for compact contracts. Quality edits happen before
+independent review/tester; final visual evidence follows the validated tree.
+Use [runtime evidence](../bulma-bus/PERFORMANCE.md) for captured logs and matching
+local checks. Paths in STATE are canonical, even when spec and tickets share a file.

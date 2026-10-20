@@ -51,3 +51,7 @@ question: ...  # if ask; speak in the chat language
 - Zero product code.
 - Always record path and risk (reviewer/shipper trust them).
 - Harmful doubt → short ASK, not full_feature "to be safe" on an obvious bug.
+
+Select initial plan/quality depth with `scripts/plan-shape.py` from known facts
+([GRILL.md](../GRILL.md)). Persist `plan_mode` and `quality_mode`; unknown scope
+is detailed. Recompute quality depth from actual diff before review.

@@ -48,18 +48,18 @@ case "$path" in
   full_feature)
     nodes+=(grill spec tickets)
     [[ "$risk" != low ]] && nodes+=(plan_critic)
-    nodes+=(implement review tester evidence blast quality ship ci)
+    nodes+=(implement blast quality review tester evidence ship ci)
     ;;
   debug_fix)
-    nodes+=(diagnose implement review tester evidence blast quality ship ci)
+    nodes+=(diagnose implement blast quality review tester evidence ship ci)
     ;;
   light_change)
-    nodes+=(tickets implement review tester evidence)
+    nodes+=(tickets implement)
     [[ "$risk" == elevated ]] && nodes+=(blast)
-    nodes+=(quality ship ci)
+    nodes+=(quality review tester evidence ship ci)
     ;;
   *)
-    nodes+=(implement review tester evidence quality ship ci)
+    nodes+=(implement quality review tester evidence ship ci)
     ;;
 esac
 

@@ -32,7 +32,7 @@ Load the skill, then follow the **adapted** node.
 | `figure-it-out` | diagnose, no narrower playbook | Then one fix slice |
 | `typescript-best-practices` / `no-comments` | review | `.ts` / `.tsx` |
 | `technical-writing` | spec, PR body | |
-| `thermo-nuclear-code-quality-review` | `quality` | Always `fix all`. Not optional. |
+| `thermo-nuclear-code-quality-review` | `quality` | Deep mode only, before review. Focused mode reuses coder; see nodes/quality.md. |
 | `principle-fix-root-causes` | `diagnose` | Symptom guards are off. |
 | `principle-sequence-verifiable-units` | `tickets` / `implement*` | One ticket, verify, then the next. |
 | `principle-prove-it-works` | `tester` | Real commands. A skip is not a pass. |

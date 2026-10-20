@@ -9,17 +9,16 @@ goal / resume
   → mcp_context
   → triage
        ├ scope=fullstack → fullstack (same branch, git worktrees; Orca optional) then this path per worker
-       ├ full_feature → grill → spec → tickets → plan_critic → implement* → review → tester
-       ├ debug_fix    → diagnose → one ticket → implement → review → tester
-       └ light_change → tickets (single) → implement → review → tester
+       ├ full_feature → grill → spec → tickets → plan_critic → implement* → blast? → quality → review → tester
+       ├ debug_fix    → diagnose → one ticket → implement → blast? → quality → review → tester
+       └ light_change → tickets (single) → implement → blast? → quality → review → tester
   → (more tickets? implement next)
   → evidence
-  → blast (skip on light_change unless risk=elevated)
-  → quality (thermo fix all)
   → shipper → ci_watch
 ```
 
-After all tickets pass tester, **evidence**, then blast and/or quality.
+Each ticket completes blast when applicable and quality before independent review
+and tester. After all tickets pass, capture final **evidence**, then ship.
 
 `implement*` is one fresh coder subagent **per ticket**. Verify the
 ticket before starting the next (bundled
@@ -43,7 +42,7 @@ are nodes (subagents where the adapter says so).
 | triage | path=debug_fix | **diagnose** |
 | triage | path=light_change | **tickets** (single) |
 | triage | path unclear | DECIDE the narrower path; ASK only last-resort policy |
-| grill | frontier empty | **spec** |
+| grill | implementation decisions resolved | **spec** |
 | grill | ungrillable | prototype, then DECIDE or ASK |
 | grill | ASK in flight | `waiting_user` **stop** |
 | spec | SPEC.md written | **tickets** |
@@ -55,7 +54,8 @@ are nodes (subagents where the adapter says so).
 | diagnose | root cause + fix slice | **implement** (one ticket) |
 | diagnose | this is a feature | re-route **grill** |
 | diagnose | ASK needed | `waiting_user` |
-| implement | DONE | **review** |
+| implement | DONE, not light_change or risk=elevated | **blast** |
+| implement | DONE, light_change and risk≠elevated | **quality** |
 | implement | NEEDS_CONTEXT / BLOCKED | ASK or escalate |
 | review | spec_verdict=fail or quality_verdict=fail + loops left | **implement** (same ticket) |
 | review | either fail + loops exhausted | **escalate** |
@@ -64,15 +64,15 @@ are nodes (subagents where the adapter says so).
 | tester | fail + loops exhausted | **escalate** |
 | tester | pass + more tickets | **implement** (next) |
 | tester | pass + no more tickets | **evidence** |
-| evidence | done + (not light_change or risk=elevated) | **blast** |
-| evidence | done + light_change + risk≠elevated | **quality** |
+| evidence | done, final tree matches validated tree | **shipper** |
+| evidence | product tree changed | **review** (then tester and evidence) |
 | blast | done | **quality** |
-| quality | ok | **shipper** |
+| quality | ok | **review** |
 | quality | blocked | **escalate** |
 | shipper | PR created | **ci_watch** |
 | shipper | `--no-pr` | `done_local` |
 | ci_watch | all green | **done** |
-| ci_watch | fail + loops left | **implement** (fix) → push → ci_watch |
+| ci_watch | fail + loops left | **implement** (fix, then quality/review/tester/evidence/shipper) |
 | ci_watch | loops exhausted | **escalate** |
 | plan/implement | missing contract or open blocker | **blocker_handler** |
 | blocker_handler | blocker Done | resume implement |
@@ -85,7 +85,7 @@ are nodes (subagents where the adapter says so).
 
 ```yaml
 open_pr: true
-thermo_nuclear: required_when_shipping
+thermo_nuclear: elevated_or_structural
 ci_green_required: true
 ci_fix_loops: 5
 review_fix_loops: 2
@@ -111,7 +111,7 @@ See [PSTACK.md](PSTACK.md). Grill is [GRILL.md](GRILL.md). Voice is [VOICE.md](V
 - Declaring **delivered** with CI red/pending
 - full_feature on every small bug
 - Main thread writing product code
-- PR without thermo `fix all`
+- Product changes after final review without revalidation
 - Shipping without TDD evidence on behavior change
 - Auto-merge
 - Interviewing the user through the grill tree

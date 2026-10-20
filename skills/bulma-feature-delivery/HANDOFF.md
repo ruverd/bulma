@@ -104,7 +104,7 @@ and the AC changed: re-read AC. Do not re-grill settled decisions unless an AC
 line contradicts a DECIDE row.
 
 ## Pass criteria (delivery)
-- [ ] thermo fix all done
+- [ ] quality completed before review on validated tree
 - [ ] PR(s) open
 - [ ] gh pr checks ALL green
 - [ ] status done only after CI green

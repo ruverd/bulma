@@ -28,6 +28,9 @@ done_report | escalated
 | `work_kind` | feature \| bug \| regression \| chore \| spike |
 | `path` | full_feature \| debug_fix \| light_change |
 | `risk` | low \| normal \| elevated |
+| `plan_mode` | compact or detailed; missing on resume means detailed |
+| `quality_mode` | focused or deep; recomputed from actual diff; unknown means deep |
+| `validated_tree` | tree identity shared by final review, tests and visual evidence |
 | `risk_reason` | one line, why this risk |
 | `route_confidence` | high \| medium \| low |
 | `route_reason` | one line, why this path |
@@ -37,7 +40,7 @@ done_report | escalated
 | `pkg` / `*_cmd` / `qa_tool` | from PRODUCT.md |
 | `assignee` / `reviewers` / `reviewers_status` | PRODUCT.md §6. `confirmed` \| `proposed` \| `missing` |
 | `chat_language` | from `bulma-memory` home file. Default `en` |
-| `spec_path` | `$BULMA_ROOT/.bulma-feature-delivery/SPEC.md` |
+| `spec_path` | SPEC.md in detailed mode; TICKETS.md in compact mode |
 | `tickets_path` | `$BULMA_ROOT/.bulma-feature-delivery/TICKETS.md` |
 | `current_ticket` | |
 | `seams` | confirmed in spec/tickets |
