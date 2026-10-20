@@ -34,3 +34,7 @@ are in `processed_comment_ids`, and review ids are in
 
 A later re-review (new ids) needs its own pair. Do not repeat 👍/reply
 on an id already in those lists.
+
+For grouped fixes, reuse the final SHA and test evidence across replies, but
+address each comment's claim and disposition. One group never substitutes for
+per-comment replies. React to each parent review once, not once per child.

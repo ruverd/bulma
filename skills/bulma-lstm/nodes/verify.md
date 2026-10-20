@@ -70,3 +70,18 @@ never a reason to change a disposition.
 For runtime failures, query captured logs before repeating a reproduction.
 Use [runtime evidence](../../bulma-bus/PERFORMANCE.md); missing Trail falls back
 to file capture. Logs support diagnosis, but do not replace behavioral tests.
+
+## Plan fix groups
+
+Write `dispositions.json` beside STATE, preserving every comment row. Fix rows
+include `id`, `disposition`, `claim_true`, `fix_ok_here`, `risk`, `paths` (bound
+files), `acceptance` and `evidence`. Add `cause_id` and `cause_evidence` only when
+inspection proves comments share one root cause. Shared files or similar prose
+alone do not prove that. Missing cause evidence keeps comments separate.
+
+Run `python3 scripts/group-fixes.py "$BULMA_ROOT/.bulma-lstm/dispositions.json"`
+and save its output as `groups.json`. It preserves every fix comment and its
+acceptance, uses the highest risk, and limits a combined group to eight comments
+and six files. A single wide fix stays intact and requires complicated-fix review.
+Never drop an unclear row because grouping succeeded; resolve its decision first.
+Record group IDs in STATE. New comments require verification before regrouping.

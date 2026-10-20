@@ -21,6 +21,8 @@ init | resolving | rebasing | verifying | grilling | patching | proving | replyi
 | `review_ids` | comma list of review `databaseId` in this run |
 | `processed_comment_ids` | inline comment ids that already have 👍 **and** a thread reply |
 | `processed_review_ids` | review ids whose every in-scope comment is acked, plus 👍 on the review body |
+| `groups` | path to groups.json; every fix comment belongs to exactly one cause group |
+| `completed_groups` | group IDs with resulting tree/evidence; not proof of final acceptance |
 | `dispositions` | `fix` / `skip` / `unclear` counts or path |
 | `claim_true` | yes \| no \| unknown (per comment, in Dispositions table) |
 | `fix_ok_here` | yes \| no \| na |
