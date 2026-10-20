@@ -39,9 +39,10 @@ Chat: `bulma-memory`. Unslop always. Every GitHub reply
 rewritten with bundled `unslop` before POST. Never POST the first draft.
 
 Reply is not optional. Every analyzed comment gets 👍 and a thread
-reply. Never dismiss someone else's `CHANGES_REQUESTED`, even after **prove**
-passes or in a skip-only run. After a proven fix, re-request the original
-reviewer with the fix SHA and evidence. Their review clears their block.
+reply. After proven code changes, post a summary, resolve fixed conversations,
+dismiss fully addressed CHANGES_REQUESTED reviews with evidence, and re-request
+original reviewers unless their latest decisive status or the PR is APPROVED.
+Skip-only runs reply and summarize without dismissing or re-requesting.
 See [reply.md](nodes/reply.md).
 
 Do not spawn `bulma_developer` / `bulma_reviewer` / `bulma_qa`.

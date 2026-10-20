@@ -10,5 +10,5 @@
 | Unclear product / security | ASK last resort or escalate |
 | Unrelated bug | note; do not pad this PR |
 | Comment with no 👍 or no reply | reply is not done; go back |
-| `CHANGES_REQUESTED` still on a processed review | expected until its author re-reviews; request re-review with SHA and proof, never dismiss ([GITHUB.md](GITHUB.md)) |
+| `CHANGES_REQUESTED` still on a processed review | dismiss only when its complete feedback is proved fixed; otherwise retain it and report outstanding concerns ([GITHUB.md](GITHUB.md)) |
 | GitHub reply posted without unslop | rewrite and POST again; never leave the first draft |
