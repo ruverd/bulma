@@ -43,7 +43,8 @@ waits 5m and does **not** post. Red CI still DEFERS.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
    before pass selection and again before publishing. Open change requests,
-   unresolved threads, unanswered questions and AI QA concerns block approval.
+   unresolved threads, unanswered questions and AI QA `FAIL` block approval;
+   QA `FAIL` needs human approval. QA `BLOCKED` (could not run) never gates.
    Never dismiss another reviewer's review; ask its reviewer to re-review.
    Missing evidence fails closed. `--force` cannot bypass these approval gates.
 10. **My own open findings never expire silently.** A prior finding of mine is

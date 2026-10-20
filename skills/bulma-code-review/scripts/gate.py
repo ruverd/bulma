@@ -28,6 +28,8 @@ BUILD_TEST = re.compile(
 FAILED = {"failure", "timed_out", "cancelled", "action_required", "startup_failure", "stale", "error"}
 DECISIVE = {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
 DEEP_REASONS = {"coverage", "uncertainty", "critic_failed"}
+# AI QA verdict prefix. FAIL needs human approval; BLOCKED (QA could not run) does not gate.
+QA_FAIL = re.compile(r"^FAIL(ED)?\b", re.I)
 
 
 class Missing(Exception):
@@ -120,8 +122,8 @@ def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str) 
     runs = latest_by([c for c in checks if c.get("head_sha") == head], "name", "id")
     for name, run in runs.items():
         title = ((run.get("output") or {}).get("title") or "").strip()
-        if title.upper().startswith("BLOCKED"):
-            reasons.append(f"check {name} says {title}")
+        if QA_FAIL.match(title):
+            reasons.append(f"needs human approval: check {name} says {title}")
         if not BUILD_TEST.search(name):
             continue
         if run.get("status") != "completed":
@@ -131,8 +133,9 @@ def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str) 
         elif run.get("conclusion") == "success":
             green = True
     for context, status in latest_by(statuses, "context", "created_at").items():
-        if (status.get("description") or "").strip().upper().startswith("BLOCKED"):
-            reasons.append(f"status {context} says {status['description'].strip()}")
+        description = (status.get("description") or "").strip()
+        if QA_FAIL.match(description):
+            reasons.append(f"needs human approval: status {context} says {description}")
         if BUILD_TEST.search(context):
             if status.get("state") == "success":
                 green = True

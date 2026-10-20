@@ -271,8 +271,12 @@ echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1
 blocked_with 'unresolved thread: u1' || fail "gate: unresolved thread must block"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
-echo '[[{"context":"AI QA","state":"success","description":"BLOCKED: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
-blocked_with 'status AI QA says BLOCKED' || fail "gate: AI QA BLOCKED must block"
+echo '[[{"context":"AI QA","state":"failure","description":"FAIL: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
+blocked_with 'needs human approval: status AI QA says FAIL' || fail "gate: AI QA FAIL must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+echo '[[{"context":"AI QA","state":"success","description":"BLOCKED: env down","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
+[[ "$(gate)" == 0 ]] || fail "gate: AI QA BLOCKED must not block ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/checks.json" <<EOF
