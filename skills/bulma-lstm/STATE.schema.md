@@ -18,6 +18,10 @@ init | resolving | rebasing | verifying | grilling | patching | proving | replyi
 | `sha` | head oid |
 | `mergeable` | MERGEABLE / CONFLICTING / DIRTY / … |
 | `ci` | green / red / pending / unknown |
+| `dismissed_review_ids` | confirmed dismissals of fully proved change requests |
+| `summary_url` | idempotent COMMENT summary for final SHA and analyzed IDs |
+| `re_requested` | confirmed reviewer + fix SHA pairs |
+| `pending_actions` | unconfirmed API operations, with errors |
 | `review_ids` | comma list of review `databaseId` in this run |
 | `processed_comment_ids` | inline comment ids that already have 👍 **and** a thread reply |
 | `processed_review_ids` | review ids whose every in-scope comment is acked, plus 👍 on the review body |

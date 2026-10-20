@@ -1,40 +1,39 @@
 # Node: reply
 
-**Verb:** ack
+**Verb:** acknowledge and complete the review lifecycle.
 
-Commands: [GITHUB.md](../references/GITHUB.md). This node is the
-progress trail on the PR. Chat does not count.
+Commands: [GITHUB.md](../references/GITHUB.md). Enter only after prove passes,
+or verify finishes a skip-only run. Never dismiss a failed or unresolved fix.
 
-For **every** in-scope inline comment (fix **and** skip):
+1. For every in-scope comment, react with 👍 and reply with its disposition,
+   final SHA and evidence. Rewrite through bundled `unslop` before POST. English.
+   React to the parent review once. Preserve per-comment answers for grouped fixes.
+2. Publish one COMMENT summary per final SHA and analyzed comment set, including
+   fixed/skipped items, test evidence and remaining concerns. A body-only COMMENT
+   review can serve as this summary. Use a stable marker and check existing
+   artifacts on resume or ambiguous network failure before posting again.
+3. Resolve each conversation whose claim is proved fixed on the final head,
+   after its reply. Skip/disputed or unresolved comments stay open.
+4. When code changed and prove passed, dismiss active `CHANGES_REQUESTED` reviews
+   whose entire feedback, including body findings, is proved addressed. Include
+   fix SHA, evidence and summary URL in the dismissal reason. Re-fetch the exact
+   review and live head before dismissal. Never dismiss an APPROVED review,
+   another unresolved concern, or a request just to unblock merge.
+5. Refresh review state. Re-request each original reviewer only when code changed
+   and their latest decisive status is not `APPROVED`, overall review decision is
+   not `APPROVED`, and they are not already requested. Record successful requests
+   by reviewer + fix SHA. A later COMMENTED review does not erase an approval.
+6. Record completed replies, resolutions, dismissals, summary URL and requests
+   only after GitHub confirms them. Failed permission/API actions remain pending
+   and appear in report. Continue independent replies; never claim completion of
+   a rejected mutation. New head during mutations returns to verify/prove.
 
-1. 👍 on the comment.
-2. Load `unslop`, rewrite the reply, POST it on the thread.
-3. 👍 on the parent review body.
+Use `scripts/review-actions.py` with freshly collected state as the deterministic
+planner for steps 4–5. Its input and API operations are in GITHUB.md. Recompute
+after dismissal rather than replaying an old plan. Dismissal is not approval;
+reviewer gates still require the original reviewer to clear their concern.
 
-Body-only review: 👍 on the review, then an unslopped COMMENT review
-after it.
-
-Enter this node only from GRAPH (**prove** pass, or verify skip-only).
-Never dismiss someone else's `CHANGES_REQUESTED`. Passing **prove** is evidence
-for the original reviewer, not permission to remove their block.
-
-Then:
-
-4. Resolve the conversation when a fix landed. Skip stays open after
-   the skip reply unless that reply is enough to close it.
-5. Preserve `CHANGES_REQUESTED` on those reviews.
-6. Re-request that reviewer when a fix landed, with the fix SHA and test evidence.
-   For a disputed or skip-only blocking review, explain the evidence and ask
-   the original reviewer to reconsider. Do not clear it yourself.
-
-Done only when every in-scope comment has 👍 + reply, every processed
-`CHANGES_REQUESTED` review remains owned by its reviewer, comment ids
-are in `processed_comment_ids`, and review ids are in
-`processed_review_ids`.
-
-A later re-review (new ids) needs its own pair. Do not repeat 👍/reply
-on an id already in those lists.
-
-For grouped fixes, reuse the final SHA and test evidence across replies, but
-address each comment's claim and disposition. One group never substitutes for
-per-comment replies. React to each parent review once, not once per child.
+Skip-only runs still reply and comment, but never dismiss or re-request. A new
+comment ID needs its own reply even if it repeats an old finding. `done` requires
+all applicable actions confirmed or a report that explicitly names pending API
+failures; processed comment IDs alone do not prove the lifecycle completed.
