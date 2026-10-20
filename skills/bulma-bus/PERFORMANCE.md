@@ -10,7 +10,9 @@ python3 scripts/runtime.py run --repo "$WORKTREE" \
   --environment "$ENV_FINGERPRINT" -- pnpm test --runInBand
 ```
 
-`--trail` uses Trail when installed, otherwise captures to a plain file.
+`--trail` uses the log-capture Trail only when its CLI exposes `run`. Otherwise
+it captures to a plain file. Trail Code (`@trailhq/trail-code`) has `ask`, `build`
+and `check`, not `run`; use bulma-host for that code-map integration.
 Trail's session ID and file path are in `output.log`; query that session through
 `runtime_logs` in bulma-host. Capture is automatic; guided probe insertion is
 only for a reproduction that existing logs cannot explain. Remove probes before

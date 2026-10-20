@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import signal
@@ -56,6 +57,18 @@ def write_json(path, data):
     tmp.replace(path)
 
 
+def log_capture_available():
+    executable = shutil.which('trail')
+    if not executable:
+        return False
+    try:
+        help_result = subprocess.run([executable, '--help'], capture_output=True, text=True, timeout=5)
+        return help_result.returncode == 0 and bool(re.search(
+            r'^\s+run(?:\s|$)', help_result.stdout, re.MULTILINE))
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def run(args):
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     if not command:
@@ -63,7 +76,7 @@ def run(args):
     folder = outside_repo(args.directory, args.repo) / uuid.uuid4().hex
     folder.mkdir(parents=True)
     before = identity(args.repo, command, args.environment)
-    capture = 'trail' if args.trail and shutil.which('trail') else 'file'
+    capture = 'trail' if args.trail and log_capture_available() else 'file'
     argv = ['trail', 'run', '--', *command] if capture == 'trail' else command
     started = time.monotonic()
     with (folder / 'output.log').open('wb') as log:
