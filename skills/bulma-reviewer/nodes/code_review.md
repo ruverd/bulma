@@ -7,7 +7,9 @@ the high-risk critic when `classify-risk.py` prints `high`. Do not spawn
 a second critic here.
 Pending required CI is **wait_ci**, not this node.
 The engine's [preflight](../../bulma-code-review/references/PREFLIGHT.md) runs
-before review and publication. Read human and AI QA concerns before posting;
+before review and publication. Read human and AI QA concerns before posting.
+AI QA `BLOCKED` (could not run) never blocks review; QA `FAIL` blocks APPROVE
+and needs human approval;
 the observation collection below is telemetry, not a replacement for that gate.
 Apply the engine's [evidence rules](../../bulma-code-review/references/EVIDENCE.md)
 within that same pass: preserve the checkout, verify regression assertions and

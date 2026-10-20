@@ -43,7 +43,10 @@ Never treat the first 50/100 threads, or the first comment alone, as complete.
 
 - An active `CHANGES_REQUESTED`, unresolved thread, or unanswered review
   question in reviews, inline comments, or PR comments blocks APPROVE.
-  Include AI QA failures and questions. A question is not just a `?` regex.
+  Include AI QA `FAIL` findings and questions. A question is not just a `?`
+  regex. An AI QA `BLOCKED` verdict (QA could not run: env, auth, app) is not
+  a concern and does not gate review; a QA `FAIL` blocks APPROVE until a human
+  approves the PR.
 - Read replies and resolution evidence. `isOutdated`, an author saying
   "fixed", or a newer push does not settle a concern. A later `COMMENTED`
   review does not automatically withdraw a change request.
@@ -195,7 +198,8 @@ Every review POST goes through [scripts/gate.py](../scripts/gate.py) on the
 refreshed evidence above. It blocks APPROVE on: another reviewer's latest
 decisive review being CHANGES_REQUESTED, a change request dismissed by someone
 other than its reviewer and not re-approved by them, any unresolved thread, a
-status or check whose description starts with `BLOCKED` (AI QA), no successful
+status or check whose description starts with `FAIL` (AI QA; needs human
+approval, while `BLOCKED` does not gate), no successful
 build/test check on the head (or a failed/pending one), a nonempty sign-off
 list, a missing template row, a marker that does not match the head, a
 blocker/major in the ledger, `risk=high` without `critic=ran`, and a light

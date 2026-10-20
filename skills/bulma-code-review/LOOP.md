@@ -17,7 +17,8 @@ Inspect workflow branch/path filters and skipped job/step conditions; only
 executed checks supply evidence. Optional unrelated jobs do not gate approval.
 
 Ignore review-bot check statuses for this CI loop. Their review comments and
-AI QA findings still gate approval through [PREFLIGHT.md](references/PREFLIGHT.md).
+AI QA `FAIL` findings still gate approval through [PREFLIGHT.md](references/PREFLIGHT.md);
+QA `BLOCKED` does not.
 Required-check success must include actual build/test execution on the reviewed
 head. Empty, skipped, neutral, stale or unverifiable jobs are `unknown`, never
 green. Check workflow filters against `baseRefName`, especially `feature/*`.
