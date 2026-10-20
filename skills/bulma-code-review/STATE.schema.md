@@ -15,6 +15,7 @@ init | waiting_ci | reviewing | published | deferred | done
 
 | Field | Use |
 |---|---|
+| `review_dir` | per-PR snapshot and retained analysis directory |
 | `pr` | `<owner>/<repo>#<N>` |
 | `pr_url` | full URL |
 | `sha` | head SHA at the time of the pass |
@@ -55,7 +56,7 @@ skip | ran | failed
 - One artifact per PR per pass. Re-running with an unchanged SHA and unchanged
   evidence does not duplicate an artifact. New concerns, a legacy marker needing
   revalidation, or a valid CI promotion can require a new verdict on that SHA.
-- `waiting_ci` never posts to the PR. It waits, then reviews on green.
+- `waiting_ci` never posts to the PR. It retains analysis, then revalidates on green.
 - A DEFER is recorded with its reason. It is not an APPROVE with caveats.
 
 Template: [templates/STATE.md](templates/STATE.md).

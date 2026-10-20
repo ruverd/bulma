@@ -38,6 +38,8 @@ left unverified because of a cap is declared and forces **DEFER**, never APPROVE
 Refresh [PREFLIGHT.md](../references/PREFLIGHT.md). Reaching this section does
 not prove that earlier CI or review-context evidence is still current.
 
+Pending CI is checked before selecting a publication verdict, including REQUEST_CHANGES.
+
 Carried findings that still reproduce (§4.2) count exactly like new ones. APPROVE
 requires zero surviving findings, new **and** carried.
 
@@ -49,7 +51,8 @@ requires zero surviving findings, new **and** carried.
 | clean, sensitive paths or behavior | **DEFER** `reason=human_signoff`, "needs human sign-off" |
 | head moved and delta not reviewed | re-review delta; if unable, **DEFER** `reason=head_changed` |
 | clean, full coverage, room clear, no human gate, CI proven on reviewed live head | **APPROVE** |
-| clean, full coverage, CI not green (`--force` run) | **DEFER** `reason=ci_red\|ci_pending\|ci_unknown`, marker keeps `pass=deep\|light` |
+| any findings, CI pending | retain completed analysis, **wait_ci**, no publication yet |
+| clean, full coverage, CI red or unknown (`--force` run) | **DEFER** `reason=ci_red\|ci_unknown`, marker keeps `pass=deep\|light` |
 | clean, coverage incomplete | **DEFER** `reason=coverage` |
 | blocker-level, or correctness/contract/security major-level, uncertainty | **DEFER** `reason=uncertainty` |
 | risk high, critic did not complete | **DEFER** `reason=critic_failed`, marker `critic=failed` |

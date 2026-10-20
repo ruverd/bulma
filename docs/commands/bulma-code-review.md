@@ -41,7 +41,9 @@ Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
 10. Workflows, Terraform, auth, billing/seats and secrets need human sign-off
     and never receive auto-approval, including on light and promoted passes.
 
-Pending required CI: `wait_ci` (5m `schedule_wake`, **no** PR comment).
+Pending required CI allows code review first, then retains completed analysis
+locally during `wait_ci`. No PR artifact is posted while pending. Live gates
+run again before publication; changed inputs invalidate the retained analysis.
 Draft / conflict / CI-red: DEFER with `pass=none` (no code was read).
 
 ## Pass

@@ -4,6 +4,7 @@ status: init
 pr: ""
 pr_url: ""
 repo: ""
+review_dir: ""
 sha: ""
 reviewed_sha: ""
 base_sha: ""

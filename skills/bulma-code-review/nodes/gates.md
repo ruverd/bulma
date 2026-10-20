@@ -3,7 +3,7 @@
 Nothing below this line reads a diff or a product file. Workflow configuration
 is read only to establish CI execution evidence. Draft, conflict, and CI-red
 gates still post one issue comment. Pending required CI does **not** post.
-It waits ([LOOP.md](../LOOP.md)).
+Review the pinned diff while CI runs; retain analysis before waiting ([LOOP.md](../LOOP.md)).
 
 Compute `ci_overall` from the head-bound execution evidence in
 [PREFLIGHT.md](../references/PREFLIGHT.md), not rollup conclusions alone:
@@ -22,7 +22,7 @@ ignore review bots).
 | `mergeStateStatus` in `DIRTY`, `CONFLICTING` | DEFER, `reason=conflict` |
 | `review_context` = blocked or unknown | DEFER, `reason=review_context` or `review_context_unknown`, link concerns |
 | `ci_overall` = failure | DEFER, `reason=ci_red`, list ≤8 failing checks with log links |
-| `ci_overall` = pending | **wait_ci** — [LOOP.md](../LOOP.md). No PR comment. Chat only. Stop. |
+| `ci_overall` = pending | **review** pinned head now; after critic retain analysis and **wait_ci**. No PR artifact while pending. |
 | `ci_overall` = unknown | DEFER, `reason=ci_unknown` |
 
 Every gate DEFER carries `pass=none` in its marker — **no code was reviewed**. That
@@ -30,4 +30,4 @@ value is what stops §8.1 from later promoting unreviewed code to APPROVE.
 `wait_ci` posts nothing, so there is no marker until a later review or DEFER.
 
 `--force` skips the three CI rows only (state, draft and conflict gates never
-yield). Use it to review while CI is still running. It also skips `wait_ci`.
+yield). Pending CI already permits inspection by default. `--force` does not bypass the pending publication wait.

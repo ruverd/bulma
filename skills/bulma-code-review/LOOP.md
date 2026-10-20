@@ -1,6 +1,6 @@
 # wait_ci — pending CI loop
 
-Pending required checks never produce a GitHub artifact. Chat only.
+Pending required checks never produce a GitHub artifact. Review code first, then wait.
 `schedule_wake` ([bulma-host](../bulma-host/SKILL.md)). Do not block the turn on
 `gh pr checks --watch`.
 
@@ -31,12 +31,29 @@ Path: `$BULMA_ROOT/.bulma-code-review/STATE.md`
 Copy [templates/STATE.md](templates/STATE.md). Fields that matter here:
 `pr_url`, `repo`, `pr`, `sha`, `loop_id`, `ci`, `caller`.
 
+## Retain analysis before waiting
+
+In `review_dir`, keep `AC.md`, `bound.json`, `coverage.json` (per-file checks,
+caller/contract paths and uncovered areas), and `analysis.json` (`pass`, `risk`,
+`critic`, findings and remaining uncertainties). Keep full findings; do not store
+only a clean/dirty boolean. Generate current `CONTEXT.json` as described in
+[nodes/pass_decision.md](nodes/pass_decision.md).
+
+```bash
+python3 scripts/snapshot.py seal --dir "$REVIEW_DIR" --context "$REVIEW_DIR/CONTEXT.json"
+```
+
+Cache failure never authorizes publication. Record failure and resume with normal
+review rules. `--dry-run` may retain local analysis, but creates no wake or POST.
+Prefer host completion events with one wake per PR; otherwise use the 5m timer.
+The wake must still verify current HEAD and all gates. No in-session polling.
+
 ## Create (once per PR)
 
 If STATE already has a `loop_id` for this `repo#pr`, do not create a second loop.
 
 `--dry-run`: print WAITING, create nothing.
-`--force`: skip this file, continue the skill at §4.
+`--force` permits inspection with red/unknown CI, but does not bypass pending wait.
 
 ```
 schedule_wake
@@ -60,11 +77,12 @@ Repo: <owner/repo>
 State: $BULMA_ROOT/.bulma-code-review/STATE.md
 Caller: <bulma-code-review | bulma-reviewer>
 
-Re-run §1–§3 on the live head SHA. Do not read the diff until CI is green.
-If required CI is still pending, do nothing else and end the turn.
-If green, cancel_wake, then run §4–§9 including critic then publish
-(deep if nothing was reviewed yet). If Caller is bulma-reviewer, after the review
-load_skill bulma-reviewer and continue at diagnose → report.
+Refresh the snapshot, context and gates on the live head SHA. If retained
+analysis matches, do not reread code. If it does not, run the normal deep/light
+pass and critic, then retain the replacement analysis even if CI is pending.
+If CI is still pending, keep the wake and end the turn without posting.
+If green, cancel_wake, then resume verdict and publication with fresh preflight
+and gate.py. If Caller is bulma-reviewer, continue at diagnose → report.
 If required CI failed or is unknown, cancel_wake and DEFER
 (reason=ci_red or ci_unknown) with the issue comment in SKILL §9.
 If the PR is CLOSED or MERGED, cancel_wake and stop.
@@ -80,8 +98,9 @@ is a new SHA; wait or review that SHA, never the stale one).
 
 | World | Next |
 |---|---|
-| still pending | stop (keep the loop) |
-| success | delete loop, **review** |
+| pending, analysis valid | stop (keep the loop) |
+| pending, analysis invalid | review current inputs, retain analysis, keep loop |
+| success | delete loop, reuse valid analysis or **review**, then publish gates |
 | failure / unknown | delete loop, **defer** |
 | CLOSED / MERGED | delete loop, stop |
 

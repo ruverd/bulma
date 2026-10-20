@@ -12,7 +12,7 @@ description: >
 Sequential phases per PR. Depth adapts to review history.
 **Multi-PR:** one subagent per PR (see §0).
 **CI fork:** [GRAPH.md](GRAPH.md) · [LOOP.md](LOOP.md). Pending required CI
-waits 5m and does **not** post. Red CI still DEFERS.
+allows pinned code review, then waits with retained analysis and does **not** post. Red CI still DEFERS.
 
 ## Invariants — never break
 

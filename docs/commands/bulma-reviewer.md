@@ -32,8 +32,8 @@ Skill: [`../../skills/bulma-reviewer`](../../skills/bulma-reviewer).
 - `/reviewer` on the current branch’s PR
 - Envelope: `REVIEW_REQUEST`
 
-`--force` reviews while CI is red. Pending required CI waits 5m
-and does **not** post (`wait_ci`).
+`--force` reviews while CI is red. Pending required CI permits pinned code review, then retains analysis and waits
+without posting. A CI completion event resumes when supported; otherwise a 5m wake.
 
 ## Graph
 
@@ -41,8 +41,8 @@ and does **not** post (`wait_ci`).
 args or REVIEW_REQUEST
   → admit           idle → main; busy or 2+ PRs → worker+worktree
   → resolve
-  → wait_ci         required CI pending — 5m wake, no PR comment
   → code_review     /bulma-code-review (spec-first, bind, high-risk critic)
+  → wait_ci?        retain analysis while CI runs, refresh gates before publishing
   → diagnose        classify failures + mergeable
   → report          REVIEW_RESULT + pop if stacked
 ```
