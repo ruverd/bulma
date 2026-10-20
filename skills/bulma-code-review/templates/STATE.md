@@ -19,6 +19,8 @@ reviewed_shas: ""
 loop_id: ""
 risk: ""
 critic: ""
+gate: ""
+dismissed_approvals: ""
 caller: bulma-code-review
 updated_at: ""
 ---

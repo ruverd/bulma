@@ -28,7 +28,8 @@ start (PR url / number / branch)
 | review | always | **critic** |
 | critic | always | **publish** |
 | publish | head or base changed | **review** (fresh diff, repeat preflight) |
-| publish | approval gate blocked or unknown | **defer** |
+| publish | approval gate blocked or unknown (`gate.py` exit 1) | **defer** |
+| publish | `gate.py` exit 3 (only bot approvals on head) | **publish** as COMMENT |
 | publish | posted | delete loop, **stop** |
 | defer | posted | delete loop, **stop** |
 

@@ -2,12 +2,14 @@
 
 | Tier | Meaning | Effect |
 |---|---|---|
-| **blocker** | proven defect, security flaw, broken contract, data loss; request body written into role, tenant, price, or flag/permission | REQUEST_CHANGES |
-| **major** | closed list only: new logic without a test; swallowed error or silent catch or masking fallback; missing error or loading state on a new data flow; `any` or cast that erases a real check; documented repo rule broken; contract change leaving callers unhandled; a new special-case branch bolted onto an unrelated flow (concrete path and trigger); user input concatenated into SQL, HTML, shell, or href; broad catch, or `?.` skipping a required operation | REQUEST_CHANGES |
+| **blocker** | proven defect, security flaw, broken contract (a reachable caller crashes, writes wrong data or loses data), data loss; request body written into role, tenant, price, or flag/permission | REQUEST_CHANGES |
+| **major** | closed list only: new logic without a test; swallowed error or silent catch or masking fallback; missing error or loading state on a new data flow; `any` or cast that erases a real check; documented repo rule broken; contract change whose unhandled callers degrade without a crash or bad write (wrong empty state, missing field); a new special-case branch bolted onto an unrelated flow (concrete path and trigger); user input concatenated into SQL, HTML, shell, or href; broad catch, or `?.` skipping a required operation | REQUEST_CHANGES |
 | **nit** | everything else, including the reviewer preferences below | collapsed Nits block, max 5, never blocks |
 
-Introduced or worsened by this PR, and anchored to a changed path. Pre-existing
-problems the PR merely touches are nits.
+Introduced or worsened by this PR, wherever it surfaces. A break in an
+unchanged caller or test counts when a changed hunk causes it (`cause_path`).
+Pre-existing problems the PR merely touches are nits. A defect reachable when
+a flag is on keeps its severity.
 
 ### Reviewer preferences — always nits
 
@@ -49,8 +51,15 @@ requires zero surviving findings, new **and** carried.
 | clean, full coverage, room clear, no human gate, CI proven on reviewed live head | **APPROVE** |
 | clean, full coverage, CI not green (`--force` run) | **DEFER** `reason=ci_red\|ci_pending\|ci_unknown`, marker keeps `pass=deep\|light` |
 | clean, coverage incomplete | **DEFER** `reason=coverage` |
-| blocker-level uncertainty | **DEFER** `reason=uncertainty` |
-| empty diff, all approval gates above pass | **APPROVE**, body says no code changes |
+| blocker-level, or correctness/contract/security major-level, uncertainty | **DEFER** `reason=uncertainty` |
+| risk high, critic did not complete | **DEFER** `reason=critic_failed`, marker `critic=failed` |
+| prior own REQUEST_CHANGES, or DEFER `coverage\|uncertainty\|critic_failed`, and this pass was not deep on the full diff | run the deep pass; never APPROVE from a light pass |
+| empty delta after my own APPROVE, all approval gates above pass | **APPROVE**, body says no code changes |
+| `gate.py` exits 1 | **DEFER** with the gate's reasons |
+| `gate.py` exits 3 (only bot approvals on this head) | **COMMENT** review, same body, `reason=bot_quorum` |
+
+Before any DEFER or REQUEST_CHANGES on a PR where my approval still stands,
+dismiss it ([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval).
 
 Critical/High maps to blocker/major, including any such finding in our inline
 comments or body. The final payload cannot contain those severities alongside
@@ -62,6 +71,8 @@ All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*`, its
 marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0`, `open=-`. Then
 re-run every approval gate, including room, human sign-off and head-bound CI.
 Older markers without preflight/one-hop evidence require a fresh deep pass.
+Promotion reads no diff, so write `bound.json` as
+`{"kept":[],"body":[],"dropped":[]}` from that clean marker for `gate.py`.
 Only then post APPROVE whose body links the earlier comment. First line: "I already
 reviewed this SHA while CI was still running. Checks are green now, so this is
 the approve." Marker keeps the prior `pass=` and adds `reason=promote`.

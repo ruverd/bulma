@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Keep findings whose path:line sits in the unified diff (or an allow-path)."""
+"""Place findings: inline when path:line sits in the patch, body when the
+defect surfaces elsewhere but cause_path:cause_line sits in the patch.
+
+Exit 3 when a blocker or major ends up in `body`, or in `dropped` without
+`pre_existing: true`. Those findings still block APPROVE; the exit code keeps a
+placement miss from silently erasing them.
+"""
 from __future__ import annotations
 
 import argparse
@@ -74,34 +80,54 @@ def line_number(finding: dict[str, Any]) -> int | None:
     return number if number > 0 else None
 
 
+def in_patch(
+    path: str, number: int | None, covered: dict[str, set[int]], allow: set[str]
+) -> bool:
+    if not path:
+        return False
+    if path in allow:
+        return True
+    return number is not None and number in covered.get(path, ())
+
+
 def bind(
     findings: list[dict[str, Any]],
     covered: dict[str, set[int]],
     allow: set[str],
 ) -> dict[str, list[dict[str, Any]]]:
     kept: list[dict[str, Any]] = []
+    body: list[dict[str, Any]] = []
     dropped: list[dict[str, Any]] = []
     for finding in findings:
         path = str(finding.get("path") or "")
         number = line_number(finding)
         record = dict(finding)
+        if finding.get("in_diff") is not False and in_patch(path, number, covered, allow):
+            kept.append(finding)
+            continue
+        cause_path = str(finding.get("cause_path") or "")
+        if in_patch(cause_path, line_number({"line": finding.get("cause_line")}), covered, allow):
+            record["placement"] = "body"
+            body.append(record)
+            continue
         if finding.get("in_diff") is False:
             record["drop_reason"] = "in_diff_false"
-            dropped.append(record)
-            continue
-        if not path or number is None:
+        elif not path or number is None:
             record["drop_reason"] = "missing_line"
-            dropped.append(record)
-            continue
-        if path in allow:
-            kept.append(finding)
-            continue
-        if number in covered.get(path, ()):
-            kept.append(finding)
-            continue
-        record["drop_reason"] = "not_in_patch"
+        else:
+            record["drop_reason"] = "not_in_patch"
         dropped.append(record)
-    return {"kept": kept, "dropped": dropped}
+    return {"kept": kept, "body": body, "dropped": dropped}
+
+
+def blocking(result: dict[str, list[dict[str, Any]]]) -> bool:
+    serious = ("blocker", "major")
+    if any(f.get("severity") in serious for f in result["body"]):
+        return True
+    return any(
+        f.get("severity") in serious and f.get("pre_existing") is not True
+        for f in result["dropped"]
+    )
 
 
 def main() -> int:
@@ -114,13 +140,10 @@ def main() -> int:
     source = sys.stdin if args.findings == "-" else open(args.findings, encoding="utf-8")
     with source as handle:
         findings = load_findings(handle.read())
-    json.dump(
-        bind(findings, new_lines_by_path(patch), set(args.allow_path)),
-        sys.stdout,
-        indent=2,
-    )
+    result = bind(findings, new_lines_by_path(patch), set(args.allow_path))
+    json.dump(result, sys.stdout, indent=2)
     sys.stdout.write("\n")
-    return 0
+    return 3 if blocking(result) else 0
 
 
 if __name__ == "__main__":

@@ -87,7 +87,29 @@ HUMAN_TOKENS = frozenset({
     "impersonate", "impersonation", "password", "passwd", "session", "sessions",
     "billing", "seat", "seats", "payment", "payments", "invoice", "invoices",
     "secret", "secrets", "credential", "credentials", "terraform",
+    "zitadel", "saml", "scim", "frontegg", "identity", "chargebee",
+    "subscription", "subscriptions", "entitlement", "entitlements",
+    "access", "acl", "role", "roles", "security",
 })
+
+# Credential tokens in these contexts mean a certificate of completion, not a secret.
+CREDENTIAL_TOKENS = frozenset({"credential", "credentials"})
+CERTIFICATION_TOKENS = frozenset({"certification", "certifications"})
+
+# Paths the deploy or CI runs with production keys, whatever their names say.
+HUMAN_PREFIXES = (".github/", "scripts/ci/", "infra/")
+HUMAN_BASENAMES = frozenset({"package.json", ".npmrc", "bunfig.toml"})
+HUMAN_BASENAME_PREFIXES = ("amplify", "dockerfile")
+
+# Rendered output: a seat screenshot is not seat logic.
+HUMAN_EXCLUDED_DIRS = ("__snapshots__/",)
+HUMAN_EXCLUDED_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".snap")
+
+# Added-line needles (sign-off mode only). Case-sensitive on purpose.
+HUMAN_ADDED = ("secrets.", "AWS_", "pull_request_target", "permissions:")
+USES = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)")
+PINNED = re.compile(r"@[0-9a-f]{40}$")
+DIFF_PATH = re.compile(r"^\+\+\+ b/(.+)$")
 
 
 def tokens(path: str) -> set[str]:
@@ -106,12 +128,52 @@ def path_is_high(path: str) -> bool:
 def path_needs_human(path: str) -> bool:
     lowered = path.replace("\\", "/").lower()
     parts = lowered.split("/")
+    base = parts[-1]
+    if any(d in lowered for d in HUMAN_EXCLUDED_DIRS) or base.endswith(HUMAN_EXCLUDED_SUFFIXES):
+        return False
+    words = tokens(path)
+    if words & CERTIFICATION_TOKENS:
+        words -= CREDENTIAL_TOKENS
     return (
-        ".github/workflows/" in lowered
+        lowered.startswith(HUMAN_PREFIXES)
+        or any(f"/{prefix}" in f"/{lowered}" for prefix in HUMAN_PREFIXES)
+        or base in HUMAN_BASENAMES
+        or base.startswith(HUMAN_BASENAME_PREFIXES)
         or lowered.endswith((".tf", ".tf.json", ".tfvars", ".tfvars.json", ".pem", ".key"))
         or any(part == ".env" or part.startswith(".env.") for part in parts)
-        or bool(tokens(path) & HUMAN_TOKENS)
+        or bool(words & HUMAN_TOKENS)
     )
+
+
+def added_line_is_human(line: str) -> bool:
+    if any(needle in line for needle in HUMAN_ADDED):
+        return True
+    uses = USES.match(line)
+    return bool(uses) and not uses.group(1).startswith("./") and not PINNED.search(uses.group(1))
+
+
+def patch_paths_needing_human(patch: str) -> list[str]:
+    """Paths whose added lines touch secrets, AWS keys, workflow permissions
+    or unpinned actions."""
+    current, out = "", []
+    for raw in patch.splitlines():
+        header = DIFF_PATH.match(raw)
+        if header:
+            current = header.group(1).split("\t", 1)[0]
+            continue
+        if raw.startswith("+++") or not raw.startswith("+") or not current:
+            continue
+        if current not in out and added_line_is_human(raw[1:]):
+            out.append(current)
+    return out
+
+
+def human_signoff(paths: list[str], patch: str, author: str, author_type: str) -> list[str]:
+    out = [path for path in paths if path_needs_human(path)]
+    out += [path for path in patch_paths_needing_human(patch) if path not in out]
+    if author_type.lower() == "bot" or author.lower().endswith("[bot]"):
+        out.append(f"author:{author}")
+    return out
 
 
 def added_lines(patch: str) -> list[str]:
@@ -166,14 +228,16 @@ def main() -> int:
                         help="print JSON paths that require human sign-off")
     parser.add_argument("--changed-files", type=int, default=0)
     parser.add_argument("--churn", type=int, default=0)
+    parser.add_argument("--author", default="", help="PR author login (sign-off mode)")
+    parser.add_argument("--author-type", default="", help="PR author type, e.g. Bot")
     args = parser.parse_args()
     paths = read_files(args)
-    if args.human_signoff:
-        print(json.dumps([path for path in paths if path_needs_human(path)]))
-        return 0
     patch = ""
     if args.patch:
         patch = open(args.patch, encoding="utf-8").read()
+    if args.human_signoff:
+        print(json.dumps(human_signoff(paths, patch, args.author, args.author_type)))
+        return 0
     print(
         classify(
             paths,

@@ -69,8 +69,8 @@ from review state alone.
 full `HEAD_SHA` and the required-check definition in [LOOP.md](../LOOP.md):
 
 ```bash
-gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" --paginate --slurp
-gh api "repos/$REPO/commits/$HEAD_SHA/statuses?per_page=100" --paginate --slurp
+gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" --paginate --slurp > "$REVIEW_DIR/checks.json"
+gh api "repos/$REPO/commits/$HEAD_SHA/statuses?per_page=100" --paginate --slurp > "$REVIEW_DIR/statuses.json"
 gh run list --repo "$REPO" --commit "$HEAD_SHA" --limit 100 \
   --json databaseId,headSha,workflowName,status,conclusion,url
 # Inspect relevant workflow runs, including every build/test job:
@@ -105,12 +105,23 @@ new paths of renames and deletions. `FILES.txt` remains the current pass's
 patch list; save the complete list separately as `PR_FILES.txt`.
 
 ```bash
-python3 scripts/classify-risk.py --human-signoff --files-from PR_FILES.txt
+AUTHOR=$(gh pr view "$PR" --repo "$REPO" --json author --jq '.author.login')
+AUTHOR_TYPE=$(gh api "repos/$REPO/pulls/$PR" --jq '.user.type')
+gh pr diff "$PR" --repo "$REPO" > "$REVIEW_DIR/PR_PATCH.diff"
+python3 scripts/classify-risk.py --human-signoff --files-from PR_FILES.txt \
+  --patch "$REVIEW_DIR/PR_PATCH.diff" --author "$AUTHOR" --author-type "$AUTHOR_TYPE" \
+  > "$REVIEW_DIR/signoff.json"
 ```
 
-The JSON list names workflows, Terraform, auth, billing/seats, and secrets
-paths. Also flag equivalent sensitive behavior found in generically named
-files. Nonempty means `human_signoff=required`: **"needs human sign-off"**
+The JSON list names workflows and everything under `.github/`, `scripts/ci/`,
+`infra/`, Terraform, `amplify*`, `Dockerfile*`, `package.json`, `.npmrc`,
+`bunfig.toml`, auth and identity providers, billing/seats/subscriptions,
+roles and access, and secrets. In the full PR patch it also flags added lines
+with `secrets.`, `AWS_`, `pull_request_target`, `permissions:`, or a `uses:`
+not pinned to a commit SHA. A bot author adds `author:<login>`. Snapshots and
+images are excluded. Also flag equivalent sensitive behavior found in
+generically named files, such as a script the production deploy runs with
+production keys in its environment. Nonempty means `human_signoff=required`: **"needs human sign-off"**
 with paths and responsible owners from repo rules. Never auto-approve these
 PRs, even if a human has already approved. Report code findings as usual;
 otherwise DEFER with `reason=human_signoff`. High risk alone is a separate
@@ -136,9 +147,60 @@ body when inline binding fails; placement does not refute a bug.
 Pin `commit_id` to `reviewed_sha` in the review payload. After POST, verify
 the returned review ID and its `commit_id`, then fetch the live head again.
 If it moved during POST, report the approval as stale and require a new pass;
-never claim the newer SHA is approved or merge it. An API POST cannot lock
-out concurrent pushes. Branch protection must dismiss stale approvals or
-require approval of the most recent reviewable push to enforce this at merge.
+never claim the newer SHA is approved or merge it, and dismiss that approval
+(§Retire my stale approval). An API POST cannot lock out concurrent pushes,
+and branch protection may not dismiss stale approvals, so the reviewer does.
+
+## Retire my stale approval
+
+My APPROVE keeps counting until someone dismisses it. A later DEFER is an
+issue comment and does not replace it. Find my standing approvals in
+`reviews.json`: latest decisive review by `$ME` with `state == APPROVED`.
+
+Dismiss each one when any of these holds:
+
+- its `commit_id` is not the live `headRefOid` (dismiss at pass decision,
+  before reviewing the delta)
+- this pass ends in DEFER or REQUEST_CHANGES
+- room evidence shows a new concern since my approval
+- post-verify finds the head moved during POST
+
+```bash
+gh api -X PUT "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID/dismissals" \
+  -f message="new commits since approval" -f event=DISMISS
+```
+
+Use a message that names the cause: `new commits since approval`, `deferred:
+<reason>`, `changes requested`, or `new concern: <url>`. Record dismissed ids
+in STATE `dismissed_approvals`. A dismissal is a state change, not a second
+artifact. Only my own reviews; never another reviewer's. If the call fails
+(permissions, network), say so in the artifact body and chat.
+
+## Resolve my own fixed threads
+
+Before an APPROVE, resolve review threads whose root comment is mine and whose
+finding §4.2 re-verified as fixed on the head:
+
+```bash
+gh api graphql -f id="$THREAD_ID" -f query='
+mutation($id:ID!) { resolveReviewThread(input:{threadId:$id}) { thread { isResolved } } }'
+```
+
+Leave other reviewers' threads alone. Then refresh `threads.json`; `gate.py`
+blocks on any unresolved thread, mine included.
+
+## Gate before POST
+
+Every review POST goes through [scripts/gate.py](../scripts/gate.py) on the
+refreshed evidence above. It blocks APPROVE on: another reviewer's latest
+decisive review being CHANGES_REQUESTED, a change request dismissed by someone
+other than its reviewer and not re-approved by them, any unresolved thread, a
+status or check whose description starts with `BLOCKED` (AI QA), no successful
+build/test check on the head (or a failed/pending one), a nonempty sign-off
+list, a missing template row, a marker that does not match the head, a
+blocker/major in the ledger, `risk=high` without `critic=ran`, and a light
+approval after my own change request. Any missing evidence file blocks.
+Commands are in [nodes/publish.md](../nodes/publish.md).
 
 ## Retrospective sanity check
 

@@ -10,8 +10,11 @@ for room evidence. Take our artifact with the latest timestamp. Parse its marker
 
 ```
 <!-- bulma-review: v=1 pass=deep|light|none sha=<sha> blockers=<n> majors=<n> reason=<slug>
-     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran preflight=1 -->
+     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran|failed preflight=1 -->
 ```
+
+`reason=` carries the DEFER reason (`coverage`, `uncertainty`, `critic_failed`,
+`ci_red`, ...) on every DEFER, and `bot_quorum` on a COMMENT review.
 
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
 below that leads to APPROVE must check for a `pass=deep|light` marker first.
@@ -37,11 +40,22 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
 | `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`) | **skip** — report the same reason in chat, post nothing |
 | `sha == headRefOid`, DEFERRED with `reason=uncertainty` | **skip** — needs a human answer or a new commit |
+| `sha == headRefOid`, COMMENTED `reason=bot_quorum`, approvals on the head unchanged | **skip** |
 | `sha != headRefOid`, prior marker `pass=none` | **deep** on the full diff — no prior pass to be incremental against |
+| any `sha`, my latest decisive artifact is REQUEST_CHANGES, or a DEFER with `reason=coverage\|uncertainty\|critic_failed`, with no deep pass of mine after it | **deep** on the full PR diff, carry-forward still applies |
 | `sha != headRefOid`, prior marker `pass=deep\|light` | **light** on `sha..headRefOid` |
 
 A second DEFER for a reason already posted on the same SHA is a duplicate artifact:
 skip and report in chat instead. `ci_pending` is never posted; that path is wait_ci.
+
+A light pass only reads the delta, so it can only keep an approval-shaped
+verdict that was already APPROVE. Whatever the earlier deep pass missed is
+never looked at again unless the flip back to APPROVE reruns Phases 5–6 on the
+full diff. `gate.py` enforces this from the markers.
+
+If my approval stands on an older SHA, dismiss it now, before review
+([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval). It no
+longer describes the head.
 
 Skip output is chat-only: state the reason and the SHA. Do not touch the PR.
 If fresh room evidence blocks a previous approval, do not silently skip: DEFER

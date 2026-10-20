@@ -26,13 +26,15 @@ init | waiting_ci | reviewing | published | deferred | done
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
 | `ci` | pending \| green \| red \| unknown |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
-| `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER |
-| `defer_reason` | set whenever `verdict=DEFER` (CI red, draft, conflict) |
+| `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum) |
+| `defer_reason` | set whenever `verdict=DEFER` (CI red, draft, conflict, coverage, uncertainty, critic_failed, gate) |
+| `gate` | last `gate.py` result: pass \| blocked \| bot_quorum, with its reasons |
+| `dismissed_approvals` | ids of my own stale approvals dismissed this pass |
 | `reviewed_shas` | SHAs already reviewed, so a light pass knows the carry-forward |
 | `caller` | the graph that asked, when invoked over the bus |
 | `loop_id` | host `schedule_wake` id while `waiting_ci` ([LOOP.md](LOOP.md)) |
 | `risk` | from `scripts/classify-risk.py`; high enables the critic |
-| `critic` | whether the critic spawned |
+| `critic` | whether the critic ran; `failed` on a high-risk run whose critic did not complete |
 
 ## risk
 
@@ -43,8 +45,10 @@ low | high
 ## critic
 
 ```
-skip | ran
+skip | ran | failed
 ```
+
+`skip` only when `risk=low`.
 
 ## Rules
 

@@ -63,9 +63,13 @@ Caps: 4 extra Reads, 3 codegraph queries, 2 added blockers.
 ## After the worker
 
 Pipe `kept` + `added` through `scripts/bind-findings.py` with the same
-patch and allow-paths. Preserve proven unbound defects in the body ledger.
-Nits from the first pass stay
-bound as they were. STATE `critic=ran`.
+patch and allow-paths. Proven defects that surface outside the patch carry
+`cause_path`/`cause_line` and land in `body`. Nits from the first pass stay
+bound as they were. Overwrite `$BULMA_ROOT/.bulma-code-review/bound.json`
+with the merged result. STATE `critic=ran`.
 
-Spawn or script failure: keep the first-pass bound ledger, set
-`critic=skip`, note `critic_failed` in chat, still publish.
+Spawn or script failure: keep the first-pass bound ledger and set
+`critic=failed`. Risk is high, so an unreviewed critic is not a clean pass:
+the verdict is REQUEST_CHANGES when the ledger already has a blocker or major,
+otherwise **DEFER** `reason=critic_failed`. The marker says `critic=failed`,
+never `critic=skip`; `skip` is reserved for `risk=low`.
