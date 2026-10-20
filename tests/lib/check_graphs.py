@@ -17,7 +17,7 @@ NEEDS = [
         skill="bulma-feature-delivery",
         node="evidence",
         after="tester",
-        before="quality",
+        before="shipper",
         extra_files=("templates/PR_BODY.md",),
     ),
     Need(

@@ -43,7 +43,9 @@ Do NOT read all of SPEC/TICKETS if the ticket text is already in the prompt
 - Reviewer: path to `git diff` + files_touched + done criteria. Not the diff inline.
 - One ticket per subagent. Do not "resume" with a monster transcript.
 - Do not load `how` / `why` in the coder ([PSTACK.md](PSTACK.md)).
-- Discovery: host `code_graph_explore` when `.codegraph/` or `.tokensave/` exists. No extra explorer worker.
+- Discovery: host `code_graph_explore` when `.codegraph/` or `.tokensave/` exists.
+  Otherwise use the host Trail Code adapter when an existing fresh map is available.
+  No extra explorer worker.
 
 ### quality / CI
 - Logs: only the **tail** of the failure (`gh run view --log-failed`, filtered).
@@ -83,3 +85,10 @@ No preamble "I will now…".
 - MCP gate errors
 - Contract in the blocker comment
 - CI check names + links when red
+
+## Bounded execution
+
+Use plan-shape.py and GRILL.md for compact contracts. Quality edits happen before
+independent review/tester; final visual evidence follows the validated tree.
+Use [runtime evidence](../bulma-bus/PERFORMANCE.md) for captured logs and matching
+local checks. Paths in STATE are canonical, even when spec and tickets share a file.

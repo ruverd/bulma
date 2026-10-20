@@ -16,3 +16,7 @@ On a UI route, capture Before here while the bug still shows. Same route and vie
 Write the slice that restores stated behavior (DECIDE). Last-resort ASK only if the fix would create a new product rule the ticket does not cover **and** you cannot defend a rec.
 
 Spawn `bulma-fd-debugger` (legacy name; this file is the contract).
+
+For runtime failures, query captured logs before repeating a reproduction.
+Use [runtime evidence](../../bulma-bus/PERFORMANCE.md); missing Trail falls back
+to file capture. Logs support diagnosis, but do not replace behavioral tests.

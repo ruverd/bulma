@@ -62,3 +62,17 @@ If fresh room evidence blocks a previous approval, do not silently skip: DEFER
 with the concern URLs. Reevaluate `review_context`, `review_context_unknown`,
 `human_signoff`, and `head_changed` deferrals on every run. Promotion always
 re-runs the full preflight, including sensitive paths and CI evidence.
+
+## Retained analysis from pending CI
+
+Before selecting a new pass, refresh preflight and `CONTEXT.json` in `review_dir`.
+This context contains the current tracker acceptance criteria and content hashes
+of every repository rule file used by the review. Refresh those sources, not a
+copy of the old context. Missing tracker/rule evidence invalidates reuse.
+Run `scripts/snapshot.py check --dir "$REVIEW_DIR" --context "$REVIEW_DIR/CONTEXT.json"`.
+Success reuses only completed code analysis, including carried findings and
+coverage. Resume at verdict with live CI and room evidence. If prior own
+REQUEST_CHANGES or coverage/uncertainty/critic_failed requires deep, the retained
+pass must be deep too. A changed head, base, PR text, context, policy or artifact
+invalidates the cache. Apply the normal deep/light rules above. Never turn an
+unfinished review into a completed analysis just to save work.

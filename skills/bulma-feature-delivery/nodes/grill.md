@@ -10,4 +10,4 @@ Walk the tree internally. DECIDE and log. ASK only as last resort (very importan
 
 New module: run `architect`. Take the synthesized sketch (DECIDE). Checkpoint only as last-resort policy.
 
-Done (frontier empty) → **spec**.
+Done (implementation decisions resolved) → **spec**.

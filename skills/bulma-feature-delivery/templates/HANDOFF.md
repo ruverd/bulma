@@ -46,7 +46,7 @@
 
 ## Pass criteria (delivery)
 
-- [ ] quality thermo fix all
+- [ ] quality completed before final review
 - [ ] PR(s) open
 - [ ] CI all green (`gh pr checks`)
 - [ ] only then status=done

@@ -1,6 +1,9 @@
 ---
 schema_version: 5
 status: init
+plan_mode: detailed
+quality_mode: deep
+validated_tree: ""
 spec_path: ""
 tickets_path: ""
 current_ticket: ""
@@ -207,10 +210,10 @@ Index: `.bulma-feature-delivery/mcp-sources.md`
 - **Unproven:**
 - **Summary:**
 
-## Quality (thermo-nuclear)
+## Quality before review
 
 - **Status:** pending | done | blocked
-- **Mode:** fix all
+- **Mode:** focused | deep
 - **Findings fixed:**
 - **Remaining:**
 - **Hard gate after:** pending

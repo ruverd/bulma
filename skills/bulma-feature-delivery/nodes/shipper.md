@@ -6,19 +6,21 @@
 
 ## Mission
 
-After quality ok: commit → push → draft PR.
+After quality, review, tester and final evidence match the current tree: commit → push → draft PR.
 Then the orchestrator runs **ci_watch** if a PR/MR exists.
 
 ## Sequence
 
-1. Pre-checks: review pass, tester pass, quality fix-all + hard_gate_after pass —
+1. Pre-checks: review pass, tester pass, quality ok, final evidence current —
    confirm exit codes in `.bulma-feature-delivery/gates.log` if it exists.
 2. `git branch --show-current` must not be `main` or `master`. Fail the node if it is.
    Branch == tracker branch if set.
 3. Forge from [PRODUCT.md](../PRODUCT.md). `github` → `gh`. `gitlab` → `glab`. `git` → push only, no PR (`done_local` unless the user insisted).
 4. Idempotency: list PRs/MRs on this head. Exists → update, do not recreate.
 5. Commit (cite ticket id if any). **No Co-Authored-By, no "Generated with", no trailers.**
-6. `git fetch origin && git rebase origin/<base>`. Re-run the hard gate.
+6. `git fetch origin && git rebase origin/<base>`. If the tree or base changes,
+   return to review, tester and final evidence before pushing. Preserve completed
+   decisions; revalidate affected contracts against the new base.
    Then push (`-u`). `--force-with-lease` only after a rebase that rewrote
    commits, and only on the task branch. Never `--force`. Never on main/master.
 7. Draft PR/MR with the ticket link. Body from

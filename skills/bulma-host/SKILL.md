@@ -118,6 +118,7 @@ every row degrades to the fallback rather than blocking.
 
 | Capability | Tool when present | Fallback when absent |
 |---|---|---|
+| `runtime_logs` | Log-capture Trail `list_sessions` / `get_logs`, only if that provider is installed | Read the bounded error section of the recorded log |
 | `tracker_fetch_issue` | Linear: `mcp__linear-server__get_issue` | The PR body and title alone. Never invent AC |
 | `tracker_save_issue` | Linear: `mcp__linear-server__save_issue` | `gh issue create` / `glab issue create` ([BLOCKERS.md](../bulma-feature-delivery/BLOCKERS.md)) |
 | `tracker_save_comment` | Linear: `mcp__linear-server__save_comment` | Comment on the PR instead |
@@ -161,8 +162,9 @@ Claude, Codex, Grok, and Cursor on one machine **share** that tree.
 ## Quality rubric
 
 `bulma-fd-quality` loads bundled
-`thermo-nuclear-code-quality-review` (`skills/thermo-nuclear-code-quality-review/`). Always run
-`fix all`. Do not skip.
+`thermo-nuclear-code-quality-review` in deep mode only. Follow
+[quality.md](../bulma-feature-delivery/nodes/quality.md) for depth and ordering.
+Focused quality reuses the coder; independent review and tester always follow.
 
 ## Product policy
 
@@ -171,3 +173,37 @@ system: [PRODUCT.md](../bulma-feature-delivery/PRODUCT.md)
 plus the **current repo** (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING`)
 plus `bulma-memory` (confirmed reviewers, chat language).
 Do not bake a company's GitHub handles or repo names into a graph node.
+
+## Trail Code context
+
+Trail Code (`@trailhq/trail-code`, formerly graft) provides code maps and team
+memory. It is distinct from the log-capture tool also named Trail. Never infer
+capabilities from the binary name. Use the CLI's help or exposed MCP schema.
+
+When `.codegraph/` exists, CodeGraph remains the first discovery source. Otherwise,
+when `graft/` or `.trail/cache/` exists, query Trail Code before a grep/read loop:
+
+```bash
+python3 scripts/code-context.py --repo "$WORKTREE" --query "<symbols or question>" --limit 6
+```
+
+The adapter checks freshness and returns inline source with locations. Missing,
+stale or unsupported maps return `status=fallback` and exit 3; use targeted source
+reads instead. Do not initialize a map automatically. Refresh an existing map
+only when authorized, with `trail build --no-gitignore --no-ignore "$WORKTREE"`.
+Do not run paid/deep build, `--name` analysis, team-memory writes or upgrades as
+part of ordinary discovery. Worktree maps must describe that worktree's revision.
+
+For impact analysis on a fresh map, `trail blast --base "$BASE" --format json
+--no-refresh "$WORKTREE"` supplies dependent symbols. It supports the bundled
+blast-radius investigation; it does not replace behavioral proof. `trail check`
+may provide learned constraints, but its suggestions never override repo policy
+or gate correctness by themselves. No automatic note publication.
+
+## Runtime evidence
+
+Tester and diagnose nodes use [PERFORMANCE.md](../bulma-bus/PERFORMANCE.md).
+Trail is optional. Pass only session IDs, evidence paths and relevant error
+excerpts to workers. Host token usage is optional metadata; never invent it.
+Load only the current node contract and its required references. Cache static
+contracts within a session; reload when their file content changes.

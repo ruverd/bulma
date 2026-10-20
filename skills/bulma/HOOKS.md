@@ -41,3 +41,27 @@ Per-item hooks (`qa.gate` and `triage.classify` per finding, `lstm.verify` per c
 ## Context
 
 Always pass `--context repo=<owner/repo> pr=<number> sha=<head> ticket=<id>` with what is known. Empty is fine.
+
+## Reuse unchanged decisions
+
+Eligible hooks (`fd.triage`, `lstm.verify`, `review.risk`,
+`reviewer.failure_class`, `dispatch.tier`, `insight.classify`) may use the five-minute
+response cache. Pass `--context evidence=<sha256 of complete current source inputs>`
+alongside repo/PR/SHA/ticket. Recompute this digest from freshly read sources,
+including referenced rules, contracts and tracker acceptance; never reuse a digest
+because a state file exists. Missing evidence identity disables caching. Cache
+keys include hook policy, model, power, thresholds, graph answer and full sanitized
+request/context. Truncated inputs, replay fixtures, routing, QA approval and ASK
+policy never use the cache. `BULMA_JEV_CACHE=0` disables it for comparison runs.
+
+Cached answers are judged again and get a new decision ID. Cached calls record
+`note=cache_hit` and zero billed input tokens, not the original request's usage.
+Errors, missing answers and expired/corrupt entries fall back to a fresh call.
+Cache data is global under `$BULMA_HOME/jev-cache`, never in a product checkout.
+A cache hit changes neither approval gates nor the required code verification.
+
+Use `bulma.py report` with matched tasks and cache disabled/enabled to compare
+latency, token usage and outcome reversals. Existing per-hook agreement with the
+graph answer identifies candidates for deterministic rules. Do not remove a Jev
+hook on agreement alone; compare failures/reversals and later human findings too.
+Per-item hooks still use `ask-many`; dispatch already batches independent units.

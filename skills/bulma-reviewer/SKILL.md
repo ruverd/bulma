@@ -33,7 +33,7 @@ the engine's [evidence rules](../bulma-code-review/references/EVIDENCE.md).
 Its approval and changes-requested bodies include a `Model` row identifying
 the executing reviewer, or `unknown` when the runtime exposes no identity.
 Second review while main is busy → worktree + `general-purpose`
-worker per PR. `--force` if CI red. Pending required CI waits 5m
+worker per PR. `--force` if CI red. Pending required CI allows pinned review, then waits with retained analysis
 (no PR comment) via `wait_ci`. Draft / conflict / CI-red DEFER is
 expected.
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.

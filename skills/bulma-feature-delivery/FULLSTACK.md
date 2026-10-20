@@ -76,13 +76,13 @@ Tracker MCP for the ticket. Never a vendor CLI.
 - backend: contracts, migrations, API TDD
 - frontend: UI_DESIGN_SYSTEM + Figma if any + contract consumption
 - never merge; draft PR if `open_pr`
-- thermo fix all in that worker's repo before shipping that repo
+- quality before final review in that worker's repo
 
 ## 6. Dual ship + CI green
 
 For **each** repo, after the worker is ok:
 
-1. quality / thermo in that worktree
+1. quality, then independent review/tester/evidence in that worktree
 2. commit + push on the **same** branch
 3. draft PR (base main) linking the ticket + the sibling PR
    - reviewers/assignee per [PRODUCT.md](PRODUCT.md)

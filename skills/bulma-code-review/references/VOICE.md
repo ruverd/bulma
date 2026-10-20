@@ -42,5 +42,4 @@ until that path is fixed."
 A DEFER is also a sentence: "CI is still red on lint and typecheck, so I did
 not read the diff."
 
-A wait_ci chat line: "Required CI is still pending, so I did not read the
-diff. Checking again in 5 minutes."
+A wait_ci chat line: "Code review is complete on this SHA. Required CI is still pending. Checking again in 5 minutes."
