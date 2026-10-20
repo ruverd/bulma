@@ -853,7 +853,7 @@ PY
 # host transcript when present, never from the ledger.
 cmd_report() {
   local home="${BULMA_HOME:-$HOME/.bulma}"
-  local found=0 dir slug ledger jobs body tokens
+  local found=0 dir slug ledger jobs body tokens metrics
   if [[ -d "$home" ]]; then
     for dir in "$home"/*; do
       [[ -d "$dir" ]] || continue
@@ -873,6 +873,14 @@ cmd_report() {
         local lease
         lease="$(report_lease "$jobs")"
         [[ -n "$lease" ]] && body="${body:+$body$'\n'}$lease"
+      fi
+      if [[ -d "$dir/.bulma-bus/metrics" ]] && command -v python3 >/dev/null 2>&1; then
+        metrics="$(python3 "$REPO/skills/bulma-bus/scripts/runtime.py" report \
+          --directory "$dir/.bulma-bus/metrics" 2>/dev/null || true)"
+        if [[ -n "$metrics" && "$metrics" != "{}" ]]; then
+          body="${body:+$body$'\n'}node measurements (host usage may be partial):
+$metrics"
+        fi
       fi
       [[ -n "$body" ]] || continue
       found=1

@@ -54,6 +54,8 @@ check leaks python3 "$LIB/check_leaks.py" "$ROOT"
 check branch-name python3 "$LIB/check_branch_name.py" "$ROOT"
 check legacy-name python3 "$LIB/check_legacy_name.py" "$ROOT"
 
+check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_runtime.py"
+
 if [[ "$FAILED" -ne 0 ]]; then
   echo "repo checks failed" >&2
   exit 1

@@ -118,6 +118,7 @@ every row degrades to the fallback rather than blocking.
 
 | Capability | Tool when present | Fallback when absent |
 |---|---|---|
+| `runtime_logs` | Trail `list_sessions` / `get_logs` after tool discovery | Read the bounded error section of the recorded log |
 | `tracker_fetch_issue` | Linear: `mcp__linear-server__get_issue` | The PR body and title alone. Never invent AC |
 | `tracker_save_issue` | Linear: `mcp__linear-server__save_issue` | `gh issue create` / `glab issue create` ([BLOCKERS.md](../bulma-feature-delivery/BLOCKERS.md)) |
 | `tracker_save_comment` | Linear: `mcp__linear-server__save_comment` | Comment on the PR instead |
@@ -171,3 +172,11 @@ system: [PRODUCT.md](../bulma-feature-delivery/PRODUCT.md)
 plus the **current repo** (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING`)
 plus `bulma-memory` (confirmed reviewers, chat language).
 Do not bake a company's GitHub handles or repo names into a graph node.
+
+## Runtime evidence
+
+Tester and diagnose nodes use [PERFORMANCE.md](../bulma-bus/PERFORMANCE.md).
+Trail is optional. Pass only session IDs, evidence paths and relevant error
+excerpts to workers. Host token usage is optional metadata; never invent it.
+Load only the current node contract and its required references. Cache static
+contracts within a session; reload when their file content changes.

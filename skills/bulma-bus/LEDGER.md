@@ -63,3 +63,6 @@ worse than no number. Do not estimate tokens into this file.
 path, and prints prompt / uncached / cache% by workspace class (`lstm`,
 `fd`, `reviewer`, `other`). Uncached is billed input that missed the
 prefix cache. Graphs still never write those numbers.
+
+Per-attempt host usage, separate active/wait time and reusable command evidence:
+[PERFORMANCE.md](PERFORMANCE.md). Record one measurement at each node exit.

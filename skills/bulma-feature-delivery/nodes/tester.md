@@ -34,3 +34,10 @@ orchestrator.
 - Never invent pass.
 - Do not edit source to "make it pass".
 - skipped only if the toolchain is impossible → orchestrator escalates.
+
+## Capture and reuse
+
+Use [runtime evidence](../../bulma-bus/PERFORMANCE.md) for these commands.
+A successful `runtime.py check` permits reuse only for deterministic local tests
+with a complete environment fingerprint. Otherwise execute. Keep command, exit
+code and evidence path in STATE. Full logs stay on disk; inspect relevant errors.

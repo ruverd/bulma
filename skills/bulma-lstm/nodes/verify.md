@@ -66,3 +66,7 @@ directory), passing the row's `claim_true`.
 [INSIGHTS.md](../../bulma-bus/INSIGHTS.md) defines who counts as human, the
 fields, and the `--ours-open` marker lookup. A failed write is a chat note,
 never a reason to change a disposition.
+
+For runtime failures, query captured logs before repeating a reproduction.
+Use [runtime evidence](../../bulma-bus/PERFORMANCE.md); missing Trail falls back
+to file capture. Logs support diagnosis, but do not replace behavioral tests.
