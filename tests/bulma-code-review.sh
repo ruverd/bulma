@@ -94,6 +94,36 @@ python3 "$RISK" --human-signoff \
 assert_json "$TMP/human.json" "len(d) == 9 and 'src/seatLimits.ts' in d and 'src/author/page.tsx' not in d and 'prisma/schema.prisma' not in d"
 python3 "$RISK" --human-signoff --files-from "$TMP/FILES.txt" >"$TMP/no-human.json"
 assert_json "$TMP/no-human.json" "d == []"
+python3 "$RISK" --human-signoff infra/stack.yaml scripts/ci/apply-amplify-custom-rules.mjs \
+  .github/actions/setup/action.yml Dockerfile amplify.yml .npmrc bunfig.toml apps/web/package.json \
+  src/jobs/tasks/chargebee-subscription-reconcile.ts \
+  src/services/identity-provider/zitadel/zitadel-saml-idp.service.ts \
+  src/roles/guard.ts src/acl.ts >"$TMP/deploy-human.json"
+assert_json "$TMP/deploy-human.json" "len(d) == 12"
+python3 "$RISK" --human-signoff src/features/certification/CredentialCard.tsx \
+  src/seats/__snapshots__/SeatPicker.test.tsx.snap e2e/seat-picker.png src/useAccessibility.ts >"$TMP/over.json"
+assert_json "$TMP/over.json" "d == []"
+cat >"$TMP/signoff.patch" <<'EOF'
+diff --git a/src/a.ts b/src/a.ts
+--- a/src/a.ts
++++ b/src/a.ts
+@@ -1 +1,2 @@
++const key = process.env.AWS_SECRET_ACCESS_KEY
+diff --git a/ci/x.yml b/ci/x.yml
+--- a/ci/x.yml
++++ b/ci/x.yml
+@@ -1 +1,3 @@
++      - uses: actions/checkout@v4
++      - uses: actions/setup-node@0123456789abcdef0123456789abcdef01234567
+diff --git a/src/ok.ts b/src/ok.ts
+--- a/src/ok.ts
++++ b/src/ok.ts
+@@ -1 +1,2 @@
++const x = 1
+EOF
+python3 "$RISK" --human-signoff --patch "$TMP/signoff.patch" --author 'renovate[bot]' --author-type Bot \
+  src/ok.ts >"$TMP/lines.json"
+assert_json "$TMP/lines.json" "d == ['src/a.ts', 'ci/x.yml', 'author:renovate[bot]']"
 ok human-signoff-paths
 
 # --- bind-findings ---
@@ -120,10 +150,30 @@ cat >"$TMP/findings.json" <<'EOF'
 ]
 EOF
 
-python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/findings.json" >"$TMP/bound.json"
+# Exit status of a command, stdout to $1, without tripping set -e.
+status() { local out="$1" rc=0; shift; "$@" >"$out" || rc=$?; echo "$rc"; }
+
+[[ "$(status "$TMP/bound.json" python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/findings.json")" == 3 ]] \
+  || fail "bind: unplaced majors must exit 3"
 assert_json "$TMP/bound.json" "len(d['kept']) == 1 and d['kept'][0]['title'] == 'in hunk'"
-assert_json "$TMP/bound.json" "len(d['dropped']) == 4"
+assert_json "$TMP/bound.json" "len(d['dropped']) == 4 and d['body'] == []"
 ok bind-in-hunk
+
+# A break in an unchanged file, caused by a changed hunk, lands in body and exits 3.
+cat >"$TMP/caused.json" <<'EOF'
+[{"severity":"blocker","path":"src/caller.test.ts","line":12,"in_diff":false,
+  "cause_path":"src/x.ts","cause_line":42,"title":"caller breaks"}]
+EOF
+[[ "$(status "$TMP/caused-bound.json" python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/caused.json")" == 3 ]] \
+  || fail "bind: body blocker must exit 3"
+assert_json "$TMP/caused-bound.json" "len(d['body']) == 1 and d['dropped'] == [] and d['kept'] == []"
+cat >"$TMP/pre.json" <<'EOF'
+[{"severity":"major","path":"src/old.ts","line":3,"in_diff":false,"pre_existing":true,"title":"old debt"},
+ {"severity":"nit","path":"src/old.ts","line":4,"in_diff":false,"title":"old nit"}]
+EOF
+[[ "$(status "$TMP/pre-bound.json" python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/pre.json")" == 0 ]] \
+  || fail "bind: pre-existing majors and nits must exit 0"
+ok bind-body-bucket
 
 cat >"$TMP/carry.json" <<'EOF'
 [{"severity":"blocker","path":"src/old.ts","line":10,"title":"carried"}]
@@ -131,7 +181,8 @@ EOF
 python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/carry.json" \
   --allow-path src/old.ts >"$TMP/carry-bound.json"
 assert_json "$TMP/carry-bound.json" "len(d['kept']) == 1"
-python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/carry.json" >"$TMP/carry-drop.json"
+[[ "$(status "$TMP/carry-drop.json" python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/carry.json")" == 3 ]] \
+  || fail "bind: unplaced carried blocker must exit 3"
 assert_json "$TMP/carry-drop.json" "len(d['kept']) == 0"
 ok bind-allow-path
 
@@ -141,6 +192,144 @@ EOF
 python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/wrap.json" >"$TMP/wrap-bound.json"
 assert_json "$TMP/wrap-bound.json" "len(d['kept']) == 1"
 ok bind-wrapper
+
+# --- gate ---
+
+GATE="$SKILL/scripts/gate.py"
+[[ -f "$GATE" ]] || fail "missing $GATE"
+HEAD=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+EV="$TMP/ev"
+mkdir -p "$EV"
+
+reset_evidence() {
+  echo '[[]]' >"$EV/reviews.json"
+  echo '[[]]' >"$EV/comments.json"
+  echo '[[]]' >"$EV/timeline.json"
+  echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]}}}}}]' >"$EV/threads.json"
+  cat >"$EV/checks.json" <<EOF
+[{"total_count":1,"check_runs":[{"id":1,"name":"build-and-test","head_sha":"$HEAD","status":"completed","conclusion":"success"}]}]
+EOF
+  echo '[[]]' >"$EV/statuses.json"
+  echo '[]' >"$EV/signoff.json"
+  echo '{"kept":[],"body":[],"dropped":[]}' >"$EV/bound.json"
+}
+
+write_payload() {
+  python3 - "$EV/payload.json" "$1" "$HEAD" "$2" <<'PY'
+import json, sys
+path, event, head, marker = sys.argv[1:]
+body = f"""## Approved: o/r#1
+
+| | |
+|---|---|
+| Model | test-model |
+| Reviewed head | {head} |
+| Pass | deep |
+| CI | green on {head} |
+| Review context | clear |
+| Human sign-off | not required |
+| Coverage | 3 of 3 changed files |
+
+<!-- bulma-review: v=1 {marker} sha={head} preflight=1 -->
+"""
+json.dump({"commit_id": head, "event": event, "body": body, "comments": []}, open(path, "w"))
+PY
+}
+
+gate() {
+  status "$TMP/gate.out" python3 "$GATE" --dir "$EV" --payload "$EV/payload.json" --me review-bot \
+    --head "$HEAD" --signoff "$EV/signoff.json" --ledger "$EV/bound.json" "$@"
+}
+
+blocked_with() {
+  [[ "$(gate)" == 1 ]] && grep -q "$1" "$TMP/gate.out"
+}
+
+CLEAN="pass=deep blockers=0 majors=0 reason=- open=- risk=low critic=skip"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+[[ "$(gate)" == 0 ]] || fail "gate: clean approve must pass ($(cat "$TMP/gate.out"))"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":5,"user":{"login":"alice","type":"User"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
+EOF
+blocked_with 'open change request from alice' || fail "gate: open change request must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":5,"user":{"login":"alice","type":"User"},"state":"DISMISSED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
+EOF
+cat >"$EV/timeline.json" <<'EOF'
+[[{"event":"review_dismissed","actor":{"login":"author"},"created_at":"2026-10-19T11:00:00Z",
+   "dismissed_review":{"state":"changes_requested","review_id":5}}]]
+EOF
+blocked_with 'dismissed by author, never cleared' || fail "gate: author-dismissed change request must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1"}]}}]}}}}}]' >"$EV/threads.json"
+blocked_with 'unresolved thread: u1' || fail "gate: unresolved thread must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+echo '[[{"context":"AI QA","state":"success","description":"BLOCKED: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
+blocked_with 'status AI QA says BLOCKED' || fail "gate: AI QA BLOCKED must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+cat >"$EV/checks.json" <<EOF
+[{"check_runs":[{"id":1,"name":"build-and-test","head_sha":"$HEAD","status":"completed","conclusion":"skipped"},
+                {"id":2,"name":"CodeRabbit","head_sha":"$HEAD","status":"completed","conclusion":"success"}]}]
+EOF
+blocked_with 'no successful build/test check' || fail "gate: skipped CI must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+echo '["infra/stack.yaml"]' >"$EV/signoff.json"
+blocked_with 'needs human sign-off: infra/stack.yaml' || fail "gate: sign-off must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+python3 - "$EV/payload.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+p["body"] = "\n".join(l for l in p["body"].splitlines() if not l.startswith("| Coverage"))
+json.dump(p, open(sys.argv[1], "w"))
+PY
+blocked_with 'template row missing: Coverage' || fail "gate: missing row must block"
+[[ "$(status /dev/null python3 "$GATE" --dir "$EV" --payload "$EV/payload.json" --me review-bot --head "$HEAD")" == 1 ]] \
+  || fail "gate: missing row must block payloads without approval evidence too"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+echo '{"kept":[],"body":[{"severity":"blocker","title":"caller breaks"}],"dropped":[]}' >"$EV/bound.json"
+blocked_with 'blocker in ledger (body)' || fail "gate: body blocker must block"
+
+reset_evidence; write_payload APPROVE "pass=deep blockers=0 majors=0 reason=- open=- risk=high critic=failed"
+blocked_with 'risk=high but critic=failed' || fail "gate: failed critic must block"
+
+reset_evidence; write_payload APPROVE "pass=light blockers=0 majors=0 reason=- open=- risk=low critic=skip"
+cat >"$EV/reviews.json" <<'EOF'
+[[{"id":7,"user":{"login":"review-bot"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T09:00:00Z",
+   "body":"<!-- bulma-review: v=1 pass=deep sha=old blockers=1 majors=0 reason=- open=a:1:x preflight=1 -->"}]]
+EOF
+blocked_with 'needs pass=deep' || fail "gate: light flip after my change request must block"
+write_payload APPROVE "$CLEAN"
+[[ "$(gate)" == 0 ]] || fail "gate: deep flip after my change request must pass ($(cat "$TMP/gate.out"))"
+
+reset_evidence; write_payload APPROVE "pass=light blockers=0 majors=0 reason=- open=- risk=low critic=skip"
+cat >"$EV/comments.json" <<'EOF'
+[[{"user":{"login":"review-bot"},"created_at":"2026-10-19T09:00:00Z",
+   "body":"<!-- bulma-review: v=1 pass=light sha=old blockers=0 majors=0 reason=coverage open=- preflight=1 -->"}]]
+EOF
+blocked_with 'needs pass=deep' || fail "gate: light approve after coverage defer must block"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":9,"user":{"login":"peer-bot","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
+EOF
+[[ "$(gate --bot-login peer-bot)" == 3 ]] || fail "gate: second bot approval must exit 3"
+[[ "$(gate)" == 0 ]] || fail "gate: a human approval must not trip bot quorum"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+rm "$EV/checks.json"
+blocked_with 'evidence missing' || fail "gate: missing evidence must block"
+ok gate
 
 # --- skill contract ---
 
@@ -207,7 +396,16 @@ assert publish.index('PREFLIGHT.md') < publish.index('-X POST')
 assert '## ✅ Approved:' not in publish.split('```markdown', 1)[1].split('```', 1)[0]
 assert 'reviews/$REVIEW_ID' in publish
 review = (root / 'nodes/review.md').read_text()
-assert '{ success, data }' in review and 'body findings' in review
+assert '{ success, data }' in review and 'cause_path' in review
+assert 'Uncertainty about a major or a nit disappears' not in review
+assert 'keeps its severity' in review
+assert 'gate.py' in publish and '&& gh api "repos/$REPO/pulls/$PR/reviews"' in publish
+assert 'dismissals' in preflight and 'Retire my stale approval' in preflight
+critic = (root / 'nodes/critic.md').read_text()
+assert 'critic=failed' in critic and 'still publish' not in critic
+verdict = (root / 'nodes/verdict.md').read_text()
+assert 'anchored to a changed path' not in verdict and 'wherever it surfaces' in verdict
+assert 'Loaded by another reviewer' in skill
 PY
 ok approval-preflight-contract
 

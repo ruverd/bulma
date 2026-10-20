@@ -85,6 +85,12 @@ For config or workflow changes without exports, search for scripts/tests that
 assert the changed keys, action names or paths. A checkout-action replacement
 can break a security guard test outside the workflow diff.
 
+A break that surfaces in a file this PR did not change still counts. A test
+in an unchanged test file that now fails, a caller that now crashes, a type
+error in an untouched importer: record it at the file where it surfaces
+(`path`/`line`) and point `cause_path`/`cause_line` at the changed hunk that
+causes it. Check CI test output for failures outside `FILES.txt` too.
+
 ```
 code_graph_explore  →  "<ChangedSymbol> <OtherSymbol> callers"
 ```
@@ -214,6 +220,9 @@ No new reading in this phase. Every surviving finding must carry all of:
   "path": "src/x.ts",
   "line": 42,
   "in_diff": true,
+  "cause_path": "src/x.ts (only when the defect surfaces outside the patch)",
+  "cause_line": 40,
+  "pre_existing": false,
   "title": "Retry count keeps old value.",
   "trigger": "concrete condition — input, state, call order",
   "impact": "what the user or system observes",
@@ -227,10 +236,17 @@ Cut rules, biased toward refutation:
 - no concrete `trigger` → **drop in silence**
 - no `axis` → **drop in silence**
 - `refutation` holds → **drop in silence**
-- depends on behaviour outside this repo (api-v2 contract, flag, production data)
-  → move to `uncertainties`
-- an uncertainty causes DEFER **only** if, were it true, it would be a blocker.
-  Uncertainty about a major or a nit disappears.
+- a defect in this diff that is reachable when a flag is on keeps its severity.
+  A flag, a rollout plan or an external contract does not lower it
+- only facts that genuinely cannot be checked from this repo, its linked
+  counterparts or CI (an unavailable provider response, production data) go
+  to `uncertainties`
+- an uncertainty causes DEFER `reason=uncertainty` if, were it true, it would
+  be a blocker, or a major on the `correctness`, `contract` or `security`
+  axis. Uncertainty about a nit disappears
+- a claim about pre-existing code the diff neither changed nor broke sets
+  `pre_existing: true`; that is the only way a blocker or major leaves the
+  ledger without a placement
 
 Write the survivors to `$BULMA_ROOT/.bulma-code-review/findings.json`. Then:
 
@@ -241,11 +257,17 @@ python3 scripts/bind-findings.py \
   --allow-path <each §4.2 carry-forward file>
 ```
 
-`scripts/` sits next to this skill's `SKILL.md`. Replace the ledger with
-`kept`, plus proven diff-caused defects rejected only for inline placement.
-Keep those separately as body findings with their evidence path and causal
-changed hunk; do not pass them through the same inline filter again. Drop
-refuted or pre-existing claims. Count actual drops for chat. A placement drop
-must never erase a Critical/High and turn REQUEST_CHANGES into APPROVE.
+`scripts/` sits next to this skill's `SKILL.md`. It prints
+`{kept, body, dropped}` and exits 3 when a blocker or major sits in `body`, or
+in `dropped` without `pre_existing: true`. Save the output as
+`$BULMA_ROOT/.bulma-code-review/bound.json`; [publish.md](publish.md) passes it
+to `gate.py` as the ledger.
+
+`kept` become inline comments. `body` findings are introduced by this PR and
+surface elsewhere; publish them in the body with their `path:line` and the
+causal changed hunk. A blocker or major in `dropped` that is not pre-existing
+needs its anchor or `cause_path` fixed and a re-run, never a silent drop.
+Count actual drops for chat. A placement miss must never erase a
+Critical/High and turn REQUEST_CHANGES into APPROVE.
 
 Then [critic.md](critic.md), then [verdict.md](verdict.md).

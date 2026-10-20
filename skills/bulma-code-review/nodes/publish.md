@@ -10,16 +10,35 @@ Never approve while body or inline comments raise a Critical/High.
 One atomic call. Findings with `in_diff: true` become inline comments; every other
 finding goes in the body.
 
+Never call the reviews endpoint on its own. The gate and the POST are one
+command, so an APPROVE the gate rejects is never sent:
+
 ```bash
 PAYLOAD=$(mktemp /tmp/bulma-review-XXXX.json)   # session scratchpad if one is set
-# {"commit_id","event":"APPROVE|REQUEST_CHANGES","body":"...","comments":[{"path","line","side":"RIGHT","body"}]}
-gh api "repos/$REPO/pulls/$PR/reviews" -X POST --input "$PAYLOAD"
+# {"commit_id","event":"APPROVE|REQUEST_CHANGES|COMMENT","body":"...","comments":[{"path","line","side":"RIGHT","body"}]}
+python3 scripts/gate.py --dir "$REVIEW_DIR" --payload "$PAYLOAD" --me "$ME" \
+  --head "$HEAD_SHA" --signoff "$REVIEW_DIR/signoff.json" \
+  --ledger "$REVIEW_DIR/bound.json" $BOT_LOGINS \
+  && gh api "repos/$REPO/pulls/$PR/reviews" -X POST --input "$PAYLOAD"
 ```
+
+`$BOT_LOGINS` is `--bot-login <login>` for each review bot named in
+`bulma-memory` (accounts that run an AI reviewer under a user login). GitHub
+`Bot` users and `$ME` always count as bots.
+
+| Gate exit | Next |
+|---|---|
+| 0 | posted; post-verify below |
+| 1 | nothing posted. Each `BLOCKED` line is a reason: DEFER with them under Open, dismiss my standing approval, record STATE `gate=blocked` |
+| 3 | nothing posted. Only bot approvals stand on this head. Rewrite the payload as `event: COMMENT`, header `## 💬 Reviewed, no blockers: <repo>#<pr>`, first line "Another bot already approved this head, so this needs a human approval, not a second bot one.", marker `reason=bot_quorum`; re-run the gate and POST |
+
+REQUEST_CHANGES and COMMENT payloads pass through the gate too; it checks
+their template rows, marker and `commit_id`.
 
 `422` means an invalid position and kills the whole review atomically. Retry
 **once** with `comments: []` and all findings in the body, then record
 `inline_failed` in the chat summary. No further retries.
-Re-run preflight before that retry and preserve severity/verdict. Do not retry
+Re-run preflight and the gate before that retry and preserve severity/verdict. Do not retry
 an ambiguous network failure until checking whether the review was created.
 
 ### Body template — identical for all verdicts, only the header changes
@@ -94,7 +113,11 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 `open=-`). Without it the next run loses the ledger and re-reviews from scratch.
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
-`## ⏸️ Deferred: <repo>#<pr>`. Sections with no content are omitted. Omit
+`## ⏸️ Deferred: <repo>#<pr>`, `## 💬 Reviewed, no blockers: <repo>#<pr>` (bot
+quorum). The table rows `Model`, `Reviewed head`, `CI`, `Review context`,
+`Human sign-off` and `Coverage` are required on every review body, compact or
+not; `gate.py` rejects a body without them. Findings in the bind `body` bucket
+name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
 Acceptance when `AC.md` is `none`. Inline findings still appear in the body
 list so the summary stands alone. Do not print `axis` labels on the PR; the
 Acceptance table is the spec report, and a standards finding already quotes
@@ -121,7 +144,11 @@ BODY=$(mktemp /tmp/bulma-defer-XXXX.md)
 gh api "repos/$REPO/issues/$PR/comments" -F body=@"$BODY"
 ```
 
-Same template. The line under the header is a sentence, not a status code:
+Same template. Before posting, dismiss my standing approval on this PR
+([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval); the
+DEFER comment alone does not withdraw it. The marker carries the reason
+(`reason=coverage`, `reason=critic_failed`, ...) so the next pass knows a flip
+to APPROVE needs a deep pass. The line under the header is a sentence, not a status code:
 "CI is still red on lint and typecheck, so I did not read the diff."
 Under `### ❓ Open`, name the reason: failing checks with log links (max 8),
 the draft or conflict, the files you could not cover, or the open question.
@@ -136,7 +163,7 @@ gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid
 
 `REVIEW_ID` comes from the POST response, never from the last review in a list.
 Compare `commit_id` and the live head with `reviewed_sha`. A concurrent push
-makes this review stale; report it and require review of the new head.
+makes this review stale; dismiss it, report it and require review of the new head.
 
 DEFER: print the comment URL instead. `--dry-run`: print the payload, post nothing,
 and label the chat summary `DRY-RUN`.

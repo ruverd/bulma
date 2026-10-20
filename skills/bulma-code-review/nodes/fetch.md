@@ -33,6 +33,9 @@ git diff "$OLD_SHA..$HEAD_SHA"
 Fetch the exact commits into the review checkout first. Save the unified diff
 as `PATCH.diff` and its changed paths as `FILES.txt`. Missing old SHA or a
 force-push/rebase → full PR diff and **deep** pass, noting `stale_base` in chat.
+A prior REQUEST_CHANGES or DEFER `coverage|uncertainty|critic_failed` of mine
+also forces the full PR diff and a deep pass
+([pass_decision.md](pass_decision.md)).
 Read source from `HEAD_SHA`, never from a moving branch or unrelated checkout.
 Verify the PR head before and after fetching its diff; retry if it moved.
 

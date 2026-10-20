@@ -22,7 +22,10 @@ Init `.bulma-reviewer/STATE.md`. Walk GRAPH (**admit** first).
 Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
 context before pass selection and again before publication, pins the reviewed
 head, verifies CI execution and requires human sign-off for sensitive changes.
-Never dismiss another review or approve over an open concern.
+Never dismiss another review or approve over an open concern. Every review
+POST runs behind the engine's `scripts/gate.py`; an APPROVE it rejects is
+never sent. The engine dismisses its own approval when the head moves or a
+later pass DEFERs, and posts a COMMENT instead of a second bot approval.
 Review preserves the user's checkout. Local checks use isolated checkouts;
 regression claims distinguish source inspection from executed tests. Changes
 that depend on another deployment include counterpart and rollout checks via

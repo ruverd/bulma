@@ -13,6 +13,9 @@ Apply the engine's [evidence rules](../../bulma-code-review/references/EVIDENCE.
 within that same pass: preserve the checkout, verify regression assertions and
 check paired deployment compatibility when applicable. Do not run a second
 review or publish a separate checklist.
+The engine's `gate.py` decides whether an APPROVE posts; this node never
+posts a review around it. A gate DEFER, a bot-quorum COMMENT, or a dismissed
+stale approval is an engine outcome to report, not something to retry.
 Draft / conflict / CI-red DEFER is expected — keep going to diagnose.
 
 After the engine publishes, fetch the PR's reviews, inline comments, and issue

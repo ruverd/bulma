@@ -22,13 +22,17 @@ waits 5m and does **not** post. Red CI still DEFERS.
    artifact and does not fan out.
 2. **Exactly one artifact per PR** — one review (inline comments in the same
    call) or one issue comment. Never both. Never two of either **on the same PR**.
+   Dismissing my own stale approval and resolving my own fixed threads are
+   state changes, not artifacts.
 3. **Never APPROVE** while any required check is failed, pending or unknown.
 4. **Never invent a finding.** A finding with no concrete trigger is dropped in
    silence — not downgraded, not mentioned.
 5. **Nits never block, and most stay silent.** A nit reaches the PR only inside the
    collapsed Nits block (§9), only with a concrete `path:line`, max 5 per run, and
    never changes the verdict. Always silent regardless: praise, generic refactor
-   advice, speculative perf, pre-existing debt, anything the diff did not touch.
+   advice, speculative perf, pre-existing debt the diff neither changed nor broke.
+   A break this diff causes in an unchanged file (a caller, a test) is not
+   pre-existing; it is a finding with `cause_path`/`cause_line` (§5 Phase 10).
    "Could be cleaner" is silent except the one code-judo nit in Phase 8, which must
    name a layer, branch, or helper to delete.
 6. **Voice.** GitHub text and chat follow **Voice** (just above §9). Teammate
@@ -40,20 +44,23 @@ waits 5m and does **not** post. Red CI still DEFERS.
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
    before pass selection and again before publishing. Open change requests,
    unresolved threads, unanswered questions and AI QA concerns block approval.
-   Never dismiss another review; ask its reviewer to re-review. Missing evidence
-   fails closed. `--force` cannot bypass these approval gates.
+   Never dismiss another reviewer's review; ask its reviewer to re-review.
+   Missing evidence fails closed. `--force` cannot bypass these approval gates.
 10. **My own open findings never expire silently.** A prior finding of mine is
     dropped only after it is re-verified against the head SHA (§4.2).
 11. **Patch bind.** After Phase 10, every finding goes through
     `scripts/bind-findings.py`. A `path:line` that is not in this pass's patch
-    (or a carry-forward allow-path) cannot be inline. Preserve proven defects
-    caused by this diff as body findings with a changed-hunk reference; binding
-    failure is not evidence that a High disappeared. A finding with no `axis`
-    must be completed before publishing.
+    (or a carry-forward allow-path) cannot be inline. A defect this diff
+    causes elsewhere carries `cause_path`/`cause_line` and lands in the
+    script's `body` bucket. Exit 3 means a blocker or major sits outside the
+    inline set: it still blocks APPROVE. Binding failure is not evidence that a
+    High disappeared. A finding with no `axis` must be completed before
+    publishing.
 12. **High-risk critic.** When `scripts/classify-risk.py` prints `high`, spawn
     the critic before verdict. The critic walks contracts, integration/state,
     and security/data-loss on one spawn, without voting findings off. When
-    the script prints `low`, skip the spawn.
+    the script prints `low`, skip the spawn. High risk with no completed
+    critic is **DEFER** `reason=critic_failed`, marker `critic=failed`.
 13. **Approve the reviewed head only.** Pin the full reviewed SHA, re-review
     any new commits, and verify CI execution on that SHA. Skipped or missing
     build/test jobs are not green. Recheck before promotion and retry too.
@@ -67,6 +74,19 @@ waits 5m and does **not** post. Red CI still DEFERS.
     user's checkout. Fetch commits and run checks in an isolated review
     checkout. Inspect changed scripts and configuration before executing them.
     Follow [EVIDENCE.md](references/EVIDENCE.md) for test and rollout proof.
+17. **The gate script decides, not memory.** Every review POST runs as
+    `scripts/gate.py ... && gh api .../reviews` ([nodes/publish.md](nodes/publish.md)).
+    Exit 1 → DEFER with its reasons. Exit 3 → the same body as a `COMMENT`
+    review: another bot already approved this head, and two bot approvals must
+    not satisfy a two-approval rule. Never post an APPROVE the gate did not pass.
+18. **My approval never outlives its evidence.** When the head moves past my
+    approval, or I DEFER, request changes or see a new concern on a PR I
+    approved, dismiss my own approval first ([PREFLIGHT.md](references/PREFLIGHT.md)
+    §Retire my stale approval). Branch protection may not do it.
+19. **A flip needs a full look.** APPROVE after my own REQUEST_CHANGES, or
+    after my DEFER for `coverage`, `uncertainty` or `critic_failed`, needs a
+    **deep** pass on the full PR diff. A delta-only light pass or an empty
+    commit cannot clear it.
 
 ## Caps
 
@@ -114,3 +134,18 @@ pass loads only what it needs.
 
 Correctness, Standards, and Self-verify are never skippable. A large diff is
 not a reason.
+
+## Loaded by another reviewer
+
+A caller that borrows this engine's phases ([nodes/review.md](nodes/review.md),
+[references/EVIDENCE.md](references/EVIDENCE.md), [nodes/verdict.md](nodes/verdict.md))
+instead of running the whole skill still owns the approval gates. Hand over,
+with those files:
+
+- [references/PREFLIGHT.md](references/PREFLIGHT.md), including §Sensitive changes
+- the `classify-risk.py --human-signoff` JSON for the full PR file list and patch
+- `scripts/gate.py` and `scripts/bind-findings.py`
+
+The caller runs the gate before its own APPROVE. A nonempty sign-off list means
+the caller cannot approve either. A caller that cannot run the gate does not
+approve; it posts its findings as a `COMMENT` or DEFERs.

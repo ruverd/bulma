@@ -153,6 +153,31 @@ Notable changes per release. Format follows
 
 ### Fixed
 
+- `bulma-code-review` approval holes from the reviewer audit:
+  - `scripts/gate.py` runs in front of every review POST
+    (`gate.py && gh api .../reviews`). It blocks APPROVE on another reviewer's
+    open change request, an author-dismissed change request, unresolved
+    threads, an AI QA `BLOCKED` status, no successful build/test check on the
+    head, a nonempty sign-off list, a missing template row, a ledger
+    blocker/major, high risk without a critic, and a light flip after my own
+    change request. Exit 3 posts a COMMENT instead of a second bot approval.
+  - `bind-findings.py` keeps diff-caused breaks that surface in unchanged files
+    (`cause_path`/`cause_line`) in a `body` bucket and exits 3 when a
+    blocker/major sits outside the inline set.
+  - APPROVE after my own REQUEST_CHANGES, or a DEFER for coverage,
+    uncertainty or a failed critic, needs a deep pass on the full diff.
+  - The reviewer dismisses its own approval when the head moves, or when a
+    later pass DEFERs, requests changes or sees a new concern.
+  - Human sign-off now covers `.github/`, `scripts/ci/`, `infra/`,
+    `amplify*`, `Dockerfile*`, `package.json`, `.npmrc`, `bunfig.toml`,
+    identity/billing/access tokens, risky added lines (`secrets.`, `AWS_`,
+    `pull_request_target`, `permissions:`, unpinned `uses:`) and bot authors.
+    Snapshots and images no longer trigger it.
+  - A flag-gated defect keeps its severity; correctness/contract/security
+    major-level uncertainty DEFERs instead of disappearing.
+  - A failed critic on a high-risk PR DEFERs with `critic=failed`.
+  - Callers that borrow the engine's phases must also run its preflight,
+    sign-off check and gate.
 - `bulma setup` no longer links `commands/<name>.md` into
   `~/.claude/commands` when `skills/<name>/` exists, and removes that
   link from earlier installs. Claude Code had listed `/bulma`,
