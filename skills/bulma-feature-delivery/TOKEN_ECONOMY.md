@@ -43,7 +43,9 @@ Do NOT read all of SPEC/TICKETS if the ticket text is already in the prompt
 - Reviewer: path to `git diff` + files_touched + done criteria. Not the diff inline.
 - One ticket per subagent. Do not "resume" with a monster transcript.
 - Do not load `how` / `why` in the coder ([PSTACK.md](PSTACK.md)).
-- Discovery: host `code_graph_explore` when `.codegraph/` or `.tokensave/` exists. No extra explorer worker.
+- Discovery: host `code_graph_explore` when `.codegraph/` or `.tokensave/` exists.
+  Otherwise use the host Trail Code adapter when an existing fresh map is available.
+  No extra explorer worker.
 
 ### quality / CI
 - Logs: only the **tail** of the failure (`gh run view --log-failed`, filtered).
