@@ -626,6 +626,20 @@ import lookback, lessons
 extra = set(lessons.rules()) - {name for name, _, _ in lookback.CLUSTERS}
 assert not extra, extra
 PY
+# Executable lessons have their own queue and never become extra coder prose.
+for row in gh-4 gh-5; do
+  printf '{"id":"%s","version":"%s","cluster":"test that cannot fail","cluster_conf":0.9,"lesson_for":"repo_check","lesson_conf":0.9}\n' "$row" "$VERSION" >>"$TMP/lessons/labels.jsonl"
+done
+out="$(python3 "$LS" --file "$LSO" --repo acme/api --kind repo_check --json)"
+python3 - "$out" <<'CHECK' || fail "repo_check routing: $out"
+import json, sys
+assert [r["cluster"] for r in json.loads(sys.argv[1])["lessons"]] == ["test that cannot fail"]
+CHECK
+out="$(python3 "$LS" --file "$LSO" --repo acme/api --files src/x.ts --json)"
+python3 - "$out" <<'CHECK' || fail "repo_check routing: $out"
+import json, sys
+assert "test that cannot fail" not in [r["cluster"] for r in json.loads(sys.argv[1])["lessons"]]
+CHECK
 ok lessons
 
 # --- state builders: entry.* from world.json, review.risk and failure_class from gh JSON ---

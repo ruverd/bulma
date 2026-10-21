@@ -39,7 +39,7 @@ Under the current power, a label counts only where it clears the threshold:
 - `generalizable` decisive-no drops the row as a one-off. The header prints how
   many.
 - `lesson_for` fills the `lesson` column: `implementer`, `reviewer`,
-  `repo_rule`, `none`, `mixed` (no majority), or `-` (no acted label).
+  `repo_rule`, `repo_check`, `none`, `mixed` (no majority), or `-` (no acted label).
 
 ## Read the table
 
@@ -74,12 +74,28 @@ depends on `lesson`, and falls back to `guard` when `lesson` is `-` or `mixed`:
 | `implementer` | The cluster's section in [LESSONS.md](../../bulma-feature-delivery/LESSONS.md), which the fd coder and fd reviewer load on every ticket. If the section is missing, add it. `lessons.py` only injects clusters that have a section |
 | `reviewer` | The `guard` section of `bulma-code-review` |
 | `repo_rule` | The target repo's `CLAUDE.md` or `AGENTS.md`. Run `python3 scripts/lessons.py --repo <owner/repo> --kind repo_rule` for that repo's examples and draft one line per cluster from them |
+| `repo_check` | A regression test, lint rule, or configuration check in the target repo. Collect examples with `lessons.py --repo <owner/repo> --kind repo_check`; follow the executable-check contract below |
 | `none` | Nothing. Say so once |
+
+## Executable-check contract
+
+Prefer an existing check over another prompt rule when the defect has a precise,
+repeatable predicate. Do not generate checks from keywords alone. Each proposal
+names the confirmed defect and source PR, owning repo, existing check or new test
+path, command and CI job, and scope where it applies. Prove RED on the bad case
+and GREEN on the fix plus a valid counterexample. Missing infrastructure or zero
+executed assertions cannot count as GREEN. Record logs by path, not pasted output.
+
+Keep the current recurrence thresholds for global lessons. A confirmed individual
+bug can justify a project regression test without asserting a global trend.
+Do not replace an effective check with prose or inject its implementation into
+worker prompts. A check is complete only when the project's normal verification
+runs it. Review the resulting diff and track subsequent misses per reviewed PR.
 
 Rules for choosing what to propose:
 
 - The cluster's rule already exists and the trend is `up` or `=` after it
-  changed: the change did not work. Say so and propose rewording that rule. Do
+  changed: the change did not work. Say so and prefer a precise executable check, otherwise reword that rule. Do
   not stack a second rule on top of it.
 - No rule exists and the cluster spans 5 or more PRs: propose one, quoting two
   or three patterns from the `--json` `examples`.

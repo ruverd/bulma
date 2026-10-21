@@ -1,0 +1,76 @@
+[
+  {
+    "id": "postgres-unavailable",
+    "origin": "Reduced model of EmpathMSP/empath-api-v2#2430 QA finding, not a repository replay.",
+    "prompt": "Fix runSuite. Missing database must reject before invoking check, never report success. With a database, await check and return {executed:1, passed:true}; propagate check failures. Add a focused regression test runnable with node --test.",
+    "files": {
+      "suite.mjs": "export async function runSuite(available, check) {\n  if (!available) return {executed:0, passed:true};\n  await check();\n  return {executed:1, passed:true};\n}\n"
+    },
+    "checks": "const {runSuite} = await import('./suite.mjs');\nlet calls=0;\nawait assert.rejects(()=>runSuite(false,async()=>{calls++}));\nassert.equal(calls,0);\nassert.deepEqual(await runSuite(true,async()=>{calls++}),{executed:1,passed:true});\nassert.equal(calls,1);\nawait assert.rejects(()=>runSuite(true,async()=>{throw Error('broken')}), /broken/);\n"
+  },
+  {
+    "id": "advisory-status",
+    "origin": "Synthetic contract derived from the QA status policy observed in Empath #2430.",
+    "prompt": "Fix verdict(status, expectedSha). Return PASS, FAIL or BLOCKED only from an AI QA description with that exact verdict token and matching sha. A green transport state alone is UNKNOWN. Stale sha or missing status is UNKNOWN. Descriptions may include details after the token, e.g. AI QA BLOCKED (env), AI QA PASS: 4/4, or AI QA FAIL: denied. Reject PASSING as a verdict. Add a focused node test.",
+    "files": {
+      "verdict.mjs": "export function verdict(status, expectedSha) { return status?.state === 'success' ? 'PASS' : 'FAIL'; }\n"
+    },
+    "checks": "const {verdict}=await import('./verdict.mjs');\nassert.equal(verdict({sha:'a',state:'success',description:'AI QA BLOCKED (env)'},'a'),'BLOCKED');\nassert.equal(verdict({sha:'a',state:'success',description:'AI QA PASS: 4/4'},'a'),'PASS');\nassert.equal(verdict({sha:'a',state:'failure',description:'AI QA FAIL: denied'},'a'),'FAIL');\nfor(const s of [null,{sha:'old',description:'AI QA PASS'},{sha:'a',state:'success'},{sha:'a',description:'AI QA PASSING'}]) assert.equal(verdict(s,'a'),'UNKNOWN');\n"
+  },
+  {
+    "id": "reuse-money",
+    "origin": "Synthetic regression for Bulma reuse-before-adding lesson.",
+    "prompt": "Add receipt(amount) in receipt.mjs, returning Total: followed by a space and the amount formatted with the existing money.format contract. Do not change money.mjs. Include a node test.",
+    "files": {
+      "money.mjs": "export const money = {format: value => new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'}).format(value)};\n",
+      "receipt.mjs": "// Implement receipt here.\n"
+    },
+    "checks": "const {money}=await import('./money.mjs'); const {receipt}=await import('./receipt.mjs');\nassert.equal(receipt(1234.5),'Total: $1,234.50');\nmoney.format=()=> 'custom'; assert.equal(receipt(1),'Total: custom');\n"
+  },
+  {
+    "id": "sibling-validation",
+    "origin": "Synthetic regression for Bulma sibling-path parity lesson.",
+    "prompt": "Both save and autosave persist an amount. Reject non-integers, zero, negatives, NaN, infinity and non-numbers before any persist call, using one shared validation path. Keep both exports and pass valid integers through unchanged. Add a node test.",
+    "files": {
+      "save.mjs": "export function save(amount,persist) { if(amount<=0) throw Error('invalid'); return persist(amount); }\nexport function autosave(amount,persist) { return persist(amount); }\n"
+    },
+    "checks": "const m=await import('./save.mjs');\nfor(const f of [m.save,m.autosave]) { let calls=0; const persist=x=>{calls++;return x};\nfor(const bad of [0,-1,1.2,NaN,Infinity,'1',null]) assert.throws(()=>f(bad,persist));\nassert.equal(calls,0);assert.equal(f(7,persist),7);assert.equal(calls,1); }\n"
+  },
+  {
+    "id": "tenant-access",
+    "origin": "Synthetic regression for Bulma tenant isolation lesson.",
+    "prompt": "Fix readDocument(id, session, documents). Return the document only when its tenantId matches a nonempty session.tenantId. Throw an Error for missing sessions, missing documents and cross-tenant access; returning undefined or null is not this API contract. No mutation of documents. Include a node test.",
+    "files": {
+      "documents.mjs": "export function readDocument(id,session,documents) { return documents.find(d=>d.id===id); }\n"
+    },
+    "checks": "const {readDocument}=await import('./documents.mjs');\nconst docs=[{id:'1',tenantId:'a',body:'secret'}];const saved=JSON.stringify(docs);\nassert.equal(readDocument('1',{tenantId:'a'},docs),docs[0]);\nfor(const s of [undefined,null,{}, {tenantId:'b'}, {tenantId:''}]) assert.throws(()=>readDocument('1',s,docs));\nassert.throws(()=>readDocument('2',{tenantId:'a'},docs));assert.equal(JSON.stringify(docs),saved);\n"
+  },
+  {
+    "id": "concurrent-delivery",
+    "origin": "Synthetic regression for Bulma at-least-once side effects lesson.",
+    "prompt": "Fix createHandler(send), returning async handle(id). Coalesce concurrent calls for the same id, remember successful ids, and permit retry after failure. Different ids are independent. Do not swallow send errors. Include deterministic node tests without sleeps.",
+    "files": {
+      "handler.mjs": "export function createHandler(send) {\n const done=new Set();\n return async id=>{if(done.has(id))return; await send(id); done.add(id);};\n}\n"
+    },
+    "checks": "const {createHandler}=await import('./handler.mjs');\nlet release;let calls=0;const gate=new Promise(r=>release=r);\nconst handle=createHandler(async()=>{calls++;await gate});\nconst a=handle('x'), b=handle('x');await Promise.resolve();release();await Promise.all([a,b]);\nassert.equal(calls,1);await handle('x');assert.equal(calls,1);await handle('y');assert.equal(calls,2);\nlet attempts=0;const retry=createHandler(async()=>{if(++attempts===1)throw Error('temporary')});\nawait assert.rejects(()=>retry('z'),/temporary/);await retry('z');assert.equal(attempts,2);\n"
+  },
+  {
+    "id": "pagination-bound",
+    "origin": "Synthetic regression for Bulma pagination and unbounded iteration lesson.",
+    "prompt": "Fix collect(fetchPage, maxPages=100). Fetch pages from 0 in order; stop on the first empty page; preserve all items including falsy values. If no empty page appears within maxPages calls, throw rather than return incomplete results or loop forever. Reject nonpositive/noninteger maxPages before fetching. Propagate fetch errors. Include node tests.",
+    "files": {
+      "pages.mjs": "export async function collect(fetchPage,maxPages=100) {\n const out=[];for(let i=0;i<maxPages;i++){const page=await fetchPage(i);out.push(...page.filter(Boolean));}return out;\n}\n"
+    },
+    "checks": "const {collect}=await import('./pages.mjs');let calls=[];\nassert.deepEqual(await collect(async i=>{calls.push(i);return [[0,false,''],[1],[]][i]}),[0,false,'',1]);assert.deepEqual(calls,[0,1,2]);\nlet n=0;await assert.rejects(()=>collect(async()=>{n++;return [1]},3));assert.equal(n,3);\nfor(const limit of [0,-1,1.2,NaN,Infinity]) await assert.rejects(()=>collect(async()=>{throw Error('must not fetch')},limit),e=>!e.message.includes('must not fetch'));\nawait assert.rejects(()=>collect(async()=>{throw Error('network')}),/network/);\n"
+  },
+  {
+    "id": "duplicate-override",
+    "origin": "Reduced configuration fixture from EmpathMSP/empath-api-v2#2430, not a full Bun install replay.",
+    "prompt": "Remove only the duplicate follow-redirects override. Keep its direct devDependency and all other package settings. Do not add scripts, dependencies or regenerate the lockfile. This is a config-only fix; no new unit test is needed.",
+    "files": {
+      "package.json": "{\"name\": \"fixture\", \"private\": true, \"devDependencies\": {\"follow-redirects\": \"^1.16.1\"}, \"overrides\": {\"follow-redirects\": \"^1.16.1\", \"other\": \"2.0.0\"}}\n",
+      "bun.lock": "fixture lock, unchanged\n"
+    },
+    "checks": "const fs=await import('node:fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));\nassert.deepEqual(p,{name:'fixture',private:true,devDependencies:{'follow-redirects':'^1.16.1'},overrides:{other:'2.0.0'}});\nassert.equal(fs.readFileSync('bun.lock','utf8'),'fixture lock, unchanged\\n');\n"
+  }
+]

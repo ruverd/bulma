@@ -365,12 +365,13 @@
         "lesson_for": {
           "type": "choice",
           "field": "lesson_for",
-          "instructions": "Where should this lesson live so it stops recurring? Prefer the implementer when the defect could have been avoided while writing the code. Choose repo_rule when it depends on this codebase's stack, vendors, or conventions.",
+          "instructions": "Where should this lesson live so it stops recurring? Choose repo_check when a precise test, lint rule, or configuration check can detect the defect without model judgment. Otherwise prefer the implementer for a coding rule, reviewer for contextual judgment, or repo_rule for repository-specific guidance.",
           "criteria": {
             "implementer": "A general coding rule the implementing agent should follow before any review, e.g. update every sibling path, keep tests able to fail.",
             "reviewer": "Only detectable by reading the whole diff against its context; a check for the reviewing agent.",
             "repo_rule": "Specific to this repository's stack, vendor SDK, or conventions; belongs in the repo's CLAUDE.md or AGENTS.md.",
-            "none": "Not worth writing down anywhere."
+            "repo_check": "A confirmed defect has an objective predicate suitable for a regression test, lint rule, or configuration check in the target repository. Check must reject the bad case and accept valid cases; no broad heuristic based only on keywords.",
+          "none": "Not worth writing down anywhere."
           },
           "act_at": 0.70,
           "enum_source": "bulma/scripts/lookback.py"

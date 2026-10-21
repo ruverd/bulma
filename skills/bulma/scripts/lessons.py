@@ -14,7 +14,7 @@ catalog act_at, whatever the hook's power, because a hint in a brief costs
 nothing when it is wrong. Prints nothing when there is nothing to say.
 
 usage: lessons.py --repo owner/repo [--files a.ts,b.tsx] [--since DAYS]
-                  [--limit N] [--kind implementer|repo_rule] [--json] [--file PATH]
+                  [--limit N] [--kind implementer|repo_rule|repo_check] [--json] [--file PATH]
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ LESSONS_MD = lb.HERE.parent.parent / "bulma-feature-delivery" / "LESSONS.md"
 UI_EXT = (".tsx", ".jsx", ".vue", ".svelte")
 UI_ONLY = {"effect lifecycle"}  # only worth a line when the ticket touches UI files
 EXAMPLE_CAP = 140
-KINDS = ("implementer", "repo_rule")
+KINDS = ("implementer", "repo_rule", "repo_check")
 
 
 def rules(path=LESSONS_MD):
@@ -130,7 +130,7 @@ def main():
             # A confident majority elsewhere means this is not the coder's lesson.
             if lesson not in (None, "implementer") or name not in guide:
                 continue
-        elif lesson != "repo_rule":
+        elif lesson != args.kind:
             continue
         examples = [p for _, p in sorted(s["examples"], reverse=True)]
         picked.append({"cluster": name, "prs": len(s["prs"]), "obs": s["obs"], "critical": s["critical"],
@@ -154,7 +154,8 @@ def main():
             if p["examples"]:
                 print("  Seen here: %s" % p["examples"][0])
     else:
-        print("## Candidate CLAUDE.md rules for %s (last %d days)" % (args.repo, args.since))
+        target = "executable checks" if args.kind == "repo_check" else "CLAUDE.md rules"
+        print("## Candidate %s for %s (last %d days)" % (target, args.repo, args.since))
         print()
         for p in picked:
             print("- **%s** (%d PRs, %d critical)" % (p["cluster"], p["prs"], p["critical"]))
