@@ -1,0 +1,16 @@
+{
+  "skill": "architect",
+  "positive": [
+    {
+      "prompt": "Design this before we write code: types and module structure"
+    },
+    {
+      "prompt": "Sketch the signatures and module layout first"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Fix the failing build"
+    }
+  ]
+}

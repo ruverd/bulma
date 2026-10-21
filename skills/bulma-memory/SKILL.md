@@ -94,6 +94,11 @@ reviewers: alice, bob
 forge logins, comma-separated, never invented. `## Product` is the
 **confirmed** reviewer list. How it gets filled: PRODUCT.md §6.
 
+`second_opinion:` under `## Preferences` turns on a second critic on another
+model for elevated-risk plans: `codex`, `gemini`, or `claude`. Leave it out
+for `off`. It names a CLI installed on this machine, so it is usually a user
+preference, not a project one. How it runs: `bulma-host` §Second opinion.
+
 `## Gotchas` and `## Checks` live only in the **project** file.
 
 - `## Gotchas`: one line per domain fact the code does not make obvious

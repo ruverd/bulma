@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-feature-delivery",
+  "positive": [
+    {
+      "prompt": "Deliver this chore end to end and open a draft PR with green CI"
+    },
+    {
+      "prompt": "Resume the delivery run, HANDOFF.md is there"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Turn this plan into tracker issues",
+      "owner": "to-issues"
+    }
+  ]
+}

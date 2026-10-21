@@ -10,6 +10,17 @@ Objective hard gate with **real commands**.
 
 ## Commands (from STATE, filled by [PRODUCT.md](../PRODUCT.md))
 
+0. Floor guard, first and always:
+   `python3 <this skill>/scripts/floor-guard.py --repo <worktree> --base <base_branch>`.
+   It reads the diff from the merge base, untracked files included, and fails
+   on a move that lowers the bar: new suppression, skipped or focused test,
+   deleted test file, assertions removed from a kept test, empty catch, stub,
+   silenced CI step, lowered coverage threshold. Exit 1 is a fail like a red
+   test, routed back to implement. Exit 2 means it could not run: record
+   `floor_guard: error` and treat the gate as fail, never as a pass.
+   A deliberate exception carries `floor-guard: allow <reason>` on the line, or
+   `--allow RULE:PATH` for a whole file. Copy every `ALLOWED` row into STATE
+   `floor_allowed` so review sees each one and its reason.
 1. `typecheck_cmd` if set
 2. `test_cmd` on the **touched area** (full suite only if expected <3 min)
 3. `lint_cmd` only if expected <3 min and it is part of usual local CI
@@ -28,7 +39,8 @@ is **CI-only** — declare `ci_only` in STATE, never try it locally
 
 ## Output
 
-`hard_gate: pass | fail | skipped` + commands + exit codes in STATE.
+`hard_gate: pass | fail | skipped` + `floor_guard: pass | fail | error` +
+`floor_allowed` + commands + exit codes in STATE.
 Exit codes via wrapper (`<cmd>; echo "<cmd> exit=$?" >> .bulma-feature-delivery/gates.log`)
 and **cited** from the file — never retyped from memory. Suites >10 min belong to CI,
 not this gate (scope to the touched area). Any red = fail; flakes are judged by the
@@ -38,6 +50,8 @@ orchestrator.
 
 - Never invent pass.
 - Do not edit source to "make it pass".
+- Never add a `floor-guard: allow` marker yourself. Only the coder adds one, with
+  a reason review can check.
 - skipped only if the toolchain is impossible → orchestrator escalates.
 
 ## Capture and reuse

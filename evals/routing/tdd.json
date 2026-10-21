@@ -1,0 +1,17 @@
+{
+  "skill": "tdd",
+  "positive": [
+    {
+      "prompt": "Write a failing test for this bug first"
+    },
+    {
+      "prompt": "Add a regression test before fixing it"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Review this pull request",
+      "owner": "bulma-code-review"
+    }
+  ]
+}

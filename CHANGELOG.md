@@ -98,6 +98,24 @@ Notable changes per release. Format follows
 
 ### Added
 
+- Skill evals. `evals/routing/*.json` holds prompts each skill must and must
+  not take; `tests/lib/check_routing.py` scores them against every description
+  in CI (no model) and fails on missing vocabulary, an over-broad description,
+  or two near-duplicate descriptions. `evals/plugin/` holds `claude plugin eval`
+  cases that check the real router fires a skill and what the reply does.
+  See `evals/README.md`.
+- Floor guard. `bulma-feature-delivery/scripts/floor-guard.py` reads the diff
+  from the merge base and fails when a change lowers the bar: a new
+  suppression, a skipped or focused test, a deleted test file, assertions
+  removed from a kept test, an empty catch, a stub, a silenced CI step, a
+  lowered coverage threshold. The fd tester runs it first, and
+  `bulma-code-review` runs it in the review checkout. Exit 2 (could not run)
+  never counts as a pass.
+- fd `plan_critic` gets the plan and its contract, never the conclusion, and
+  sorts every row as contract, fix, trade-off, or noise after re-reading the
+  text. On `risk=elevated` an opt-in `second_opinion: codex | gemini | claude`
+  in memory runs one more critic on another vendor's model, read-only, prompt
+  on stdin, through the new `bulma-host` `second_opinion` primitive.
 - `/bulma` hook `dispatch.tier`: Jev picks `light | standard | heavy` for
   each coder worker (every TICKETS.md slice, CI fix, lstm patch) so simple
   units can run on a cheaper model. Code clamps it: gates always run on the
@@ -153,6 +171,10 @@ Notable changes per release. Format follows
 
 ### Fixed
 
+- `.claude-plugin/plugin.json` lists each agent file. Claude Code rejected the
+  `./agents/` directory form (`agents: Invalid string: must end with ".md"`),
+  so `claude plugin validate` failed. `tests/repo.sh` now checks that list
+  against `agents/`.
 - `bulma-code-review` approval holes from the reviewer audit:
   - `scripts/gate.py` runs in front of every review POST
     (`gate.py && gh api .../reviews`). It blocks APPROVE on another reviewer's

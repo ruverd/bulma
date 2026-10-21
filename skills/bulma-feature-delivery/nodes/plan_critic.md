@@ -18,7 +18,19 @@ the same main thread. This node is the independent check.
 | `normal` | main thread. Table, no spawn |
 | `elevated` | `spawn_worker` when `risk=elevated`, read-only, this file as the contract |
 
-Do not spawn on `normal`. Do not spawn a second critic.
+Do not spawn on `normal`. Do not spawn a second critic. The one exception is
+the second opinion below, which runs on another model, not as a nested critic.
+
+## Payload
+
+The critic gets the artifact and the contract, never the conclusion:
+SPEC.md, TICKETS.md, the DECIDE rows, and this file. Do not pass the grill
+transcript, the main thread's reasoning, or any line that says the plan is
+sound. A critic told the conclusion tends to agree with it.
+
+Frame the job as adversarial: find what is wrong with this plan. Do not
+validate it and do not summarize it. On `normal` the main thread runs the scan
+itself: re-read the two files from disk and set earlier conclusions aside.
 
 ## Scan
 
@@ -51,6 +63,33 @@ expert gap inside an existing AC's scope.
 An expert gap outside every AC is not blocking and never becomes a new AC.
 Log it in STATE decisions as a follow-up.
 
+## Reconcile
+
+The critic's rows are data, not a verdict. Re-read the SPEC or ticket text a
+row points at before you classify it. Agreeing without that check is the same
+failure as ignoring the row. Classify each row, first match wins:
+
+1. **contract** — the row exists because SPEC.md or TICKETS.md was unclear.
+   Fix the wording first, then classify the row again.
+2. **fix** — a real defect in the plan. It counts toward `revise`.
+3. **trade-off** — real, but fixing it costs more than accepting it. Log a
+   DECIDE row with the cost you accepted.
+4. **noise** — correct once you know context the critic lacked. Log it, and
+   note which context was missing. If a future reader would trip on the same
+   gap, add that context to SPEC.md.
+
+## Second opinion
+
+Runs only when `risk=elevated` and memory `## Preferences`
+([bulma-memory](../../bulma-memory/SKILL.md)) sets `second_opinion: <cli>`.
+Run the `second_opinion` primitive ([bulma-host](../../bulma-host/SKILL.md))
+once, with the same payload and this file as the prompt. Merge its rows into
+the table tagged `source: second`, then reconcile them like any other row.
+
+- Not configured: `second_opinion: off`. Never ask the user mid-run.
+- CLI missing, refused, or timed out: `second_opinion: failed` with the reason,
+  and continue with the first critic's rows. Never skip it silently.
+
 ## Apply
 
 The worker never edits SPEC.md or TICKETS.md. Main thread DECIDE and
@@ -63,7 +102,9 @@ residual leaves every path a guess (last-resort policy).
 ```text
 plan_critic_verdict: pending | skip | pass | revise
 plan_critic_mode: main | spawn | skip
+second_opinion: off | ran | failed
 findings: N
+reconcile: contract=N fix=N trade-off=N noise=N
 summary: ...
 ```
 
@@ -75,6 +116,7 @@ pass, or after residuals are logged.
 - Zero product code.
 - Do not reopen grill as an interview.
 - Do not invent AC.
+- Do not hand the critic the conclusion you hope it reaches.
 - Do not skip because the spec looks long.
 
 Resolve spec and tickets through STATE paths. Compact mode points both at the

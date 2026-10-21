@@ -48,6 +48,13 @@ If execution is unavailable, inspect the assertion path and state that the
 differential check was not run. Do not claim a runtime reproduction from a
 source trace.
 
+Run the floor guard in the isolated review checkout:
+`python3 ../bulma-feature-delivery/scripts/floor-guard.py --repo <checkout> --base <pr base>`
+(path from this skill's directory). Each `VIOLATION` row is a **major**,
+`axis: tests`, unless the PR body or the linked ticket justifies it. Each
+`ALLOWED` row names its reason: check that the reason holds, or it is a
+major too. Exit 2 means the guard did not run; say so and do not count it as clean.
+
 When the diff removes assertions, weakens fixtures or adds skips, identify
 which behavior stops being checked. A known-flake note is a lead, not proof.
 Compare the same command and environment at base and head before calling a

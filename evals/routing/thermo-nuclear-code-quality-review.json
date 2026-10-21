@@ -1,0 +1,17 @@
+{
+  "skill": "thermo-nuclear-code-quality-review",
+  "positive": [
+    {
+      "prompt": "Run a thermonuclear code quality review"
+    },
+    {
+      "prompt": "Deep maintainability audit of this module, giant files and spaghetti"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Review PR 12 for correctness",
+      "owner": "bulma-code-review"
+    }
+  ]
+}

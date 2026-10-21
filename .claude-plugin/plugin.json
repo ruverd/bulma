@@ -54,6 +54,26 @@
     "./skills/unslop",
     "./skills/why"
   ],
-  "agents": "./agents/",
-  "commands": "./commands/"
+  "agents": [
+    "./agents/bulma-fd-blocker.md",
+    "./agents/bulma-fd-ci.md",
+    "./agents/bulma-fd-coder.md",
+    "./agents/bulma-fd-context.md",
+    "./agents/bulma-fd-debugger.md",
+    "./agents/bulma-fd-fullstack.md",
+    "./agents/bulma-fd-plan-critic.md",
+    "./agents/bulma-fd-quality.md",
+    "./agents/bulma-fd-reviewer.md",
+    "./agents/bulma-fd-shipper.md",
+    "./agents/bulma-fd-tester.md",
+    "./agents/bulma-fd-triage.md",
+    "./agents/bulma_developer.md",
+    "./agents/bulma_qa.md",
+    "./agents/bulma_reviewer.md",
+    "./agents/bulma_triage.md"
+  ],
+  "commands": "./commands/",
+  "experimental": {
+    "evals": "evals/plugin"
+  }
 }

@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-memory",
+  "positive": [
+    {
+      "prompt": "Remember that chat language is Portuguese"
+    },
+    {
+      "prompt": "Set the default reviewers for this repo"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Why did we pick Postgres over Mongo?",
+      "owner": "why"
+    }
+  ]
+}

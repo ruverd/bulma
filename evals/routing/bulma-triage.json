@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-triage",
+  "positive": [
+    {
+      "prompt": "QA failed on the invoice page, is it a bug in the PR or an existing bug?"
+    },
+    {
+      "prompt": "Triage this QA failure"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Debug why the server crashes on startup",
+      "owner": "diagnose"
+    }
+  ]
+}

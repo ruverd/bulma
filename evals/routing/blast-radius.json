@@ -1,0 +1,17 @@
+{
+  "skill": "blast-radius",
+  "positive": [
+    {
+      "prompt": "What could this change break?"
+    },
+    {
+      "prompt": "What is the blast radius of renaming this export?"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Explain how this module works",
+      "owner": "how"
+    }
+  ]
+}

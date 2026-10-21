@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-lstm",
+  "positive": [
+    {
+      "prompt": "Reply to every review comment on my PR and fix what is right"
+    },
+    {
+      "prompt": "The reviewer requested changes, handle the inline threads"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Review someone else's pull request",
+      "owner": "bulma-code-review"
+    }
+  ]
+}

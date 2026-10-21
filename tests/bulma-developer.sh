@@ -125,6 +125,27 @@ has 'risk=elevated' "$FD/nodes/plan_critic.md"
 has 'Expert gap' "$FD/nodes/plan_critic.md"
 has 'Proof oracle' "$FD/nodes/plan_critic.md"
 has 'spawn' "$FD/nodes/plan_critic.md"
+# The critic sees artifact + contract, never the conclusion, and every row is
+# reconciled against the text before it counts.
+has 'never the conclusion' "$FD/nodes/plan_critic.md"
+has '## Reconcile' "$FD/nodes/plan_critic.md"
+for class in contract fix trade-off noise; do
+  has "**$class**" "$FD/nodes/plan_critic.md"
+done
+# Second opinion: opt-in, another vendor, stdin, read-only, never a silent skip.
+has 'second_opinion: off | ran | failed' "$FD/nodes/plan_critic.md"
+has 'second_opinion` | off \| ran \| failed' "$FD/STATE.schema.md"
+has 'second_opinion:' "$FD/templates/STATE.md"
+has 'second_opinion:' "$ROOT/skills/bulma-memory/SKILL.md"
+has '## Second opinion' "$ROOT/skills/bulma-host/SKILL.md"
+has 'different vendor' "$ROOT/skills/bulma-host/SKILL.md"
+has 'Read-only mode is required' "$ROOT/skills/bulma-host/SKILL.md"
+has 'Never skip it silently' "$FD/nodes/plan_critic.md"
+# Floor guard: first tester command, exit 2 is never a pass, reviewer runs it too.
+has 'floor-guard.py' "$FD/nodes/tester.md"
+has 'never as a pass' "$FD/nodes/tester.md"
+has 'Floor guard:' "$FD/templates/STATE.md"
+has 'floor-guard.py' "$ROOT/skills/bulma-code-review/references/EVIDENCE.md"
 # Must not run on bugs.
 if ! tr '\n' ' ' < "$FD/nodes/plan_critic.md" | grep -E -q 'Skip.{0,80}debug_fix'; then
   fail "plan_critic.md must skip debug_fix"

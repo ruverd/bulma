@@ -3,8 +3,8 @@ name: to-issues
 category: lib
 description: >
   Break a plan, spec, or PRD into independently-grabbable issues on the project
-  tracker using tracer-bullet vertical slices. Use when the user wants to turn
-  a plan into issues or implementation tickets.
+  tracker using tracer-bullet vertical slices. Use when the user wants to split
+  a plan or PRD into issues or implementation tickets.
 ---
 
 # To Issues

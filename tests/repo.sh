@@ -56,6 +56,9 @@ check legacy-name python3 "$LIB/check_legacy_name.py" "$ROOT"
 
 check trail-adapter env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_trail_adapter.py"
 check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_runtime.py"
+check floor-guard env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_floor_guard.py"
+check routing env PYTHONPATH="$LIB" python3 "$LIB/check_routing.py" "$ROOT"
+check routing-checker env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_routing.py"
 
 if [[ "$FAILED" -ne 0 ]]; then
   echo "repo checks failed" >&2

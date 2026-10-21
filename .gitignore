@@ -10,3 +10,4 @@
 node_modules/
 .worktrees/
 __pycache__/
+evals/plugin/results/

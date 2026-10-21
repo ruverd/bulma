@@ -1,0 +1,24 @@
+{
+  "skill": "bulma-code-review",
+  "positive": [
+    {
+      "prompt": "Review PR #418 and leave a verdict"
+    },
+    {
+      "prompt": "Can you review the pull request on the current branch?"
+    },
+    {
+      "prompt": "Review these two PRs: 51 and 52"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Address the review comments on my PR",
+      "owner": "bulma-lstm"
+    },
+    {
+      "prompt": "Write a regression test for this bug",
+      "owner": "tdd"
+    }
+  ]
+}

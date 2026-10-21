@@ -1,0 +1,17 @@
+{
+  "skill": "how",
+  "positive": [
+    {
+      "prompt": "How does the auth middleware work?"
+    },
+    {
+      "prompt": "Where should this new service live, which package owns it?"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Why did we choose this retry limit?",
+      "owner": "why"
+    }
+  ]
+}

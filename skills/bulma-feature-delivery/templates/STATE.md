@@ -145,7 +145,9 @@ Index: `.bulma-feature-delivery/mcp-sources.md`
 
 - **plan_critic_verdict:** pending | skip | pass | revise
 - **plan_critic_mode:** main | spawn | skip
+- **second_opinion:** off | ran | failed
 - **findings:**
+- **reconcile:** contract=0 fix=0 trade-off=0 noise=0
 - **summary:**
 
 ## Decisions
@@ -193,6 +195,8 @@ Index: `.bulma-feature-delivery/mcp-sources.md`
 ## Test / hard gate
 
 - **Hard gate:** pending
+- **Floor guard:** pending | pass | fail | error
+- **Floor allowed:** (one row per ALLOWED: rule, path:line, reason)
 - **Commands run:**
 - **Summary:**
 

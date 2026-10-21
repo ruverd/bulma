@@ -1,0 +1,20 @@
+{
+  "skill": "bulma-developer",
+  "positive": [
+    {
+      "prompt": "Deliver ticket ENG-1234"
+    },
+    {
+      "prompt": "QA came back FAIL with PR_BUG, fix it and send it back"
+    },
+    {
+      "prompt": "Implement this ticket and get it through QA"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Explain how the billing module works",
+      "owner": "how"
+    }
+  ]
+}
