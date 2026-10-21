@@ -14,6 +14,11 @@ Objective hard gate with **real commands**.
 2. `test_cmd` on the **touched area** (full suite only if expected <3 min)
 3. `lint_cmd` only if expected <3 min and it is part of usual local CI
 4. `e2e_cmd` only if done criteria require it
+5. every command under project memory `## Checks`
+   ([bulma-memory](../../bulma-memory/SKILL.md)), from the repo root, through
+   the same `gates.log` wrapper. They are the project's own pre-push guards.
+   A non-zero exit is a fail like any other. A command that cannot run here
+   (missing tool) is recorded as skipped with the reason, never as a pass
 
 Use the discovered `pkg` (`bun` / `pnpm` / `go` / `cargo` / …). Never `npm` when the lockfile is something else.
 

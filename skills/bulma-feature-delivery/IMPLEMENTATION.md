@@ -20,6 +20,9 @@ ticket. Re-fix of the same ticket reuses that coder except on the last
   [LESSONS.md](LESSONS.md). Empty output means paste nothing. A failed run is
   a chat note, never a reason to hold the spawn. Run it once per ticket, not
   on every re-fix.
+- **Project gotchas**: the `## Gotchas` lines from project memory
+  ([bulma-memory](../bulma-memory/SKILL.md)) whose path glob or keyword
+  matches the ticket's files or text, pasted as-is. None match → paste nothing.
 
 Keep the prompt to about one or two screens. Do not paste GRAPH.md,
 `why`, or the parent tool catalog.

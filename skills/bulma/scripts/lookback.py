@@ -69,6 +69,18 @@ CLUSTERS = [
      r"paginat|without a take|unbounded|take/limit|hasmore|hasnextpage"),
     ("tenant / cache-key isolation", "bulma-code-review Phase 6",
      r"tenant|cross-session|query ?key"),
+    ("untested branch", "bulma-code-review Phase 4",
+     r"untested (branch|guard|path|catch)|(no|missing) test (for|on) (the )?(new )?(branch|guard|fallback|error path|catch)|both sides|happy.path only"),
+    ("null / empty / boundary", "bulma-code-review Phase 5",
+     r"\bnull\b|undefined|empty (string|list|array)|\bnan\b|boundary|off.by.one|\?\? vs \|\||falsy"),
+    ("reuse before adding", "bulma-code-review Phase 8",
+     r"already exists|existing (helper|util|hook|function|service|component)|duplicat(e|es|ed) (helper|logic|function|query)|reuse|reinvent"),
+    ("check-then-act race", "bulma-code-review Phase 5",
+     r"\brace\b|check.then.(act|insert|write)|toctou|concurrent (request|write)|unique (constraint|index)|upsert|on conflict"),
+    ("test wired into CI", "bulma-code-review Phase 4",
+     r"not (run|wired|picked up) (in|by) ci|ci (does not|doesn.t|never) run|allowlist|testmatch|include pattern|waitfortimeout|wall.clock"),
+    ("clean branch", "bulma-feature-delivery shipper",
+     r"conflict marker|merge regression|scope creep|unrelated (change|refactor)|committed (build|dist|report|scratch)|absolute (local )?path|stale base"),
 ]
 GUARD = {name: guard for name, guard, _ in CLUSTERS}
 

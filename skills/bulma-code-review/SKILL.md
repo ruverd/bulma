@@ -91,6 +91,17 @@ allows pinned code review, then waits with retained analysis and does **not** po
     after my DEFER for `coverage`, `uncertainty` or `critic_failed`, needs a
     **deep** pass on the full PR diff. A delta-only light pass or an empty
     commit cannot clear it.
+20. **Converge, do not loop.** One finding per defect class, with its other
+    `instances`. A published finding is carried, never re-posted as new. A
+    rebase that keeps the same change re-verifies the ledger only. From my
+    third REQUEST_CHANGES on a PR, new majors in lines unchanged since my first
+    pass do not block, and the body asks the author to rethink the area
+    ([nodes/pass_decision.md](nodes/pass_decision.md) §Convergence). Proven
+    blockers always block.
+21. **Project knowledge stays in the project.** Repo rules come from the
+    repo's own files, including `REVIEW.md`. Domain facts come from the
+    `## Gotchas` section of project memory ([bulma-memory](../bulma-memory/SKILL.md)).
+    This skill carries no product, company or vendor knowledge.
 
 ## Caps
 

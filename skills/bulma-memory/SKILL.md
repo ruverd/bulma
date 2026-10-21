@@ -65,6 +65,13 @@ language: pt-BR
 ## Product
 reviewers: alice, bob
 
+## Gotchas
+- src/billing/**: amounts are minor units; divide once, at display
+- duration: stored in seconds everywhere
+
+## Checks
+- python3 tools/prcheck.py --base origin/main
+
 ## Open
 - Confirm reviewers: alice, bob (merged PRs)
 ```
@@ -73,8 +80,22 @@ reviewers: alice, bob
 forge logins, comma-separated, never invented. `## Product` is the
 **confirmed** reviewer list. How it gets filled: PRODUCT.md §6.
 
+`## Gotchas` and `## Checks` live only in the **project** file.
+
+- `## Gotchas`: one line per domain fact the code does not make obvious
+  (units, id conventions, provider quirks, fields that look alike). Start
+  each line with a path glob or a keyword, then `:` and the fact. The coder
+  gets the lines whose glob or keyword matches its files; the reviewer gets
+  the lines that match the diff. A gotcha is a lead, never a finding by
+  itself. Add one when a review or an incident shows a fact that the next
+  change will trip on again.
+- `## Checks`: one command per line that this project runs before a push
+  (a guardrail scanner, a schema validator). The fd tester runs them from the
+  repo root after its own commands. Never put a deploy or a destructive
+  command here.
+
 Do not duplicate a fact that already lives in the target repo
-(`AGENTS.md`, `CODEOWNERS`).
+(`AGENTS.md`, `CODEOWNERS`, `REVIEW.md`).
 
 ## `/memory`
 
@@ -87,12 +108,13 @@ Do not duplicate a fact that already lives in the target repo
 | Args | Write |
 |---|---|
 | empty | Print both files. Ask the first `## Open` item if any |
-| `--project` / clearly this-repo (reviewers, assignee, repo notes) | project file |
+| `--project` / clearly this-repo (reviewers, assignee, repo notes, gotchas, checks) | project file |
 | else | home file |
 
 Parse the note. Language / idioma / PT-BR / Portuguese → home
 `## Chat`. `reviewers:` logins → project `## Product` (that **is**
-confirmation). Other text → `## Preferences` on the chosen file.
+confirmation). `gotcha:` → project `## Gotchas`. `check:` → project
+`## Checks`. Other text → `## Preferences` on the chosen file.
 
 Append or replace the matching key. Do not rewrite unrelated
 sections. Do not commit these files.
@@ -109,6 +131,7 @@ Open is not grill. Ticket ASK stays [DECISION_POLICY.md](../bulma-feature-delive
 
 - Write memory inside a repo
 - Hardcode a company's handles in a graph
+- Copy a project's gotchas or checks into a skill file
 - Block CI, ship, or execute to drain Open
 - Interview a first-run questionnaire
 - Let chat language leak onto the forge

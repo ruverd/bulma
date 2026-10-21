@@ -32,6 +32,8 @@ Spec axis: the ticket + SPEC.md, not a new design.
 - **Lessons:** no violation of [LESSONS.md](../LESSONS.md) or of the
   recurring-lessons block in the prompt. A violation is a finding (record it,
   §Observe)
+- **Gotchas:** the change respects every project gotcha that matches its
+  files ([bulma-memory](../../bulma-memory/SKILL.md) `## Gotchas`)
 - Tests assert behavior, not only mocks
 - Security/errors/loading if applicable
 - **UI** (if the ticket/diff is UI) — [UI_DESIGN_SYSTEM.md](../UI_DESIGN_SYSTEM.md):

@@ -214,6 +214,14 @@ grep -F -q 'LESSONS.md' "$ROOT/agents/bulma-fd-coder.md" || fail "bulma-fd-coder
 grep -c '^### ' "$FDX/LESSONS.md" | grep -q -v '^0$' || fail "LESSONS.md has no rules"
 ok coder-lessons
 
+grep -F -q '## Gotchas' "$FDX/IMPLEMENTATION.md" || fail "IMPLEMENTATION.md must inject project gotchas"
+grep -F -q '## Checks' "$FDX/nodes/tester.md" || fail "tester must run project checks"
+grep -F -q '## Rollout' "$FDX/templates/PR_BODY.md" || fail "PR body must have Rollout"
+for rule in 'untested branch' 'null / empty / boundary' 'silent catch / no error report' 'reuse before adding' 'test wired into CI'; do
+  grep -F -q "### $rule" "$FDX/LESSONS.md" || fail "LESSONS.md missing $rule"
+done
+ok project-gotchas-and-checks
+
 echo "all passed"
 
 PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_feature_flow.py"

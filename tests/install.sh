@@ -522,9 +522,9 @@ home = Path(sys.argv[1])
 log_dir = home / ".grok" / "logs"
 log_dir.mkdir(parents=True)
 sessions = home / ".grok" / "sessions"
-lstm_cwd = "/tmp/orca/empath-ui/pr-empath-ui-2583-lstm"
-rev_cwd = "/tmp/orca/empath-api-v2/pr-1546-review"
-fd_cwd = "/tmp/orca/empath-ui/feature-dev-4409"
+lstm_cwd = "/tmp/orca/web-app/pr-web-app-2583-lstm"
+rev_cwd = "/tmp/orca/api/pr-1546-review"
+fd_cwd = "/tmp/orca/web-app/feature-dev-4409"
 for cwd, sid in (
     (lstm_cwd, "01aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
     (rev_cwd, "01bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
