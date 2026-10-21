@@ -88,3 +88,10 @@ accepted changes here.
 | Date | Skill | Attempted change | Result |
 |---|---|---|---|
 | 2026-10-21 | receiving-code-review | Add "pasted or on a PR" so it fires on a review comment pasted in chat | `receiving-review-pushes-back`, 4 runs each, Claude Code 2.1.306: fired 0/4 before and 0/4 after. The reply declined the wrong suggestion correctly in all 8 runs. Reverted |
+
+## Coder execution pilot
+
+[Factory pilot](factory/README.md) compares current coder lessons with a compact
+reuse instruction on eight isolated, executable fixtures. It records actual host
+usage and uses external assertions. This paid pilot is separate from routing and
+must be started explicitly; it does not change production worker instructions.

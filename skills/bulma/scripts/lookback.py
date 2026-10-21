@@ -41,7 +41,7 @@ MIN_PRS = 10  # below this many reviewed PRs in either window, no trend
 OTHER = "other"
 # Where a lesson should live. decisions.json insight.classify.lesson_for
 # reads its enum from these literals.
-LESSONS = ("implementer", "reviewer", "repo_rule", "none")
+LESSONS = ("implementer", "reviewer", "repo_rule", "repo_check", "none")
 
 # guard: the skill text that should make the cluster shrink, or "repo rule"
 # when the fix belongs in the target repo's CLAUDE.md / AGENTS.md. Names are

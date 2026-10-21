@@ -37,6 +37,20 @@ Use the discovered `pkg` (`bun` / `pnpm` / `go` / `cargo` / …). Never `npm` wh
 is **CI-only** — declare `ci_only` in STATE, never try it locally
 (or listed in `AGENTS.md` / `$BULMA_CI_LOCAL_SKIP`).
 
+## Execution prerequisites
+
+Before a suite requiring a database, browser or service, run its existing bounded
+preflight in the same execution environment. Record the missing capability as
+`hard_gate: skipped`, with command and evidence path. Do not spend another worker
+round on the same structural blocker until the environment changes. Transient
+failures retain the existing retry cap. Do not provision shared infrastructure.
+
+An exit code of zero is necessary but insufficient: verify the required suite was
+selected and executed assertions. Early returns or all-skipped suites are unproven.
+Use the project's existing integrity reporter; do not add an LLM judge. With an
+external QA provider, read its verdict and criterion coverage for the matching SHA;
+a green advisory status carrying BLOCKED is not QA PASS. Do not start a second QA.
+
 ## Output
 
 `hard_gate: pass | fail | skipped` + `floor_guard: pass | fail | error` +
