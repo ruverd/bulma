@@ -241,6 +241,9 @@ ok coder-lessons
 grep -F -q '## Gotchas' "$FDX/IMPLEMENTATION.md" || fail "IMPLEMENTATION.md must inject project gotchas"
 grep -F -q '## Checks' "$FDX/nodes/tester.md" || fail "tester must run project checks"
 grep -F -q '## Rollout' "$FDX/templates/PR_BODY.md" || fail "PR body must have Rollout"
+grep -F -q '## How to test' "$FDX/templates/PR_BODY.md" || fail "PR body must have How to test"
+[[ "$(grep '^## ' "$FDX/templates/PR_BODY.md" | tail -1)" == '## Agent run' ]] || fail "PR body must end with Agent run"
+grep -F -q 'session_usage' "$ROOT/skills/bulma-host/SKILL.md" || fail "bulma-host must define session_usage"
 for rule in 'untested branch' 'null / empty / boundary' 'silent catch / no error report' 'reuse before adding' 'test wired into CI'; do
   grep -F -q "### $rule" "$FDX/LESSONS.md" || fail "LESSONS.md missing $rule"
 done

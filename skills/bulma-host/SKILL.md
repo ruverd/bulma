@@ -34,6 +34,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `second_opinion` | Run one read-only prompt on another vendor's model through its CLI (§Second opinion) | `second_opinion: failed` with the reason; never a silent skip |
 | `worker_usage` | Token total the host reported for one finished worker (§worker_usage) | None: omit the count, never estimate it |
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
+| `session_usage` | Total tokens this run spent, as the host reports them (Claude Code: sum `usage` in the session transcript; Grok and Codex: their usage readout) | `n/a`. Never estimate |
 
 ## Review model identity
 
