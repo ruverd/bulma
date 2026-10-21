@@ -1,0 +1,17 @@
+{
+  "skill": "grill-with-docs",
+  "positive": [
+    {
+      "prompt": "Stress-test my plan against the domain model and ADRs"
+    },
+    {
+      "prompt": "Challenge this plan against CONTEXT.md and update the docs"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Write a PRD from this chat",
+      "owner": "to-prd"
+    }
+  ]
+}

@@ -2,9 +2,9 @@
 name: diagnose
 category: lib
 description: >
-  Disciplined diagnosis loop for hard bugs and performance regressions. Use
-  when the user says "diagnose this" or "debug this", reports a bug, says
-  something is broken or failing, or describes a performance regression.
+  Diagnosis loop for hard bugs and performance regressions. Use when the user
+  says "diagnose this" or "debug this", reports a bug, or says something is
+  broken, failing, or got slow.
 ---
 
 # Diagnose

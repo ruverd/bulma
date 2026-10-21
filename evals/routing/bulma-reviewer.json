@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-reviewer",
+  "positive": [
+    {
+      "prompt": "CI is red on this branch, classify the test failure and review it"
+    },
+    {
+      "prompt": "A REVIEW_REQUEST envelope arrived for PR 77"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "QA the checkout flow on PR 90",
+      "owner": "bulma-qa"
+    }
+  ]
+}

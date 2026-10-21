@@ -51,6 +51,7 @@ done_report | escalated
 | `quality_verdict` | pending \| pass \| fail |
 | `plan_critic_verdict` | pending \| skip \| pass \| revise |
 | `plan_critic_mode` | main \| spawn \| skip |
+| `second_opinion` | off \| ran \| failed |
 | `plan_critic_loops` | remaining + `plan_critic_loops_used`. Default 1 |
 
 ## Whitelist per node
@@ -66,7 +67,7 @@ done_report | escalated
 | diagnose | sentry/linear, repo | debug (root cause, evidence, one ticket) |
 | implement | one ticket + spec excerpt | code, tdd evidence, files_touched |
 | review | spec, ticket, diff, gates.log | spec_verdict, quality_verdict, review |
-| tester | files, scripts | hard gate + gates.log |
+| tester | files, scripts | hard gate, floor_guard, floor_allowed + gates.log |
 | evidence | qa_tool, pr_url, sha | fragment, before/after png paths |
 | blast | diff | blast section |
 | quality | diff, files | quality section |

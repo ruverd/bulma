@@ -1,0 +1,14 @@
+{
+  "skill": "before-and-after",
+  "positive": [
+    {
+      "prompt": "Add before and after screenshots of the UI to the PR body"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "QA this PR in the browser",
+      "owner": "bulma-qa"
+    }
+  ]
+}

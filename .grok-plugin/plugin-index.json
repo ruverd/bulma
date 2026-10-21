@@ -22,7 +22,7 @@
           },
           {
             "name": "diagnose",
-            "description": "Disciplined diagnosis loop for hard bugs and performance regressions."
+            "description": "Diagnosis loop for hard bugs and performance regressions."
           },
           {
             "name": "figure-it-out",

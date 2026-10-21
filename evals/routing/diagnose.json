@@ -1,0 +1,17 @@
+{
+  "skill": "diagnose",
+  "positive": [
+    {
+      "prompt": "The export job is broken, debug this"
+    },
+    {
+      "prompt": "Page load got 3x slower after the last deploy, find out why it regressed"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Write the docs for the export job",
+      "owner": "technical-writing"
+    }
+  ]
+}

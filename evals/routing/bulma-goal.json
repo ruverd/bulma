@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-goal",
+  "positive": [
+    {
+      "prompt": "Keep going until CI is green and QA evidence is posted"
+    },
+    {
+      "prompt": "The draft PR is open and CI is still pending, keep driving it"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Write the PRD for this feature",
+      "owner": "to-prd"
+    }
+  ]
+}

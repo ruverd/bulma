@@ -1,0 +1,17 @@
+{
+  "skill": "receiving-code-review",
+  "positive": [
+    {
+      "prompt": "I got review feedback, should I implement these suggestions?"
+    },
+    {
+      "prompt": "Evaluate this code review feedback before changing anything"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Review this pull request",
+      "owner": "bulma-code-review"
+    }
+  ]
+}

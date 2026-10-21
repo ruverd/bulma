@@ -1,0 +1,17 @@
+{
+  "skill": "to-issues",
+  "positive": [
+    {
+      "prompt": "Split this PRD into issues on the tracker"
+    },
+    {
+      "prompt": "Turn the plan into implementation tickets"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Deliver ticket ENG-9",
+      "owner": "bulma-developer"
+    }
+  ]
+}

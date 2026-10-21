@@ -1,0 +1,17 @@
+{
+  "skill": "technical-writing",
+  "positive": [
+    {
+      "prompt": "Write the README for this CLI"
+    },
+    {
+      "prompt": "Review this RFC draft for style"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Remove the AI tells from this text",
+      "owner": "unslop"
+    }
+  ]
+}

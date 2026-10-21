@@ -1,0 +1,17 @@
+{
+  "skill": "interrogate",
+  "positive": [
+    {
+      "prompt": "Tear this change apart and find blind spots"
+    },
+    {
+      "prompt": "Get a multi-model adversarial review of this diff"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Interview me about my plan until we agree",
+      "owner": "grill-me"
+    }
+  ]
+}

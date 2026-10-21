@@ -79,6 +79,19 @@ def main():
         if names != [PLUGIN_NAME]:
             errors.append(f"{rel}: plugins are {names!r}, expected [{PLUGIN_NAME!r}]")
 
+    # Claude Code rejects a directory here ("must end with .md") and then loads
+    # nothing from the plugin, so the agents are listed file by file.
+    rel = ".claude-plugin/plugin.json"
+    agents = load(root, rel).get("agents", [])
+    wanted = {"./" + os.path.relpath(p, root) for p in flat_files(root, "agents")}
+    if not isinstance(agents, list):
+        errors.append(f"{rel}: agents must list each ./agents/*.md file, not a directory")
+    else:
+        for missing in sorted(wanted - set(agents)):
+            errors.append(f"{rel}: agent not listed: {missing}")
+        for stale in sorted(set(agents) - wanted):
+            errors.append(f"{rel}: listed agent is not in agents/: {stale}")
+
     index = load(root, INDEX)
     components = index["plugins"]["bulma"]["components"]
     for kind, wanted in (

@@ -49,7 +49,10 @@ bash tests/bulma-qa.sh          # QA clips and evidence rules
 bash tests/before-and-after.sh  # the PR screenshot formatter
 ```
 
-CI runs all of them on every push. `tests/repo.sh` needs `python3`, and it
+CI runs all of them on every push. `tests/repo.sh` includes the routing check
+over `evals/routing/`. When you change a skill description, add or update its
+prompts there. Model-backed cases under `evals/plugin/` run only on demand:
+[evals/README.md](evals/README.md). `tests/repo.sh` needs `python3`, and it
 also runs `shellcheck` when `shellcheck` is installed.
 
 If you have the Grok CLI, also run `grok plugin validate .` to check the Grok

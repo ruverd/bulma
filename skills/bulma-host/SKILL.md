@@ -31,6 +31,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `worktree` | Isolated checkout of the same branch | `git worktree add` (JOBS.md) |
 | `schedule_wake` | Resume this graph later without blocking the turn | Ask the user to re-run the slash command when CI moves; do not `gh pr checks --watch` |
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
+| `second_opinion` | Run one read-only prompt on another vendor's model through its CLI (§Second opinion) | `second_opinion: failed` with the reason; never a silent skip |
 | `worker_usage` | Token total the host reported for one finished worker (§worker_usage) | None: omit the count, never estimate it |
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
 
@@ -135,6 +136,11 @@ One wake per PR. Store the host's id in STATE as `loop_id`.
 
 The wake prompt is in the skill's `LOOP.md`. It must `load_skill` by
 **name**, not by an absolute home path.
+
+## Second opinion
+
+One read-only critic on another vendor's model, through its CLI. Opt-in via
+memory `second_opinion:`. Calls and rules: [SECOND_OPINION.md](references/SECOND_OPINION.md).
 
 ## Optional MCP
 

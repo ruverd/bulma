@@ -1,0 +1,17 @@
+{
+  "skill": "bulma-qa",
+  "positive": [
+    {
+      "prompt": "QA PR 233 in the browser"
+    },
+    {
+      "prompt": "Test this pull request like a user would and try to break it"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Review the code in PR 233",
+      "owner": "bulma-code-review"
+    }
+  ]
+}

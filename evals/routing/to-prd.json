@@ -1,0 +1,17 @@
+{
+  "skill": "to-prd",
+  "positive": [
+    {
+      "prompt": "Write a PRD from what we discussed"
+    },
+    {
+      "prompt": "Create a PRD and publish it to the tracker"
+    }
+  ],
+  "negative": [
+    {
+      "prompt": "Split the PRD into issues",
+      "owner": "to-issues"
+    }
+  ]
+}
