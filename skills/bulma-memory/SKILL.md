@@ -17,8 +17,21 @@ Paths: [DISK.md](../bulma-bus/DISK.md).
 
 ```
 $BULMA_HOME/memory.md    # you (every repo)
-$BULMA_ROOT/memory.md    # this git toplevel
+$BULMA_REPO/memory.md    # this repository, shared by all its worktrees
+$BULMA_ROOT/memory.md    # this worktree only, when it differs from $BULMA_REPO
 ```
+
+`$BULMA_REPO` is the `$BULMA_ROOT` of the repository's main worktree, so a
+task worktree (Orca, Codex, Grok, `git worktree add`) reads the same project
+memory as the main clone:
+
+```bash
+main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+BULMA_REPO="$BULMA_HOME/$(printf '%s' "$main" | sed 's|^/||; s|/|-|g')"
+```
+
+In the main clone `$BULMA_REPO` and `$BULMA_ROOT` are the same directory.
+"Project file" below means `$BULMA_REPO/memory.md`.
 
 No git root? Only the home file. Create a file **when writing**, not
 on install. Missing file = empty.
@@ -28,8 +41,9 @@ on install. Missing file = empty.
 Before the first user-facing sentence of any bulma graph, engine, or
 `/memory`:
 
-1. Resolve `$BULMA_HOME` / `$BULMA_ROOT` (DISK.md).
-2. Read both files if they exist.
+1. Resolve `$BULMA_HOME`, `$BULMA_ROOT` (DISK.md) and `$BULMA_REPO` (above).
+2. Read the home file, then the project file, then the worktree file when it
+   is a different path. Later files win on the same key; sections merge.
 3. Chat language = home `## Chat` `language:`. Default `en`.
 4. If project `## Open` has an item and this turn is not
    `wait_ci` / `execute` / a last-resort ticket ASK: ask **one**

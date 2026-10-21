@@ -137,7 +137,7 @@ Bulma never writes run state inside your repo. Everything lives under
 ~/.bulma/bulma.json                      # settings
 ~/.bulma/bulma-watch.json                # pull requests watch saw merged or closed
 ~/.bulma/insights/observations.jsonl     # summaries of human review comments
-~/.bulma/<slug>/memory.md                # preferences for one repo
+~/.bulma/<slug>/memory.md                # one repo; worktrees read the main clone's
 ~/.bulma/<slug>/.bulma-bus/
                   STACK.md               # which stage is active
                   ENVELOPE.md            # the message between stages

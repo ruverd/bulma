@@ -8,7 +8,7 @@ Disk: [`../../skills/bulma-bus/DISK.md`](../../skills/bulma-bus/DISK.md).
 
 ## When
 
-- `/memory` — show `$BULMA_HOME/memory.md` and `$BULMA_ROOT/memory.md`
+- `/memory` — show `$BULMA_HOME/memory.md` and `$BULMA_REPO/memory.md` (the main clone's, shared by its worktrees)
 - `/memory me responder em PT-BR` — home `## Chat`
 - `/memory --project reviewers: alice, bob` — this repo's confirmed reviewers
 - A bulma graph starts (admit / fd / code-review) — **read**, do not wait
