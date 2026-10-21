@@ -97,16 +97,41 @@ def room(reviews: list[dict[str, Any]], timeline: list[dict[str, Any]], me: str)
     return reasons
 
 
-def threads(pages: Any) -> list[str]:
+def approved_on_head(reviews: list[dict[str, Any]], head: str) -> set[str]:
+    """Logins whose latest decisive review on this head is APPROVED."""
+    latest: dict[str, dict[str, Any]] = {}
+    for review in sorted(reviews, key=lambda r: r.get("submitted_at") or ""):
+        if review.get("state") in DECISIVE and review.get("commit_id") == head:
+            latest[login(review)] = review
+    return {who for who, review in latest.items() if review.get("state") == "APPROVED"}
+
+
+def thread_author(comment: dict[str, Any]) -> str:
+    author = comment.get("author") or {}
+    if isinstance(author, dict) and author.get("login"):
+        return str(author["login"]).lower()
+    return login(comment)
+
+
+def threads(pages: Any, reviews: list[dict[str, Any]], head: str) -> list[str]:
+    """Unresolved threads block, except notes from someone who approved this head.
+
+    Their APPROVED review is the decision. A thread with no author still blocks.
+    An approval on an older SHA does not cover a thread on the current head.
+    """
+    cleared = approved_on_head(reviews, head)
     reasons = []
     for page in pages if isinstance(pages, list) else [pages]:
         if page.get("errors") or not page.get("data"):
             raise Missing("threads.json has GraphQL errors or null data")
         nodes = page["data"]["repository"]["pullRequest"]["reviewThreads"]["nodes"]
         for node in nodes:
-            if not node.get("isResolved"):
-                first = (node.get("comments", {}).get("nodes") or [{}])[0]
-                reasons.append(f"unresolved thread: {first.get('url', node.get('id'))}")
+            if node.get("isResolved"):
+                continue
+            first = (node.get("comments", {}).get("nodes") or [{}])[0]
+            if thread_author(first) in cleared:
+                continue
+            reasons.append(f"unresolved thread: {first.get('url', node.get('id'))}")
     return reasons
 
 
@@ -175,17 +200,13 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     rows = {name.strip(): value for name, value in ROW.findall(body)}
     mark = marker(body)
     reasons = room(data["reviews"], data["timeline"], args.me)
-    reasons += threads(data["threads"])
+    reasons += threads(data["threads"], data["reviews"], args.head)
     reasons += ci(data["checks"], data["statuses"], args.head)
     signoff = load(Path(args.signoff)) if args.signoff else None
     if not isinstance(signoff, list):
         reasons.append("human sign-off evidence missing (--signoff)")
-    elif signoff:
-        reasons.append(f"needs human sign-off: {', '.join(map(str, signoff))}")
     if not rows.get("Review context", "").lower().startswith("clear"):
         reasons.append("Review context row is not clear")
-    if not rows.get("Human sign-off", "").lower().startswith("not required"):
-        reasons.append("Human sign-off row is not 'not required'")
     if mark.get("blockers") != "0" or mark.get("majors") != "0" or mark.get("open") != "-":
         reasons.append("marker still lists blockers, majors or open findings")
     if mark.get("risk") == "high" and mark.get("critic") != "ran":

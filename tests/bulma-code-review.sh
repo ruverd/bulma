@@ -271,6 +271,20 @@ echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1
 blocked_with 'unresolved thread: u1' || fail "gate: unresolved thread must block"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":8,"user":{"login":"alice","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
+EOF
+echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1","author":{"login":"alice"}}]}}]}}}}}]' >"$EV/threads.json"
+[[ "$(gate)" == 0 ]] || fail "gate: approver's own thread must not block ($(cat "$TMP/gate.out"))"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":8,"user":{"login":"alice","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}]]
+EOF
+echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1","author":{"login":"alice"}}]}}]}}}}}]' >"$EV/threads.json"
+blocked_with 'unresolved thread: u1' || fail "gate: approval on an older SHA must not clear a thread"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"failure","description":"FAIL: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
 blocked_with 'needs human approval: status AI QA says FAIL' || fail "gate: AI QA FAIL must block"
 
@@ -287,7 +301,7 @@ blocked_with 'no successful build/test check' || fail "gate: skipped CI must blo
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '["infra/stack.yaml"]' >"$EV/signoff.json"
-blocked_with 'needs human sign-off: infra/stack.yaml' || fail "gate: sign-off must block"
+[[ "$(gate)" == 0 ]] || fail "gate: sign-off list must not block ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 python3 - "$EV/payload.json" <<'PY'

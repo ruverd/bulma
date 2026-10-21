@@ -21,8 +21,10 @@ Init `.bulma-reviewer/STATE.md`. Walk GRAPH (**admit** first).
 `code_review` is the engine: spec-first, patch bind, high-risk critic.
 Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
 context before pass selection and again before publication, pins the reviewed
-head, verifies CI execution and requires human sign-off for sensitive changes.
-Never dismiss another review or approve over an open concern. Every review
+head, and verifies CI execution. A sensitive-path list is named in the
+review body and does not defer. An unresolved thread whose author approved
+this head is not an open concern. Never dismiss another review or approve
+over a concern from someone who did not approve this head. Every review
 POST runs behind the engine's `scripts/gate.py`; an APPROVE it rejects is
 never sent. The engine dismisses its own approval when the head moves or a
 later pass DEFERs, and posts a COMMENT instead of a second bot approval.
