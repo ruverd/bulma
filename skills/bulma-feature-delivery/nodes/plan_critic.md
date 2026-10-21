@@ -29,6 +29,12 @@ Write a table, not a verdict paragraph. One row per finding. Check:
 3. A ticket that contradicts SPEC.md or a DECIDE row
 4. An acceptance line with no seam
 5. A ticket that cannot be verified alone (not one implement window)
+6. Expert gap: a method or check the best practitioner of this domain would
+   apply that the plan omits (rollback for a migration, idempotency for a
+   retried job, a measured budget for "fast"). Name the method, not a persona.
+   Asking the model to "act as a senior X" changes tone, not the work.
+7. Proof oracle: a behavior AC whose only proof is the implementer saying so.
+   Each one names its evidence: a test, a command exit code, a QA observation.
 
 "The scan is clean" without those rows is not a scan you ran. If there
 is nothing to flag, write one row: `none | n/a | clean`.
@@ -39,7 +45,11 @@ is nothing to flag, write one row: `none | n/a | clean`.
 - **revise** — blocking rows exist
 
 Blocking: contradiction, missing seam on a behavior AC, ticket that
-cannot be the implement window it claims.
+cannot be the implement window it claims, behavior AC with no proof oracle,
+expert gap inside an existing AC's scope.
+
+An expert gap outside every AC is not blocking and never becomes a new AC.
+Log it in STATE decisions as a follow-up.
 
 ## Apply
 
