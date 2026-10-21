@@ -32,7 +32,8 @@ git diff "$OLD_SHA..$HEAD_SHA"
 
 Fetch the exact commits into the review checkout first. Save the unified diff
 as `PATCH.diff` and its changed paths as `FILES.txt`. Missing old SHA or a
-force-push/rebase → full PR diff and **deep** pass, noting `stale_base` in chat.
+force-push/rebase → full PR diff and **deep** pass, noting `stale_base` in chat,
+unless [pass_decision.md](pass_decision.md) §Rebase only proved the same content.
 A prior REQUEST_CHANGES or DEFER `coverage|uncertainty|critic_failed` of mine
 also forces the full PR diff and a deep pass
 ([pass_decision.md](pass_decision.md)).
@@ -70,6 +71,13 @@ can publish. Reads here are **outside** the light file cap, bounded by the
 An author reply, a comment, or a pushed commit is **not** evidence that a carried
 finding was fixed. Only the code at the head SHA is. A run that cannot re-verify
 an entry (file unreadable, cap exhausted) treats it as unresolved and keeps it.
+
+A reply that disputes the finding is different from a reply that claims a fix.
+When the author says why it is not a bug ("the caller already filters nulls",
+"intentional, see the spec"), test that reason as the finding's `refutation`
+against the head SHA. It holds → drop the entry and resolve my thread. It does
+not hold → carry the entry and answer the reason in one sentence with the
+`path:line` that disproves it. Never carry an entry without engaging the reason.
 
 ## 4.3 Product-file Read — after Phase 1
 

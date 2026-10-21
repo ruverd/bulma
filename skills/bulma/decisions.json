@@ -342,6 +342,12 @@
             "effect lifecycle": "A UI effect or subscription misses cleanup, cancellation, or a guard, so it leaks, re-fires, or updates after unmount.",
             "pagination / unbounded": "A list or query has no limit, or paging mishandles the empty or last page.",
             "tenant / cache-key isolation": "Data or cache keys are not scoped by tenant or session, so one user can see another's data.",
+            "untested branch": "A new if, default, catch, early return, cap, or status mapping has no test for one of its sides.",
+            "null / empty / boundary": "Null, undefined, empty, zero, malformed, or over-limit input is mishandled, or a client mistake becomes a server error.",
+            "reuse before adding": "New code duplicates a helper, hook, query, client, or component the repository already has.",
+            "check-then-act race": "Code reads, decides, then writes while another request can interleave, so duplicates or lost updates slip through.",
+            "test wired into CI": "A new test is never selected by any CI job, or it depends on wall-clock timing or fixed sleeps.",
+            "clean branch": "The branch carries conflict markers, a merge that dropped changes, unrelated edits, or committed scratch, build, or local files.",
             "other": "None of the classes above fits."
           },
           "act_at": 0.70,

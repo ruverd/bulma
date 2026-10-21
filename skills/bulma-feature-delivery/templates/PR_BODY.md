@@ -21,3 +21,7 @@ After:
 ## Risks
 
 <!-- What could break, and why it is acceptable. Evidence: attached PNG, fenced output, or n/a. -->
+
+## Rollout
+
+<!-- Paired PRs in other repos and the safe merge and deploy order, flag and default, and how to revert (one command, or why a revert is unsafe after a migration). Evidence: links or n/a. -->

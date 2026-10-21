@@ -57,7 +57,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 ```markdown
 ## ❌ Changes requested: <repo>#<pr>
 
-The seat picker has an unchecked seat cap and a retry-state defect.
+1 blocker and 2 majors. The seat picker has an unchecked seat cap and a retry-state defect.
 
 | | |
 |---|---|
@@ -70,6 +70,7 @@ The seat picker has an unchecked seat cap and a retry-state defect.
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors |
 | Acceptance | 1 done · 1 missing |
+| Human focus | `src/x.ts:30-60` seat cap rules; the rest is mechanical |
 
 ### 🛑 Blockers
 1. `src/x.ts:42`. **Retry keeps the old count.** If the user retries after a failure, `attempts` still has the old number and the cap never fires. Reset it before the new run.
@@ -108,8 +109,20 @@ The seat picker has an unchecked seat cap and a retry-state defect.
 
 <!-- bulma-review: v=1 pass=deep sha=<full reviewed_sha> blockers=1 majors=2 reason=-
      open=src/x.ts:42:unreset-retry-count|src/y.ts:10:missing-empty-list-test|src/a.ts:42:seat-cap-not-rechecked
-     risk=low critic=skip preflight=1 -->
+     risk=low critic=skip round=1 first=<full reviewed_sha> preflight=1 -->
 ```
+
+The line under the header starts with the count: "1 blocker and 2 majors.",
+"Nothing to fix." on a clean APPROVE, or the DEFER reason. Then one sentence
+on what the findings have in common. A reader who stops after that line knows
+whether there is work to do.
+
+`Human focus` names the one to three hunks where a person's judgement adds
+the most: product intent, a pattern others will copy, a risky rule, taste in
+UI. Everything else the checks above already covered. Write "spot check" when
+nothing stands out, and never use it to repeat a finding. On round 3 or later
+(§Convergence in [pass_decision.md](pass_decision.md)), the step-back
+paragraph goes right after the count line.
 
 The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 `open=-`). Without it the next run loses the ledger and re-reviews from scratch.
@@ -138,6 +151,15 @@ On first render `user.email` is still undefined, and this calls `send` anyway. G
 
 `⚠️ **Major.**` for majors. No praise. No questions. No list of other ways to
 fix it.
+
+A finding with `instances` names the pattern and ends with "Same in" plus the
+other `path:line` entries. The fix sentence covers all of them:
+
+```markdown
+⚠️ **Major.** `limit` from the query string is never bounded.
+
+A caller can send `limit=100000` and the handler loads every row. Clamp it at the schema. Same in `src/routes/teams.ts:41` and `src/routes/users.ts:57`.
+```
 
 ### DEFER — issue comment, never a review
 

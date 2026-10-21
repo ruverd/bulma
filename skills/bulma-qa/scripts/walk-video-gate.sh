@@ -11,7 +11,7 @@
 # gate exit 0 as evidence about video content.
 #
 # Do not try to automate this with OCR. Verified 2026-09-10 on
-# empath-ui: tesseract returns EMPTY on both the Sign in screen and
+# a product UI: tesseract returns EMPTY on both the Sign in screen and
 # the app (light text on dark purple), so an OCR gate passes
 # everything. A gate that cannot fail is worse than none.
 #

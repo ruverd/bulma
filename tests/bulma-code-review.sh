@@ -96,8 +96,8 @@ python3 "$RISK" --human-signoff --files-from "$TMP/FILES.txt" >"$TMP/no-human.js
 assert_json "$TMP/no-human.json" "d == []"
 python3 "$RISK" --human-signoff infra/stack.yaml scripts/ci/apply-amplify-custom-rules.mjs \
   .github/actions/setup/action.yml Dockerfile amplify.yml .npmrc bunfig.toml apps/web/package.json \
-  src/jobs/tasks/chargebee-subscription-reconcile.ts \
-  src/services/identity-provider/zitadel/zitadel-saml-idp.service.ts \
+  src/jobs/tasks/provider-subscription-reconcile.ts \
+  src/services/identity-provider/oidc/oidc-saml-idp.service.ts \
   src/roles/guard.ts src/acl.ts >"$TMP/deploy-human.json"
 assert_json "$TMP/deploy-human.json" "len(d) == 12"
 python3 "$RISK" --human-signoff src/features/certification/CredentialCard.tsx \
@@ -429,6 +429,57 @@ assert 'anchored to a changed path' not in verdict and 'wherever it surfaces' in
 assert 'Loaded by another reviewer' in skill
 PY
 ok approval-preflight-contract
+
+# --- convergence, rebase-only, project knowledge ---
+python3 - "$SKILL" <<'PY'
+import sys
+from pathlib import Path
+root = Path(sys.argv[1])
+skill = (root / 'SKILL.md').read_text()
+decide = (root / 'nodes/pass_decision.md').read_text()
+review = (root / 'nodes/review.md').read_text()
+publish = (root / 'nodes/publish.md').read_text()
+verdict = (root / 'nodes/verdict.md').read_text()
+fetch = (root / 'nodes/fetch.md').read_text()
+assert 'Converge, do not loop' in skill and '## Convergence' in decide
+assert 'round=<n>' in decide and 'round=1' in publish
+assert '## Rebase only' in decide and 'git patch-id --stable' in decide
+assert 'reason=rebase' in decide and 'Rebase only' in fetch
+assert '"instances"' in review and 'Same in' in publish
+assert 'REVIEW.md' in review and '## Gotchas' in review
+assert 'Reuse (major)' in review and 'duplicates an existing one' in verdict
+assert 'root changelog' in review and 'root changelog' in verdict
+assert 'disputes the finding' in fetch
+assert 'Human focus' in publish and 'Nothing to fix.' in publish
+assert 'unlikely conditions' in review
+PY
+ok convergence-contract
+
+# rebase-only detection: same change on a new base gives the same patch id
+G="$TMP/rebase"
+gc() { git -C "$G" -c user.name=t -c user.email=t@t "$@"; }
+git init -q -b main "$G"
+gc commit -q --allow-empty -m base
+echo a >"$G/a.txt"; gc add a.txt; gc commit -q -m a
+gc checkout -q -b pr
+echo feature >"$G/f.txt"; gc add f.txt; gc commit -q -m feature
+PRIOR="$(gc rev-parse HEAD)"
+gc checkout -q main
+echo b >"$G/b.txt"; gc add b.txt; gc commit -q -m b
+gc checkout -q pr
+gc rebase -q main
+NEW_HEAD="$(gc rev-parse HEAD)"
+pid() { gc diff "$(gc merge-base main "$1")" "$1" | git -C "$G" patch-id --stable | cut -d' ' -f1; }
+[[ "$PRIOR" != "$NEW_HEAD" ]] || fail "rebase did not move head"
+[[ "$(pid "$PRIOR")" == "$(pid "$NEW_HEAD")" ]] || fail "rebase-only: patch ids differ"
+echo more >>"$G/f.txt"; gc commit -q -am more
+[[ "$(pid "$PRIOR")" != "$(pid HEAD)" ]] || fail "rebase-only: content change not detected"
+ok rebase-only-patch-id
+
+if grep -rniE 'empath|chargebee|frontegg|zitadel|dynamo' "$ROOT/skills" "$ROOT/agents" "$ROOT/commands"; then
+  fail "product or vendor names leaked into skills"
+fi
+ok no-project-knowledge
 
 echo "all passed"
 

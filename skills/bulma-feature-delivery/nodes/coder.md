@@ -34,6 +34,7 @@ the repo has an index.
 - if UI: repo DS paths + `figma-context.md` if it exists
 - review/test findings if this is a re-fix
 - recurring lessons for this repo (`lessons.py` block), when the parent has any
+- project gotchas that match the ticket, when the parent has any
 - neighbor paths if needed
 
 ## Lessons
@@ -41,7 +42,8 @@ the repo has an index.
 Apply [../LESSONS.md](../LESSONS.md) on every ticket, and the recurring-lessons
 block from the prompt when there is one. They are the defects human reviewers
 kept catching after our gates passed. For sibling-path parity, name the
-siblings you checked in `summary`.
+siblings you checked in `summary`. Each project gotcha in the prompt is a fact
+the code must respect; name the ones you applied.
 
 ## Steps (TDD)
 

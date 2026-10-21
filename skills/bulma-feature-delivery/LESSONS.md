@@ -50,10 +50,63 @@ only before `setState`.
 ### pagination / unbounded
 
 Give every new list query a limit and every new loop over pages an exit on an
-empty page. Test the empty, exact-page, and last-partial-page cases.
+empty page. Test the empty, exact-page, and last-partial-page cases. Never
+query or call out once per item inside a loop on a request path; batch it, or
+check the one row you need instead of reading the whole set.
 
 ### authz / privilege
 
 On any change to roles, permissions, or auth flows, check the caller's rank
 against both the requested role and the target user's current role, on the
-server. Fail closed on an unknown role or a failed lookup.
+server. Fail closed on an unknown role or a failed lookup. Every id the caller
+sends (tenant, account, owner, parent) is checked against what the caller may
+access before a read or a write; take the scope from the session, not the body.
+
+### untested branch
+
+Every branch this change adds gets a test for each side: an `if`, a `??` or
+`||` default, a `catch`, an early return, a cap, a status or error mapping.
+Make the mock return the failing value for the failing side. A test that only
+walks the happy path leaves the new branch unproven.
+
+### null / empty / boundary
+
+For each input the change reads, try null, undefined, empty string, zero, an
+empty list, a malformed value and one past the limit. Use `??` when zero or
+empty is valid. Input a client can get wrong fails as a typed client error
+(400, 404, 409), never as an unhandled 500.
+
+### silent catch / no error report
+
+Catch only the error you expect and can handle. Rethrow or report everything
+else. Never turn a failure into an empty result or a success response
+(`catch { return [] }`). A failure an operator must act on goes to the
+project's error reporting, not only to a log line.
+
+### reuse before adding
+
+Before adding a helper, hook, query, client, mapper or component, search the
+repo for one that does the same job, by name and by its core verb and noun.
+Reuse or extend it. Add a new one only when the contract really differs, and
+say why in the summary.
+
+### check-then-act race
+
+Do not read, decide, then write when two requests can interleave. Use a
+unique constraint with an upsert or conflict clause, a conditional update, or
+a lock, and test the duplicate or concurrent case.
+
+### test wired into CI
+
+A new test file proves nothing until a CI job runs it. Check the test runner's
+include patterns, the CI workflow's paths and any allowlist, and name the job
+that picks the file up. Never assert wall-clock timing or sleep for a fixed
+time in a test.
+
+### clean branch
+
+Start from a fresh base: merge or rebase the base branch, search the tree for
+conflict markers, and read what the merge changed in files you did not touch.
+Commit only what the ticket needs: no build output, reports, scratch notes,
+local paths or unrelated refactors.
+

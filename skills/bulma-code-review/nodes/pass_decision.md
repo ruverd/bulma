@@ -10,8 +10,15 @@ for room evidence. Take our artifact with the latest timestamp. Parse its marker
 
 ```
 <!-- bulma-review: v=1 pass=deep|light|none sha=<sha> blockers=<n> majors=<n> reason=<slug>
-     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran|failed preflight=1 -->
+     open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran|failed
+     round=<n> first=<sha> preflight=1 -->
 ```
+
+`round=` counts my REQUEST_CHANGES artifacts on this PR, this one included
+(`0` when this artifact is not a change request and none came before).
+`first=` is the head SHA of my first deep pass on this PR. Both feed
+§Convergence below. A marker without them counts its REQUEST_CHANGES reviews
+from the review list and takes `first=` from the oldest `pass=deep` marker.
 
 `reason=` carries the DEFER reason (`coverage`, `uncertainty`, `critic_failed`,
 `ci_red`, ...) on every DEFER, and `bot_quorum` on a COMMENT review.
@@ -43,6 +50,7 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 | `sha == headRefOid`, COMMENTED `reason=bot_quorum`, approvals on the head unchanged | **skip** |
 | `sha != headRefOid`, prior marker `pass=none` | **deep** on the full diff — no prior pass to be incremental against |
 | any `sha`, my latest decisive artifact is REQUEST_CHANGES, or a DEFER with `reason=coverage\|uncertainty\|critic_failed`, with no deep pass of mine after it | **deep** on the full PR diff, carry-forward still applies |
+| `sha != headRefOid`, prior marker `pass=deep\|light`, same content (§Rebase only) | **rebase** — re-verify the ledger, no new diff review |
 | `sha != headRefOid`, prior marker `pass=deep\|light` | **light** on `sha..headRefOid` |
 
 A second DEFER for a reason already posted on the same SHA is a duplicate artifact:
@@ -64,6 +72,55 @@ and `head_changed` deferrals on every run. A prior `reason=human_signoff` is
 withdrawn: do not skip on it. An unresolved thread from a reviewer who approved
 this head is not blocked room. Promotion always re-runs the full preflight,
 including the sensitive-path list and CI evidence.
+
+## Rebase only
+
+A rebase or a merge from the base moves the head without changing what the
+PR does. Compare the PR's own change at both SHAs, each against its own
+merge base:
+
+```bash
+pid() { git diff "$(git merge-base "origin/$BASE" "$1")" "$1" | git patch-id --stable | cut -d' ' -f1; }
+[ "$(pid "$PRIOR_SHA")" = "$(pid "$HEAD_SHA")" ] && echo same
+```
+
+Fetch both commits into the review checkout first. Equal ids mean the same
+content. Then:
+
+- Re-verify every `open=` entry at the new head, as §4.2 carry-forward does.
+- Read no other product file and add no new finding.
+- Run the full preflight again. CI must have run on the new head, because a
+  new base can still break the build.
+- Prior APPROVE with a clean ledger → APPROVE, first line "Rebase only, same
+  change as <sha7>." Prior REQUEST_CHANGES → the carried findings decide, and
+  invariant 19 still applies.
+- Marker `pass=light reason=rebase`, `blockers`/`majors`/`open` from the
+  re-verified ledger.
+
+Different ids, a missing prior SHA, or a failed command → **light** or
+**deep** as the table says. Never guess "rebase only" from commit messages.
+
+## Convergence
+
+Two agents can trade fixes and reviews for many rounds when every deep pass
+finds something new in code that was there from the start. That costs a
+commit and a review per round and teaches the author nothing.
+
+Compute `round` before Phase 1. When this pass would be my third or later
+REQUEST_CHANGES on the PR (`round >= 3`):
+
+- A **new** finding (not in the `open=` ledger) whose lines did not change
+  in `first..headRefOid` is a blocker or it is silent. Majors there go to the
+  Nits block once, prefixed "Missed in my earlier passes". The author
+  already had them in front of me.
+- Blockers, carried findings and anything in lines changed since `first`
+  keep their severity. Convergence never hides a proven defect.
+- The body adds one paragraph under the summary: this is my `<n>`th change
+  request, the area the findings keep coming from, and the change in
+  approach I would make there. Do not list the findings again in it.
+
+A finding I already published is carried (§4.2), never posted as new. A nit
+is said once on the PR and never again.
 
 ## Retained analysis from pending CI
 

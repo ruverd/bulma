@@ -87,7 +87,7 @@ HUMAN_TOKENS = frozenset({
     "impersonate", "impersonation", "password", "passwd", "session", "sessions",
     "billing", "seat", "seats", "payment", "payments", "invoice", "invoices",
     "secret", "secrets", "credential", "credentials", "terraform",
-    "zitadel", "saml", "scim", "frontegg", "identity", "chargebee",
+    "idp", "oidc", "saml", "scim", "identity",
     "subscription", "subscriptions", "entitlement", "entitlements",
     "access", "acl", "role", "roles", "security",
 })

@@ -3,7 +3,7 @@
 | Tier | Meaning | Effect |
 |---|---|---|
 | **blocker** | proven defect, security flaw, broken contract (a reachable caller crashes, writes wrong data or loses data), data loss; request body written into role, tenant, price, or flag/permission | REQUEST_CHANGES |
-| **major** | closed list only: new logic without a test; swallowed error or silent catch or masking fallback; missing error or loading state on a new data flow; `any` or cast that erases a real check; documented repo rule broken; contract change whose unhandled callers degrade without a crash or bad write (wrong empty state, missing field); a new special-case branch bolted onto an unrelated flow (concrete path and trigger); user input concatenated into SQL, HTML, shell, or href; broad catch, or `?.` skipping a required operation | REQUEST_CHANGES |
+| **major** | closed list only: new logic without a test; swallowed error or silent catch or masking fallback; missing error or loading state on a new data flow; `any` or cast that erases a real check; documented repo rule broken; a new helper, hook, query or component that duplicates an existing one (existing `path:line` named, same inputs and outputs); contract change whose unhandled callers degrade without a crash or bad write (wrong empty state, missing field); a new special-case branch bolted onto an unrelated flow (concrete path and trigger); user input concatenated into SQL, HTML, shell, or href; broad catch, or `?.` skipping a required operation | REQUEST_CHANGES |
 | **nit** | everything else, including the reviewer preferences below | collapsed Nits block, max 5, never blocks |
 
 Introduced or worsened by this PR, wherever it surfaces. A break in an
@@ -26,6 +26,9 @@ preference and becomes a **major** under §6 instead.
 - a new nested ternary, or new nesting an early return would flatten
 - a new optional-field bag that admits illegal combinations (no `as`/`!` in the diff)
 
+Always silent, not even a nit: a missing release-notes or root changelog entry
+when no repo rule file requires one.
+
 A preference with no `path:line` in the diff is dropped, like any other nit.
 
 ## 7. Coverage — required before APPROVE
@@ -39,6 +42,9 @@ Refresh [PREFLIGHT.md](../references/PREFLIGHT.md). Reaching this section does
 not prove that earlier CI or review-context evidence is still current.
 
 Pending CI is checked before selecting a publication verdict, including REQUEST_CHANGES.
+
+Apply [pass_decision.md](pass_decision.md) §Convergence first when this would
+be my third or later REQUEST_CHANGES on the PR.
 
 Carried findings that still reproduce (§4.2) count exactly like new ones. APPROVE
 requires zero surviving findings, new **and** carried.

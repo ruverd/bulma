@@ -13,7 +13,16 @@ the Coverage block must declare.
 Do not Read product files in this phase.
 
 - Repo conventions: `CLAUDE.md` at the repo root (deep only; light reuses what
-  the diff needs). Read `AGENTS.md` only if `CLAUDE.md` is absent.
+  the diff needs). Read `AGENTS.md` only if `CLAUDE.md` is absent. Also read
+  `REVIEW.md` at the repo root, and in the nearest parent directory of each
+  changed path, when one exists. Code owners write it to say what failure
+  looks like in their area and what to skip. It outranks the defaults in
+  this skill, but not the invariants.
+- Project gotchas: the `## Gotchas` lines in project memory
+  ([bulma-memory](../../bulma-memory/SKILL.md)) whose path glob or keyword
+  matches `FILES.txt` or the patch. They are domain facts (units, ids,
+  provider quirks) that the code alone does not show. Treat each as a lead:
+  a finding still needs the trigger in this diff, never the note alone.
 - PR title and body: stated intent and acceptance criteria.
 - Tracker ticket: extract `[A-Z][A-Z0-9]+-\d+` from `headRefName` or title. If
   found, one `tracker_fetch_issue` call
@@ -170,9 +179,13 @@ exploit with a concrete trigger stays a **blocker**.
 ### Phase 8 — Standards (never skipped)
 
 `axis: standards`. Only rules written in the repo's `CLAUDE.md` / `AGENTS.md`,
-plus `CONTRIBUTING.md` or `CODING_STANDARDS.md` at the repo root if that file
-exists. Quote the rule you are applying. A repo rule broken is a **major**; a
-style preference not written down is a nit.
+`REVIEW.md`, plus `CONTRIBUTING.md` or `CODING_STANDARDS.md` at the repo root
+if that file exists. Quote the rule you are applying. A repo rule broken is a
+**major**; a style preference not written down is a nit.
+
+Never ask for a release-notes or root changelog entry, and never treat a
+missing one as a finding, unless one of those rule files requires it. A
+package's own changelog is the author's call.
 
 Structure checks also run here. They are not repo rules. No extra reads.
 
@@ -183,6 +196,13 @@ Structure checks also run here. They are not repo rules. No extra reads.
 - **Bolted special-case.** A new `if`, flag, or nullable inserted into a flow
   that does not own the feature. **Major** only with a concrete path, the extra
   branch, and what happens. No path or no trigger → drop.
+- **Reuse (major).** A function, hook, component, query, client or mapper this
+  PR adds that does the same job as one the repo already has. Search each new
+  exported or module-level symbol by its name and by its core verb and noun
+  (`formatDate`, `fetchUser`, `uuid`), within the caller-query cap; light
+  passes search only symbols the delta adds. **Major** only with the existing
+  `path:line` and the same inputs and outputs. A similar name with a
+  different contract is not a finding.
 - **Code judo (nit, max 1).** A visible way to delete a layer, branch, or helper
   without changing behaviour. Name what to delete. No concrete deletion → drop.
   Does not block. At most one per run.
@@ -228,13 +248,25 @@ No new reading in this phase. Every surviving finding must carry all of:
   "trigger": "concrete condition — input, state, call order",
   "impact": "what the user or system observes",
   "fix": "one imperative sentence",
-  "refutation": "strongest argument that this is not a bug, and why it fails"
+  "refutation": "strongest argument that this is not a bug, and why it fails",
+  "instances": ["src/z.ts:88", "src/w.ts:12"]
 }
 ```
+
+`instances` is optional. When the same defect appears in more than one place
+(the same unchecked null, the same missing guard on sibling handlers), file
+**one** finding at the first place, list the others there (max 10), and write
+the fix for the pattern, not the line. One finding per class lets the author
+fix every copy in one commit instead of one per review round. Search for the
+copies with the same caps; do not post them as separate findings.
 
 Cut rules, biased toward refutation:
 
 - no concrete `trigger` → **drop in silence**
+- a `trigger` that needs a chain of unlikely conditions nobody can reach from
+  a real caller, user action or input today → **drop in silence**. Name the
+  caller or input that produces it, or the finding is speculation. A fix for
+  it costs a commit and a review round and protects nothing
 - no `axis` → **drop in silence**
 - `refutation` holds → **drop in silence**
 - a defect in this diff that is reachable when a flag is on keeps its severity.
