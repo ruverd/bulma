@@ -224,6 +224,20 @@ for rule in 'untested branch' 'null / empty / boundary' 'silent catch / no error
 done
 ok project-gotchas-and-checks
 
+# project memory is shared by every worktree of a repo
+MEM="$ROOT/skills/bulma-memory/SKILL.md"
+snippet="$(awk '/^main=\$\(git worktree list/{p=1} p{print} /^BULMA_REPO=/{exit}' "$MEM")"
+[[ -n "$snippet" ]] || fail "bulma-memory must define BULMA_REPO from the main worktree"
+MW="$(mktemp -d "${TMPDIR:-/tmp}/bulma-mem.XXXXXX")"
+git init -q -b main "$MW/repo"
+git -C "$MW/repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+git -C "$MW/repo" worktree add -q "$MW/task" -b task
+repo_of() { (cd "$1" && export BULMA_HOME=/h && eval "$snippet" && printf '%s' "$BULMA_REPO"); }
+[[ "$(repo_of "$MW/repo")" == "$(repo_of "$MW/task")" ]] || fail "worktree resolves a different BULMA_REPO"
+[[ "$(repo_of "$MW/task")" == /h/*repo ]] || fail "BULMA_REPO must be the main clone's slug: $(repo_of "$MW/task")"
+rm -rf "$MW"
+ok memory-shared-across-worktrees
+
 echo "all passed"
 
 PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_feature_flow.py"

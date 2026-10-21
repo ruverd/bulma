@@ -122,7 +122,7 @@ or `glab api user`). Never `git config user.name`.
 |---|---|---|
 | 1 | `AGENTS.md` listed reviewers | `confirmed` |
 | 2 | `CODEOWNERS` file with owners for the changed paths | `confirmed` |
-| 3 | `$BULMA_ROOT/memory.md` `## Product` reviewers (`bulma-memory`) | `confirmed` |
+| 3 | `$BULMA_REPO/memory.md` `## Product` reviewers (`bulma-memory`) | `confirmed` |
 | 4 | Merged-PR history (below) | `proposed` |
 | 5 | Still empty | `missing` |
 

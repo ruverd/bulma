@@ -51,7 +51,9 @@ It never gates anything.
 Format and load: skill `bulma-memory`.
 
 One slug per git toplevel (each worktree has its own). Do **not**
-`git add` these dirs.
+`git add` these dirs. Project memory is the exception: it is read from the
+main worktree's slug so every task worktree shares it (`bulma-memory`,
+`$BULMA_REPO`).
 
 If a leftover `.bulma-*` exists inside the repo, move it into
 `$BULMA_ROOT` and delete the copy in the repo. Do not keep writing there.
