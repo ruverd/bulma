@@ -25,6 +25,17 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 - **Use "I" when it fits.** First person isn't unprofessional.
 - **Let some mess in.** Perfect structure feels algorithmic.
 - **Be specific.** Not "this is concerning" but "there's something unsettling about agents churning away at 3am."
+- **Allow a light touch of humor.** One dry, workplace-safe aside per piece at most, when it fits naturally. "CI is green. First time this week, so I checked twice." Good humor comes from the situation: the flaky test, the 400-line function, the bug that only shows up on Fridays.
+
+### Humor guardrails
+
+The reader is a coworker, so humor must be safe to forward to anyone on the team.
+
+- Aim jokes at the code, the tooling, or the situation. Never at a person, team, client, or the reader.
+- No profanity, innuendo, sarcasm that reads as contempt, or jokes about identity, politics, religion, health, or appearance.
+- No humor in incidents, security findings, data loss, irreversible actions, blocked work, or bad news someone has to act on. State the facts plainly there.
+- The fact comes first. The joke is garnish, never a replacement, and the text must still say everything without it.
+- Skip memes, puns stacked on puns, exclamation marks, and emoji as punchlines. If the joke needs explaining, cut it.
 
 ## Patterns to detect and fix
 

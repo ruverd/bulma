@@ -26,7 +26,9 @@ Follow `../skills/bulma-feature-delivery/nodes/shipper.md`.
    evidence fragment. Publish leftover local PNGs with
    `../skills/bulma-qa/scripts/publish-evidence.sh` (`--screenshot`) first.
    A repo `pr-description` skill may fill leftover fields, not the
-   whole body. Reviewers + assignee per PRODUCT.md (`gh api user` if
+   whole body. The body always has **How to test** (reviewer steps)
+   and ends with **Agent run** (model, time, tokens or `n/a`).
+   Reviewers + assignee per PRODUCT.md (`gh api user` if
    AGENTS.md has no assignee). Never `git user.name`.
    Request only `confirmed` (PRODUCT.md §6). One failed reviewer
    request must not block the rest.

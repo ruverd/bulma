@@ -32,6 +32,10 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
    If the fragment has no PNGs yet, capture merge-base vs HEAD here.
    Capture failure does not block the PR. A repo `pr-description`
    skill may fill leftover fields. It is not the body.
+   If the repo has its own PR template, keep it and append any missing
+   **How to test** and **Agent run** sections. **Agent run** is always
+   last: model, wall-clock time and `session_usage` tokens (`n/a` when
+   the host does not report them). Refresh it on every PR update.
 8. **Reviewers + assignee** per PRODUCT.md §6 (re-read at PR open).
    ```bash
    ME=$(gh api user --jq .login)   # or glab equivalent

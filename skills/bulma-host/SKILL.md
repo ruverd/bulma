@@ -32,6 +32,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `schedule_wake` | Resume this graph later without blocking the turn | Ask the user to re-run the slash command when CI moves; do not `gh pr checks --watch` |
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
+| `session_usage` | Total tokens this run spent, as the host reports them (Claude Code: sum `usage` in the session transcript; Grok and Codex: their usage readout) | `n/a`. Never estimate |
 
 ## Review model identity
 
