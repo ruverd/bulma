@@ -476,7 +476,7 @@ echo more >>"$G/f.txt"; gc commit -q -am more
 [[ "$(pid "$PRIOR")" != "$(pid HEAD)" ]] || fail "rebase-only: content change not detected"
 ok rebase-only-patch-id
 
-if grep -rniE 'empath|chargebee|frontegg|zitadel|dynamo' "$ROOT/skills" "$ROOT/agents" "$ROOT/commands"; then
+if grep -rniIE --exclude-dir=__pycache__ 'empath|chargebee|frontegg|zitadel|dynamo' "$ROOT/skills" "$ROOT/agents" "$ROOT/commands"; then
   fail "product or vendor names leaked into skills"
 fi
 ok no-project-knowledge
