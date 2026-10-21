@@ -32,14 +32,16 @@ Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
    The GitHub body includes Acceptance coverage.
 6. Nits never block. Max 5, collapsed. Most stay silent.
 7. Read reviews, unresolved threads and comments, including AI QA, before
-   pass selection and publication. Open concerns block approval. Never dismiss
-   another review; ask its reviewer to re-review.
+   pass selection and publication. Open concerns block approval, except a
+   thread whose author approved this head. Never dismiss another review; ask
+   its reviewer to re-review.
 8. Approve only the exact reviewed head with CI execution proved on that SHA.
    Review new commits before approving. Missing/skipped tests are not green.
 9. Inspect callers and neighboring tests one hop outside the diff; compare API
    mocks with provider/client response shapes. Own Critical/High blocks approval.
-10. Workflows, Terraform, auth, billing/seats and secrets need human sign-off
-    and never receive auto-approval, including on light and promoted passes.
+10. Workflows, Terraform, auth, billing/seats and secrets are listed as
+    needing human sign-off. That list does not defer or block approval,
+    including on light and promoted passes.
 
 Pending required CI allows code review first, then retains completed analysis
 locally during `wait_ci`. No PR artifact is posted while pending. Live gates

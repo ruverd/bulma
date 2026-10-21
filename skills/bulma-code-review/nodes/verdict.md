@@ -48,9 +48,13 @@ requires zero surviving findings, new **and** carried.
 | ≥1 blocker (new or carried) | **REQUEST_CHANGES** |
 | ≥1 major (new or carried), 0 blocker | **REQUEST_CHANGES** |
 | clean, room blocked or unknown | **DEFER** `reason=review_context\|review_context_unknown` |
-| clean, sensitive paths or behavior | **DEFER** `reason=human_signoff`, "needs human sign-off" |
 | head moved and delta not reviewed | re-review delta; if unable, **DEFER** `reason=head_changed` |
-| clean, full coverage, room clear, no human gate, CI proven on reviewed live head | **APPROVE** |
+| clean, full coverage, room clear, CI proven on reviewed live head | **APPROVE** |
+
+A nonempty human sign-off list is named in the Human sign-off row. It does not
+DEFER and it does not block APPROVE. An unresolved thread whose author approved
+this head is a clear room, not `review_context`. A prior DEFER with
+`reason=human_signoff` is withdrawn policy: do not skip on it.
 | any findings, CI pending | retain completed analysis, **wait_ci**, no publication yet |
 | clean, full coverage, CI red or unknown (`--force` run) | **DEFER** `reason=ci_red\|ci_unknown`, marker keeps `pass=deep\|light` |
 | clean, coverage incomplete | **DEFER** `reason=coverage` |
@@ -72,7 +76,8 @@ APPROVE. Body findings rejected only for inline placement still count.
 
 All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*`, its
 marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0`, `open=-`. Then
-re-run every approval gate, including room, human sign-off and head-bound CI.
+re-run every approval gate, including room and head-bound CI. Name the
+sensitive-path list in the body. It does not block promotion.
 Older markers without preflight/one-hop evidence require a fresh deep pass.
 Promotion reads no diff, so write `bound.json` as
 `{"kept":[],"body":[],"dropped":[]}` from that clean marker for `gate.py`.

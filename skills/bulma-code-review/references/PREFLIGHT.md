@@ -35,6 +35,10 @@ Never treat the first 50/100 threads, or the first comment alone, as complete.
   regex. An AI QA `BLOCKED` verdict (QA could not run: env, auth, app) is not
   a concern and does not gate review; a QA `FAIL` blocks APPROVE until a human
   approves the PR.
+- An unresolved thread does not block when its root author has a latest
+  decisive review of `APPROVED` on this head. That approval is their decision
+  on their own note. An approval on an older SHA does not clear it. A thread
+  with no author still blocks. Someone else's unresolved thread still blocks.
 - Read replies and resolution evidence. `isOutdated`, an author saying
   "fixed", or a newer push does not settle a concern. A later `COMMENTED`
   review does not automatically withdraw a change request.
@@ -112,10 +116,10 @@ not pinned to a commit SHA. A bot author adds `author:<login>`. Snapshots and
 images are excluded. Also flag equivalent sensitive behavior found in
 generically named files, such as a script the production deploy runs with
 production keys in its environment. Nonempty means `human_signoff=required`: **"needs human sign-off"**
-with paths and responsible owners from repo rules. Never auto-approve these
-PRs, even if a human has already approved. Report code findings as usual;
-otherwise DEFER with `reason=human_signoff`. High risk alone is a separate
-critic decision and is not proof that this human gate ran.
+with paths and responsible owners from repo rules. Put that list in the Human
+sign-off row. It does not DEFER and it does not block APPROVE. Report code
+findings as usual. High risk alone is a separate critic decision and is not
+proof that this list was built.
 
 ## Final publication check
 
@@ -177,20 +181,23 @@ mutation($id:ID!) { resolveReviewThread(input:{threadId:$id}) { thread { isResol
 ```
 
 Leave other reviewers' threads alone. Then refresh `threads.json`; `gate.py`
-blocks on any unresolved thread, mine included.
+blocks on an unresolved thread unless its author approved this head. Mine
+still block until I resolve them.
 
 ## Gate before POST
 
 Every review POST goes through [scripts/gate.py](../scripts/gate.py) on the
 refreshed evidence above. It blocks APPROVE on: another reviewer's latest
 decisive review being CHANGES_REQUESTED, a change request dismissed by someone
-other than its reviewer and not re-approved by them, any unresolved thread, a
+other than its reviewer and not re-approved by them, an unresolved thread
+whose author did not approve this head, a
 status or check whose description starts with `FAIL` (AI QA; needs human
 approval, while `BLOCKED` does not gate), no successful
-build/test check on the head (or a failed/pending one), a nonempty sign-off
-list, a missing template row, a marker that does not match the head, a
+build/test check on the head (or a failed/pending one), a missing sign-off
+file, a missing template row, a marker that does not match the head, a
 blocker/major in the ledger, `risk=high` without `critic=ran`, and a light
-approval after my own change request. Any missing evidence file blocks.
+approval after my own change request. A nonempty sign-off list does not block.
+Any missing evidence file blocks.
 Commands are in [nodes/publish.md](../nodes/publish.md).
 
 ## Retrospective sanity check

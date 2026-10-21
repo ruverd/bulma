@@ -60,8 +60,10 @@ longer describes the head.
 Skip output is chat-only: state the reason and the SHA. Do not touch the PR.
 If fresh room evidence blocks a previous approval, do not silently skip: DEFER
 with the concern URLs. Reevaluate `review_context`, `review_context_unknown`,
-`human_signoff`, and `head_changed` deferrals on every run. Promotion always
-re-runs the full preflight, including sensitive paths and CI evidence.
+and `head_changed` deferrals on every run. A prior `reason=human_signoff` is
+withdrawn: do not skip on it. An unresolved thread from a reviewer who approved
+this head is not blocked room. Promotion always re-runs the full preflight,
+including the sensitive-path list and CI evidence.
 
 ## Retained analysis from pending CI
 

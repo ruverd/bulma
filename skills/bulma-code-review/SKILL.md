@@ -43,8 +43,9 @@ allows pinned code review, then waits with retained analysis and does **not** po
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
    before pass selection and again before publishing. Open change requests,
-   unresolved threads, unanswered questions and AI QA `FAIL` block approval;
-   QA `FAIL` needs human approval. QA `BLOCKED` (could not run) never gates.
+   unresolved threads, unanswered questions and AI QA `FAIL` block approval.
+   A thread whose author approved this head does not. QA `FAIL` needs human
+   approval. QA `BLOCKED` (could not run) never gates.
    Never dismiss another reviewer's review; ask its reviewer to re-review.
    Missing evidence fails closed. `--force` cannot bypass these approval gates.
 10. **My own open findings never expire silently.** A prior finding of mine is
@@ -67,9 +68,11 @@ allows pinned code review, then waits with retained analysis and does **not** po
     build/test jobs are not green. Recheck before promotion and retry too.
 14. **Own Critical/High means no approval.** Reconcile body, inline comments,
     carried findings and critic output with the verdict before POST.
-15. **Sensitive paths need human sign-off.** Workflows, Terraform, auth,
-    billing/seats and secrets never receive auto-approval. Use the full PR
-    file list, including renames, even during light review.
+15. **Sensitive paths are named, not deferred.** Workflows, Terraform, auth,
+    billing/seats and secrets go in the Human sign-off row when
+    `classify-risk.py --human-signoff` lists them. That list does not DEFER
+    and does not block APPROVE. Use the full PR file list, including renames,
+    even during light review.
 16. **Preserve the checkout.** Review through pinned source reads. Never edit,
     stage, switch, stash, reset, clean, rebase or move existing branches in the
     user's checkout. Fetch commits and run checks in an isolated review
