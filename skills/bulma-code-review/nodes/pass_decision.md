@@ -42,7 +42,7 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 |---|---|
 | none | **deep** |
 | `sha == headRefOid`, state APPROVED or CHANGES_REQUESTED | **skip** — post nothing, report in chat |
-| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*`, CI now green, `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
+| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*`, CI now green or `out_of_scope`, `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
 | `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`) | **skip** — report the same reason in chat, post nothing |

@@ -85,6 +85,45 @@ Do not infer success from an aggregate job that ran while its tests skipped.
 Review-bot *statuses* are excluded from CI; their *comments* remain review
 evidence above.
 
+## CI out of scope for the base
+
+Some repositories only build and test pull requests into their default or
+release branches. A PR into a feature or umbrella branch then gets no
+build/test run at all. That is the repository's infrastructure choice, not
+missing evidence, and the PR gets tested again when its branch merges up.
+
+When no build/test check ran on the head, before calling CI unknown:
+
+```bash
+DEFAULT=$(gh repo view "$REPO" --json defaultBranchRef --jq .defaultBranchRef.name)
+WF="$REVIEW_DIR/workflows"; mkdir -p "$WF"
+gh api "repos/$REPO/contents/.github/workflows?ref=$BASE_REF_OID" --jq '.[].name' |
+  while read -r f; do
+    gh api "repos/$REPO/contents/.github/workflows/$f?ref=$BASE_REF_OID" --jq .content | base64 -d >"$WF/$f"
+  done
+python3 scripts/ci-scope.py --workflows "$WF" --base "$BASE" --default-branch "$DEFAULT" \
+  >"$REVIEW_DIR/ci-scope.json"
+```
+
+Read the workflows at the base commit (`baseRefOid`), not at the head: a PR
+cannot move itself out of scope by editing a workflow.
+
+| `scope` | `ci_overall` |
+|---|---|
+| `out_of_scope` | `out_of_scope`: review and publish normally; APPROVE allowed |
+| `in_scope` or `unknown` | the rules above (`unknown` when nothing ran) |
+
+`out_of_scope` never hides a check that did run: any failed or pending
+build/test check on the head still gives `failure` or `pending`. The default
+branch is never out of scope. A workflow the script cannot parse makes the
+scope `unknown`. `gate.py` reads `ci-scope.json` from the evidence directory.
+Running local tests is not required here; if you ran them, report them as
+local evidence, and a local failure is a finding.
+
+The CI row says so plainly: "Not run: PRs into `feature/x` do not trigger
+build or test workflows (`build.yml`, `playwright.yml`). They run when this
+branch merges into `main`."
+
 When CI did not execute, say **"CI did not run"**. Optionally run the relevant
 tests on the exact head in an isolated checkout under
 [EVIDENCE.md](EVIDENCE.md), after inspecting changed execution paths. Record

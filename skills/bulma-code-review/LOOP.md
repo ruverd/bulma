@@ -21,7 +21,10 @@ AI QA `FAIL` findings still gate approval through [PREFLIGHT.md](references/PREF
 QA `BLOCKED` does not.
 Required-check success must include actual build/test execution on the reviewed
 head. Empty, skipped, neutral, stale or unverifiable jobs are `unknown`, never
-green. Check workflow filters against `baseRefName`, especially `feature/*`.
+green. Check workflow filters against `baseRefName`, especially `feature/*`:
+when no build/test workflow runs on PRs into the base at all, `ci-scope.py`
+returns `out_of_scope` and there is nothing to wait for
+([PREFLIGHT.md](references/PREFLIGHT.md) §CI out of scope).
 
 ## State
 

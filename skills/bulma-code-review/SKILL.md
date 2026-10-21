@@ -25,6 +25,8 @@ allows pinned code review, then waits with retained analysis and does **not** po
    Dismissing my own stale approval and resolving my own fixed threads are
    state changes, not artifacts.
 3. **Never APPROVE** while any required check is failed, pending or unknown.
+   `out_of_scope` is not unknown: the repo's own workflows never build or test
+   PRs into this base ([PREFLIGHT.md](references/PREFLIGHT.md) §CI out of scope).
 4. **Never invent a finding.** A finding with no concrete trigger is dropped in
    silence — not downgraded, not mentioned.
 5. **Nits never block, and most stay silent.** A nit reaches the PR only inside the
@@ -65,7 +67,8 @@ allows pinned code review, then waits with retained analysis and does **not** po
     critic is **DEFER** `reason=critic_failed`, marker `critic=failed`.
 13. **Approve the reviewed head only.** Pin the full reviewed SHA, re-review
     any new commits, and verify CI execution on that SHA. Skipped or missing
-    build/test jobs are not green. Recheck before promotion and retry too.
+    build/test jobs are not green, unless `ci-scope.py` proves the base is out
+    of scope. Recheck before promotion and retry too.
 14. **Own Critical/High means no approval.** Reconcile body, inline comments,
     carried findings and critic output with the verdict before POST.
 15. **Sensitive paths are named, not deferred.** Workflows, Terraform, auth,

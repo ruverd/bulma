@@ -142,7 +142,7 @@ def latest_by(items: list[dict[str, Any]], key: str, order: str) -> dict[str, di
     return out
 
 
-def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str) -> list[str]:
+def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, out_of_scope: bool = False) -> list[str]:
     reasons, green = [], False
     runs = latest_by([c for c in checks if c.get("head_sha") == head], "name", "id")
     for name, run in runs.items():
@@ -166,7 +166,7 @@ def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str) 
                 green = True
             else:
                 reasons.append(f"build/test status {status.get('state')}: {context}")
-    if not green:
+    if not green and not out_of_scope:
         reasons.append(f"no successful build/test check ran on {head}")
     return reasons
 
@@ -201,7 +201,7 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     mark = marker(body)
     reasons = room(data["reviews"], data["timeline"], args.me)
     reasons += threads(data["threads"], data["reviews"], args.head)
-    reasons += ci(data["checks"], data["statuses"], args.head)
+    reasons += ci(data["checks"], data["statuses"], args.head, data["ci_scope"].get("scope") == "out_of_scope")
     signoff = load(Path(args.signoff)) if args.signoff else None
     if not isinstance(signoff, list):
         reasons.append("human sign-off evidence missing (--signoff)")
@@ -263,6 +263,7 @@ def main() -> int:
                 "threads": load(root / "threads.json"),
                 "checks": flat(load(root / "checks.json"), "check_runs"),
                 "statuses": flat(load(root / "statuses.json")),
+                "ci_scope": load(root / "ci-scope.json") if (root / "ci-scope.json").exists() else {},
             }
             reasons += approval(args, body, data)
     except (Missing, KeyError, TypeError, AttributeError) as exc:
