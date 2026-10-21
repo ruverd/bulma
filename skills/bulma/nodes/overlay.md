@@ -27,7 +27,8 @@
    - worker spawns: before a coder `spawn_worker` (fd implement, `ci_watch`
      fix, lstm patch), take the tier from `dispatch plan` and pass its
      `spawn=` args; testers and shippers from `dispatch role`. After review,
-     tests and CI, report `dispatch result`. Contract:
+     tests and CI, report `dispatch result` with `--tokens` from host
+     `worker_usage` when the host shows a total. Contract:
      [../DISPATCH.md](../DISPATCH.md).
 3. One chat line per hook (`--line` prints it; drop the `[decision_id]`
    suffix in chat), VOICE style:

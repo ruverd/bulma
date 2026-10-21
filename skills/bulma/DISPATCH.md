@@ -101,7 +101,11 @@ Quality signals, strongest first:
 3. **loops per unit**.
 
 Cost: `worker_tokens` summed per tier, retries included. Pass `--tokens`
-when the host reports worker usage; leave it out otherwise.
+with the worker's total from `worker_usage`
+([../bulma-host/SKILL.md](../bulma-host/SKILL.md)) on every `result`; leave it
+out when the host shows no number. `report` prints how many units carry a
+count (`15000 (1/2)`) and warns while fewer than half do: per-unit cost from
+a partial ledger is not a comparison.
 
 ## Promotion gate
 
