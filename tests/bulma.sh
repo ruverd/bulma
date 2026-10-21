@@ -279,6 +279,8 @@ out="$(python3 "$BULMA" dispatch report --repo-only --bulma-root "$DR")"
 grep -E -q '^\| 1 \| live \| light \| ' <<<"$out" || fail "report light row: $out"
 grep -F -q 'clamped light->standard on risk: 2' <<<"$out" || fail "report clamp count: $out"
 grep -F -q 'gate: live, 2/30 light units; keep collecting' <<<"$out" || fail "report gate: $out"
+grep -E -q '^\| 1 \| live \| light \| .*\| 15000 \(1/[0-9]+\) \| 15000 \|$' <<<"$out" || fail "report token coverage: $out"
+grep -E -q '^tokens: 1/[0-9]+ units reported; tokens/unit is not comparable' <<<"$out" || fail "report token warning: $out"
 out="$(python3 "$BULMA" dispatch review --repo-only --bulma-root "$DR")"
 grep -F -q "$U1" <<<"$out" || fail "review must list the escalated unit"
 # gate math on a synthetic shadow ledger: 30 labelled, light passes as often as heavy

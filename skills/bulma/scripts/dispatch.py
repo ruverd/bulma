@@ -356,6 +356,7 @@ def tier_stats(items):
         "reversed_rate": (sum(1 for r in items if r["outcome"] == "reversed") / n) if n else 0.0,
         "loops": "%.2f" % (sum(int(r["loops_used"] or 0) for r in items) / n) if n else "-",
         "tokens": sum(tokens),
+        "token_units": len(tokens),
         "per_unit": (sum(tokens) // len(tokens)) if tokens else None,
     }
 
@@ -390,7 +391,7 @@ def cmd_dispatch_report(args):
     if not rows:
         print("no dispatch units found")
         return 0
-    print("| version | power | tier_run | n | first_pass | reversed | loops/unit | tokens | tokens/unit |")
+    print("| version | power | tier_run | n | first_pass | reversed | loops/unit | tokens (units) | tokens/unit |")
     print("|---|---|---|---|---|---|---|---|---|")
     groups = {}
     for row in rows:
@@ -398,9 +399,9 @@ def cmd_dispatch_report(args):
         groups.setdefault((row["criteria_version"], live, row["tier_run"]), []).append(row)
     for (version, live, tier), items in sorted(groups.items(), key=lambda kv: (kv[0][0], kv[0][1], TIERS.index(kv[0][2]) if kv[0][2] in TIERS else 9)):
         st = tier_stats(items)
-        print("| %s | %s | %s | %d | %s | %s | %s | %d | %s |" % (
+        print("| %s | %s | %s | %d | %s | %s | %s | %d (%d/%d) | %s |" % (
             version or "-", live, tier, st["n"], st["first_pass"], st["reversed"], st["loops"],
-            st["tokens"], st["per_unit"] if st["per_unit"] is not None else "-"))
+            st["tokens"], st["token_units"], st["n"], st["per_unit"] if st["per_unit"] is not None else "-"))
     shadow = [r for r in rows if r["power"] == "shadow"]
     if shadow:
         print()
@@ -410,6 +411,9 @@ def cmd_dispatch_report(args):
     clamped = sum(1 for r in rows if r["clamp"] == "risk")
     if clamped:
         print("clamped light->standard on risk: %d" % clamped)
+    reported = sum(1 for r in rows if r["worker_tokens"].isdigit())
+    if reported * 2 < len(rows):
+        print("tokens: %d/%d units reported; tokens/unit is not comparable across tiers yet" % (reported, len(rows)))
     print(gate_line(rows, core.load_config()))
     return 0
 
