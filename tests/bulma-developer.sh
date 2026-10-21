@@ -122,6 +122,8 @@ has 'plan_critic_verdict' "$FD/STATE.schema.md"
 has 'plan_critic_verdict' "$FD/templates/STATE.md"
 has 'critiquing' "$FD/STATE.schema.md"
 has 'risk=elevated' "$FD/nodes/plan_critic.md"
+has 'Expert gap' "$FD/nodes/plan_critic.md"
+has 'Proof oracle' "$FD/nodes/plan_critic.md"
 has 'spawn' "$FD/nodes/plan_critic.md"
 # Must not run on bugs.
 if ! tr '\n' ' ' < "$FD/nodes/plan_critic.md" | grep -E -q 'Skip.{0,80}debug_fix'; then
