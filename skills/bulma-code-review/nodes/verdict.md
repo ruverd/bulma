@@ -55,7 +55,7 @@ requires zero surviving findings, new **and** carried.
 | ≥1 major (new or carried), 0 blocker | **REQUEST_CHANGES** |
 | clean, room blocked or unknown | **DEFER** `reason=review_context\|review_context_unknown` |
 | head moved and delta not reviewed | re-review delta; if unable, **DEFER** `reason=head_changed` |
-| clean, full coverage, room clear, CI proven on reviewed live head | **APPROVE** |
+| clean, full coverage, room clear, CI proven on reviewed live head, or `out_of_scope` for the base | **APPROVE** |
 
 A nonempty human sign-off list is named in the Human sign-off row. It does not
 DEFER and it does not block APPROVE. An unresolved thread whose author approved
@@ -82,7 +82,10 @@ APPROVE. Body findings rejected only for inline placement still count.
 
 All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*`, its
 marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0`, `open=-`. Then
-re-run every approval gate, including room and head-bound CI. Name the
+re-run every approval gate, including room and head-bound CI. CI that is
+`out_of_scope` for the base counts as green here; the first line then says
+"I already reviewed this SHA. CI does not run on PRs into `<base>`, so this is
+the approve." Name the
 sensitive-path list in the body. It does not block promotion.
 Older markers without preflight/one-hop evidence require a fresh deep pass.
 Promotion reads no diff, so write `bound.json` as

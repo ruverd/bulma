@@ -298,6 +298,16 @@ cat >"$EV/checks.json" <<EOF
                 {"id":2,"name":"CodeRabbit","head_sha":"$HEAD","status":"completed","conclusion":"success"}]}]
 EOF
 blocked_with 'no successful build/test check' || fail "gate: skipped CI must block"
+echo '{"scope":"out_of_scope","base":"feature/x"}' >"$EV/ci-scope.json"
+[[ "$(gate)" == 0 ]] || fail "gate: CI out of scope for the base must not block ($(cat "$TMP/gate.out"))"
+cat >"$EV/checks.json" <<EOF
+[{"check_runs":[{"id":1,"name":"build-and-test","head_sha":"$HEAD","status":"completed","conclusion":"failure"}]}]
+EOF
+blocked_with 'build/test check failure' || fail "gate: a failed check blocks even out of scope"
+echo '{"scope":"unknown"}' >"$EV/ci-scope.json"
+echo '[{"check_runs":[]}]' >"$EV/checks.json"
+blocked_with 'no successful build/test check' || fail "gate: unknown scope must block"
+rm -f "$EV/ci-scope.json"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '["infra/stack.yaml"]' >"$EV/signoff.json"
@@ -429,6 +439,66 @@ assert 'anchored to a changed path' not in verdict and 'wherever it surfaces' in
 assert 'Loaded by another reviewer' in skill
 PY
 ok approval-preflight-contract
+
+# --- ci-scope: do build/test workflows run on PRs into this base? ---
+SCOPE="$SKILL/scripts/ci-scope.py"
+WF="$TMP/wf"; mkdir -p "$WF"
+cat >"$WF/build.yml" <<'EOF'
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches:
+      - main
+      - 'release/**'   # release lines
+jobs:
+  build:
+    runs-on: ubuntu-latest
+EOF
+cat >"$WF/review-bot.yml" <<'EOF'
+name: Review bot
+on: [pull_request]
+jobs:
+  review:
+    runs-on: ubuntu-latest
+EOF
+scope_of() { python3 -I "$SCOPE" --workflows "$WF" --base "$1" --default-branch main | python3 -c 'import json,sys; print(json.load(sys.stdin)["scope"])'; }
+[[ "$(scope_of feature/dev-1)" == out_of_scope ]] || fail "ci-scope: feature base must be out of scope"
+[[ "$(scope_of release/2026/10)" == in_scope ]] || fail "ci-scope: release/** must match"
+[[ "$(scope_of main)" == in_scope ]] || fail "ci-scope: default branch is never out of scope"
+cat >"$WF/build.yml" <<'EOF'
+name: Build
+on:
+  pull_request:
+    branches-ignore: ['feature/*']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+EOF
+[[ "$(scope_of feature/dev-1)" == out_of_scope ]] || fail "ci-scope: branches-ignore must exclude"
+[[ "$(scope_of hotfix/a)" == in_scope ]] || fail "ci-scope: branches-ignore must keep others"
+cat >"$WF/build.yml" <<'EOF'
+name: Build
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+EOF
+[[ "$(scope_of feature/dev-1)" == in_scope ]] || fail "ci-scope: unfiltered pull_request covers every base"
+cat >"$WF/build.yml" <<'EOF'
+name: Build
+on: { pull_request: { branches: [main] } }
+jobs:
+  test:
+    runs-on: ubuntu-latest
+EOF
+[[ "$(scope_of feature/dev-1)" == unknown ]] || fail "ci-scope: unreadable build workflow must be unknown"
+rm "$WF/build.yml"
+[[ "$(scope_of feature/dev-1)" == unknown ]] || fail "ci-scope: no build/test workflow at all must be unknown"
+[[ ! -d "$SKILL/scripts/__pycache__" ]] || fail "ci-scope must not write __pycache__"
+ok ci-scope
 
 # --- convergence, rebase-only, project knowledge ---
 python3 - "$SKILL" <<'PY'

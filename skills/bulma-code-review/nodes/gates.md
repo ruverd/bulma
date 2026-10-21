@@ -11,7 +11,8 @@ Compute `ci_overall` from the head-bound execution evidence in
 pending/queued/in_progress. `success` requires actual build/test execution on
 the reviewed SHA and all required checks passing. Empty, skipped, neutral,
 stale or unverified build/test evidence → `unknown`; say "CI did not run"
-when execution is absent.
+when execution is absent. No build/test ran and `ci-scope.py` says the base is
+`out_of_scope` → `out_of_scope`.
 What counts as required is in [LOOP.md](../LOOP.md) (CI workflow + GitHub-required;
 ignore review bots).
 
@@ -24,6 +25,7 @@ ignore review bots).
 | `ci_overall` = failure | DEFER, `reason=ci_red`, list ≤8 failing checks with log links |
 | `ci_overall` = pending | **review** pinned head now; after critic retain analysis and **wait_ci**. No PR artifact while pending. |
 | `ci_overall` = unknown | DEFER, `reason=ci_unknown` |
+| `ci_overall` = out_of_scope | **review**, then publish like `success` ([PREFLIGHT.md](../references/PREFLIGHT.md) §CI out of scope) |
 
 Every gate DEFER carries `pass=none` in its marker — **no code was reviewed**. That
 value is what stops §8.1 from later promoting unreviewed code to APPROVE.

@@ -21,6 +21,7 @@ start (PR url / number / branch)
 | resolve | `ci_overall` pending | **review** |
 | resolve | `ci_overall` failure or unknown | **defer** |
 | resolve | `ci_overall` success | **review** |
+| resolve | `ci_overall` out_of_scope | **review** (publishes like success) |
 | wait_ci | still pending | **stop** (loop wakes in 5m) |
 | wait_ci | success and retained analysis valid | **publish** (verdict and fresh gates) |
 | wait_ci | head/base/context changed | **review** |

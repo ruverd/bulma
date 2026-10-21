@@ -64,7 +64,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Model | <reviewer_model> |
 | Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review |
-| CI | green on <sha>, <run links>; or CI did not run |
+| CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; or CI did not run |
 | Review context | clear, or linked open concerns |
 | Human sign-off | not required, or needs human sign-off: <paths> |
 | Coverage | 12 of 12 changed files |
