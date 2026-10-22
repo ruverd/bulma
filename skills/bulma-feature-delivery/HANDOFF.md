@@ -6,6 +6,14 @@ limit**, **do not abandon** the task: write a continuity artifact and
 
 ## Signals of "limit near"
 
+For an explicit pause, stop dispatching, cancel any scheduled wake and stop or
+checkpoint workers at a safe boundary. Write intent, owned changes, verified
+results, unresolved calls and the exact next action under `$BULMA_ROOT`. Preserve
+the selected playbook identity and checklist. Do not commit unrelated dirty work
+or push merely to pause. Report whether a process still needs stopping. On resume,
+reconcile actual tree and evidence rather than restarting settled discovery.
+"Keep going while I am away" is not a pause request.
+
 Treat as handoff if **any** of these:
 
 - UI/CLI warning of usage limit / rate limit / "approaching limit"

@@ -31,6 +31,11 @@ failed checks or a tree changed by the command invalidate evidence. Never reuse
 TDD RED, flaky tests, remote CI status, security sign-off or live review context.
 The check is an optimization for identical local validation, not an approval gate.
 
+New receipts hash the captured log. Missing hashes on older receipts or changed
+log bytes require recapture. Refactoring compares before/after receipts with the
+delivery skill's [equivalence contract](../bulma-feature-delivery/playbooks/refactoring.md).
+Equal captured output covers only the probe's inputs, never the whole application.
+
 ## Measurements
 
 At each node exit, append a measurement using `measure --repo ... --directory

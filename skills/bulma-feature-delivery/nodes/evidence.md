@@ -18,6 +18,10 @@ when ROUTING.md skips blast. GRAPH.md owns the edges.
 
 ## Before capture
 
+Before final capture, run this skill's `scripts/playbook.py check --state <STATE.md>
+--repo <worktree>`. Incomplete proof returns to the step's owning node within
+existing caps. Do not skip it or declare completion from a pending row.
+
 This node owns the rule. Neighbors get one sentence, not a copy.
 
 - After the worktree exists, before the first RED, when a UI route

@@ -74,6 +74,12 @@ class EvidenceTest(unittest.TestCase):
         current = runtime.identity(self.repo, ['false'], 'toolchain-v1')
         self.assertFalse(runtime.reusable(record, current))
 
+    def test_changed_log_cannot_be_reused(self):
+        _, record = self.capture()
+        current = runtime.identity(self.repo, self.command, 'toolchain-v1')
+        Path(record['log']).write_text('different output')
+        self.assertFalse(runtime.reusable(record, current))
+
     def test_no_repository_state(self):
         result = self.cli('run', '--repo', str(self.repo), '--directory', str(self.repo / 'state'), '--', 'true')
         self.assertEqual(result.returncode, 2)

@@ -24,7 +24,9 @@
    - Critical and unreachable → ERROR block (MCP_CONTEXT.md), `mcp_gate: failed`, **blocked**.
    - Ok → fetch → `*-context.md`.
 4. Tracker ok → checkout `feature/<id-lowercase>`
-   ([JOBS.md](../../bulma-bus/JOBS.md) §Worktree). Not main.
+   ([JOBS.md](../../bulma-bus/JOBS.md) §Worktree). Not main. Skip checkout
+   creation for explicit read-only or planning-only goals; investigation runs
+   against the existing checkout without commits or branch mutations.
 5. Re-scan the ticket body for more URLs.
 6. `mcp-sources.md` + STATE.
 

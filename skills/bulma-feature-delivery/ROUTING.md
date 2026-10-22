@@ -16,6 +16,11 @@ route_confidence: high | medium | low
 route_reason: "..."
 ```
 
+Select the orthogonal task contract using [PLAYBOOKS.md](PLAYBOOKS.md).
+Read-only investigation takes precedence over all delivery paths and fullstack.
+Refactoring, performance and skill authoring retain path/risk classification;
+the playbook changes the proof required, not permission to skip graph gates.
+
 | Looks like | path |
 |---|---|
 | New behavior, UX, or a rule that needs grilling | `full_feature` |
@@ -99,7 +104,9 @@ Skip grill. Skip blast unless `risk=elevated`. Still a subagent for product code
 
 ### `spike`
 
-Read-only diagnose. `done_report`. No PR. If it is a bug, re-route `debug_fix`. If it is a feature, re-route `full_feature`.
+Read-only diagnose under Investigation. Check its proof, then `done_report`.
+No PR. Finding a bug or feature produces a cited recommendation; implementation
+requires a delivery request. Do not convert a read-only question into a fix.
 
 ## Stages
 

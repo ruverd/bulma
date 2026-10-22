@@ -13,6 +13,11 @@ Do **not** create tracker issues from this node. [BLOCKERS.md](../BLOCKERS.md) i
 
 Main thread.
 
+Carry the selected playbook's obligations into each applicable ticket. Complete
+baseline capture before implementation. Refactoring records its fixed probe,
+fixtures and original receipt; performance records its frozen method. Do not
+create another checklist: update the owning rows in STATE.
+
 Compact mode: validate the existing single ticket and seams, then continue.
 Do not load to-issues, duplicate SPEC.md or synthesize another plan. All consumers
 read STATE `spec_path` and `tickets_path`; separate files remain for detailed mode.

@@ -22,7 +22,12 @@ Do not implement. Do not debug in depth (that is **diagnose** on path debug_fix)
    Path is the spine. Risk only toggles extra gates. An auth **bug** is
    `debug_fix` + `elevated`, not `full_feature`.
 7. DECISION_POLICY: DECIDE the path and risk. ASK only last-resort. Do not ASK "feature or bug?" when the title already says.
-8. Write STATE + Decisions.
+8. Select the task contract with [PLAYBOOKS.md](../PLAYBOOKS.md). Persist its
+   identity and checklist in STATE. Investigation sets `work_kind: spike` and
+   takes the read-only edge before scope or delivery routing. Performance and
+   refactoring keep the path appropriate to their actual change; their proof
+   requirements do not remove graph gates.
+9. Write STATE + Decisions.
 
 ## Output
 

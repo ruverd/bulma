@@ -52,6 +52,11 @@ the code must respect; name the ones you applied.
 3. Update files_touched for the ticket
 4. Quick self-review; **does not** replace the reviewer subagent
 
+For a behavior-preserving refactoring, keep the injected characterization probe
+fixed and green across structural steps. Do not manufacture a failing baseline
+by changing accepted behavior. If behavior changes, the normal RED/GREEN rule
+applies. Return evidence for the parent; only the coordinator edits its checklist.
+
 ## Return status (required)
 
 ```text

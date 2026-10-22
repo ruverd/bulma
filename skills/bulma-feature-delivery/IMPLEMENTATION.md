@@ -10,6 +10,9 @@ ticket. Re-fix of the same ticket reuses that coder except on the last
 - Spec excerpt + recorded decisions (not the grill chat)
 - **Full ticket text** (do not say "read STATE and pick")
 - Confirmed seams
+- The selected playbook's applicable obligation, contract path and existing
+  baseline pointers. Complete before evidence before dispatch; do not send the
+  full playbook catalog or let the coder edit the probe to make a result match.
 - Neighbor file paths
 - If UI: DS paths + 2–5 recent same-type screens
 - Review/test findings when re-fixing
@@ -33,7 +36,10 @@ or the parent tool catalog.
 
 Follow [nodes/implement.md](nodes/implement.md) and [TDD.md](TDD.md).
 
-Return status is required. `DONE` without TDD evidence is `NEEDS_CONTEXT` to the parent.
+Return status is required. `DONE` without required TDD evidence on a behavior
+change is `NEEDS_CONTEXT` to the parent. A behavior-preserving refactoring keeps
+the frozen characterization baseline and equivalence proof instead of inventing
+a failing-before bug. Any changed behavior still requires RED then GREEN.
 
 If the coder wants a different design: `NEEDS_CONTEXT`. Parent DECIDE from spec + repo. ASK only last-resort policy. Coder does not silently redesign.
 

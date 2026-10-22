@@ -92,6 +92,12 @@ Do not replace an effective check with prose or inject its implementation into
 worker prompts. A check is complete only when the project's normal verification
 runs it. Review the resulting diff and track subsequent misses per reviewed PR.
 
+Each approved structural fix keeps one rule-to-enforcement row in its review
+packet: defect rule, enforcing type/check, bad-case proof, valid-case proof and
+normal CI job. Prefer removing the faulty design over adding another validator.
+If no executable predicate fits, label the remaining judgment rule as unenforced;
+do not claim that adding it to a prompt made the mistake impossible.
+
 Rules for choosing what to propose:
 
 - The cluster's rule already exists and the trend is `up` or `=` after it

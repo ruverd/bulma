@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "defaults": {"feature": "feature", "bug": "bug-fix", "regression": "bug-fix", "chore": "maintenance", "spike": "investigation"},
+  "playbooks": {
+    "investigation": {"contract": "playbooks/investigation.md", "steps": [
+      {"id": "sources", "node": "diagnose", "required": true},
+      {"id": "answer", "node": "diagnose", "required": true}
+    ]},
+    "bug-fix": {"contract": "playbooks/bug-fix.md", "steps": [
+      {"id": "reproduction", "node": "diagnose", "required": true},
+      {"id": "mechanism", "node": "diagnose", "required": true},
+      {"id": "same-surface-proof", "node": "tester", "required": true}
+    ]},
+    "feature": {"contract": "playbooks/feature.md", "steps": [
+      {"id": "acceptance", "node": "tickets", "required": true},
+      {"id": "behavior-proof", "node": "tester", "required": true},
+      {"id": "alternatives", "node": "grill", "required": false}
+    ]},
+    "maintenance": {"contract": "playbooks/maintenance.md", "steps": [
+      {"id": "scope", "node": "tickets", "required": true},
+      {"id": "verification", "node": "tester", "required": true}
+    ]},
+    "refactoring": {"contract": "playbooks/refactoring.md", "steps": [
+      {"id": "baseline", "node": "tickets", "required": true},
+      {"id": "equivalence", "node": "tester", "required": true}
+    ]},
+    "performance": {"contract": "playbooks/performance.md", "steps": [
+      {"id": "baseline", "node": "diagnose", "required": true},
+      {"id": "measurement", "node": "tester", "required": true},
+      {"id": "regression-proof", "node": "tester", "required": true}
+    ]},
+    "skill-change": {"contract": "playbooks/skill-change.md", "steps": [
+      {"id": "structural-checks", "node": "tester", "required": true},
+      {"id": "behavior-evaluation", "node": "tester", "required": false}
+    ]}
+  }
+}

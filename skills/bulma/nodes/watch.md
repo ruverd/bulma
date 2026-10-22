@@ -30,8 +30,11 @@ The script:
 ## Output
 
 Print the script output as-is, then at most three sentences in the chat
-language: what needs the user first, which stalled item you would resume,
-and whether the orphaned ones are worth restarting.
+language: what changed, which stalled item you would resume, and any decision
+only the user can make. For each such decision, give the item link, concrete
+options, recommendation and material cost or risk. Add no action item for work
+the agent can do itself. If no user decision is pending, say so. Do not invent
+freshness from a cached record or repeat unchanged updates on scheduled ticks.
 
 Report only. Do not resume, `cd`, or load a graph from this node. The user
 picks a line and runs its `next` command; that `/bulma` run routes normally.

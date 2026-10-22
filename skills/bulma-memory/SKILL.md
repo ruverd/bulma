@@ -98,6 +98,7 @@ language: pt-BR
 
 ## Preferences
 - short durable notes
+- verification_recipe: docs/verification.md
 
 ## Product
 reviewers: alice, bob

@@ -3,6 +3,9 @@
 Bulma is a software factory for coding agents. You give it a ticket, and it
 takes the work from plan to a tested pull request, then waits for you to merge.
 
+[Task playbooks](docs/task-playbooks.md) define the proof each kind of work needs,
+including read-only investigations, refactoring equivalence and measured performance.
+
 It runs inside the coding agent you already use: Claude Code, Codex, Cursor, or
 Grok. You type one command, `/bulma`, and it decides which step comes next.
 

@@ -2,6 +2,10 @@
 
 **Verb:** root cause. No product fix in this node.
 
+For `playbook: investigation`, follow its cited-answer contract and finish with
+the playbook check and `done_report`. Do not produce a fix ticket or dispatch an
+implementer. For performance, read the selected measurement contract first.
+
 Bundled `diagnose`: reproduce → minimise → hypothesise → instrument → (stop).
 
 Hard / no playbook: bundled `figure-it-out` Phase A–C, then hand a single fix slice to implement.
@@ -20,3 +24,7 @@ Spawn `bulma-fd-debugger` (legacy name; this file is the contract).
 For runtime failures, query captured logs before repeating a reproduction.
 Use [runtime evidence](../../bulma-bus/PERFORMANCE.md); missing Trail falls back
 to file capture. Logs support diagnosis, but do not replace behavioral tests.
+
+After two failed fixes based on the same premise, record that premise and a
+discriminating observation before another fix. Keep the existing loop counters;
+changing a hypothesis never replenishes them.
