@@ -27,10 +27,11 @@ Load now:
 Spine (bundled primitives):
 
 ```
-grill-with-docs → to-spec → to-tickets → implement(/tdd) → code-review
+bounded discovery → contract → implement(/tdd) → code-review
 ```
 
-Adapted grill: [GRILL.md](GRILL.md). ASK the user only as a last resort.
+Bounded discovery: [GRILL.md](GRILL.md). Interview skills are optional for user-requested
+design exploration. Ask only under [DECISION_POLICY.md](DECISION_POLICY.md).
 
 ## Quick start
 

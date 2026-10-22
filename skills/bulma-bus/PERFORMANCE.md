@@ -52,3 +52,6 @@ Compare matched tasks with the same model, repository snapshot and risk: reviewe
 LSTM, small feature and elevated-risk feature. Record first-pass success, retries,
 false positives and defects found by later human review alongside time and tokens.
 Do not claim quality equivalence from a smaller prompt or a single green run.
+
+For policy comparisons, use [workflow experiments](EXPERIMENTS.md). This is an
+offline evaluation protocol, not an additional node in every delivery.

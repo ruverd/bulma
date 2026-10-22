@@ -10,6 +10,17 @@ Small, known tasks use one canonical contract for spec and ticket. Elevated risk
 and structural changes use deep quality before independent review. Focused quality
 reuses the coder. On Codex, invoke `$bulma-feature-delivery` through its skill.
 
+The `grill` node is bounded discovery. It reuses supplied context, decides routine
+implementation details and asks only for unavailable information whose answer
+changes the accepted outcome enough to justify interruption. Independent questions
+can share a round. Deep design interviews run when requested. Decision rationale
+lives once in STATE; helper skills load only for a concrete gap.
+
+Workflow changes can be compared with the offline
+[experiment protocol](../../skills/bulma-bus/EXPERIMENTS.md). Recursive optimization
+does not run inside ordinary delivery. Existing node and status names stay stable
+for resumes.
+
 Skill: [`../../skills/bulma-feature-delivery`](../../skills/bulma-feature-delivery).
 
 ## When

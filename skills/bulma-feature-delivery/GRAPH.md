@@ -24,6 +24,9 @@ and tester. After all tickets pass, capture final **evidence**, then ship.
 ticket before starting the next (bundled
 `principle-sequence-verifiable-units`).
 
+Grill is bounded discovery, with a requested interview as an optional mode.
+Compact discovery/spec/tickets form one planning pass over one contract; the
+node names remain separate for resume compatibility.
 Grill, spec, and tickets run on the **main thread**. `plan_critic` is
 main-thread too, except `risk=elevated` which spawns a read-only worker.
 Implement / review / diagnose / tester / evidence / quality / shipper / ci
@@ -44,7 +47,7 @@ are nodes (subagents where the adapter says so).
 | triage | path unclear | DECIDE the narrower path; ASK only last-resort policy |
 | grill | implementation decisions resolved | **spec** |
 | grill | ungrillable | prototype, then DECIDE or ASK |
-| grill | ASK in flight | `waiting_user` **stop** |
+| grill | ASK in flight | `waiting_user` **stop dependent work** |
 | spec | SPEC.md written | **tickets** |
 | tickets | tickets written, seams decided, path=full_feature and risk≠low | **plan_critic** |
 | tickets | tickets written, seams decided, else | **implement** (first unblocked ticket) |
@@ -77,7 +80,7 @@ are nodes (subagents where the adapter says so).
 | plan/implement | missing contract or open blocker | **blocker_handler** |
 | blocker_handler | blocker Done | resume implement |
 | blocker_handler | blocker open | `waiting_blocker` → **end session** |
-| any | user must decide | `waiting_user` **stop** |
+| any | user must decide | `waiting_user` **stop dependent work** |
 | any | context/limit | **handoff** |
 | triage | work_kind=spike | diagnose read-only → `done_report` |
 
