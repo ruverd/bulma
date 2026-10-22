@@ -9,11 +9,13 @@ description: >
 
 <what-to-do>
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+For a requested design interview, follow [grill-me](../grill-me/SKILL.md) and
+challenge consequential decisions against the documented domain model. Routine
+delivery uses [bounded discovery](../bulma-feature-delivery/GRILL.md) instead.
 
-Ask the questions one at a time, waiting for feedback on each question before continuing.
-
-If a question can be answered by exploring the codebase, explore the codebase instead.
+Resolve recoverable facts from supplied context, code and docs. Ask about missing
+intent that changes the plan. Batch independent questions and sequence dependent
+ones. Stop when the requested design is actionable.
 
 </what-to-do>
 
@@ -53,7 +55,9 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Update existing documentation when a consequential term or decision changes.
+Create a new CONTEXT or ADR tree only when the user requests domain documentation.
+Otherwise keep rationale in the current decision record.
 
 ## During the session
 
@@ -75,7 +79,8 @@ When the user states how something works, check whether the code agrees. If you 
 
 ### Update CONTEXT.md inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](CONTEXT-FORMAT.md).
+When a consequential term is resolved, update existing `CONTEXT.md` using
+[CONTEXT-FORMAT.md](CONTEXT-FORMAT.md). Do not duplicate the conversation.
 
 Don't couple `CONTEXT.md` to implementation details. Only include terms that are meaningful to domain experts.
 

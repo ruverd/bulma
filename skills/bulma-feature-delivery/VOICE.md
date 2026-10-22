@@ -27,7 +27,8 @@ Write like a teammate. Not a form, a linter, or a status page.
 
 ## Status updates
 
-Short. Infrequent. Final message stands alone: what ran, what you decided, and the one question only if you ASK.
+Short. Infrequent. Final message stands alone: what ran, what you decided, and
+unresolved questions only if you ASK.
 
 Speak this shape in the chat language:
 
@@ -44,8 +45,10 @@ Mark done `✓`, current (the S node) `●`, later `○`. Skip nodes ROUTING
 says no. Do not paste GRAPH.md. `bulma status` prints the same Walk
 when cwd has fd STATE (`scripts/status-walk.sh`).
 
-On DECIDE, the D line names what you took. On ASK, P is the one question.
+On DECIDE, the D line names what you took. On ASK, P names the missing information.
 
 ## Grill questions
 
-Only ask when [DECISION_POLICY.md](DECISION_POLICY.md) says ASK. Teammate voice. Include the recommendation and why you are not following it alone. Speak the question in the chat language.
+Only ask when [DECISION_POLICY.md](DECISION_POLICY.md) says ASK. Name what behavior
+the answer changes. Include a recommendation when useful. Batch independent
+questions; sequence dependent ones. Speak in the chat language.

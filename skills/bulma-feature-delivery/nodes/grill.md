@@ -1,13 +1,14 @@
 # Node: grill
 
-**Verb:** interview. Main thread only (talks to the user).
+**Verb:** resolve implementation gaps. Main thread.
 
-Follow [../GRILL.md](../GRILL.md) in full. Load bundled `how` for the
-subsystem you will touch. `why` only per [PSTACK.md](../PSTACK.md).
-Load bundled `unslop`.
+Follow [../GRILL.md](../GRILL.md) and [../DECISION_POLICY.md](../DECISION_POLICY.md).
+The node name and `grilling` status remain stable for resume compatibility.
 
-Walk the tree internally. DECIDE and log. ASK only as last resort (very important **and** high uncertainty after lookup).
+Use existing context first. Clear acceptance criteria and known repo patterns
+need only a short discovery pass. Do not load interview skills, `how` or
+`architect` without a concrete gap requiring them. Apply bundled `unslop`.
 
-New module: run `architect`. Take the synthesized sketch (DECIDE). Checkpoint only as last-resort policy.
-
-Done (implementation decisions resolved) → **spec**.
+Record consequential decisions once. ASK only for outcome-changing information
+under the decision policy. Resolved → **spec**; compact spec/tickets synthesize
+and validate one contract without another design round.

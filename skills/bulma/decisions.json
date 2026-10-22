@@ -124,20 +124,20 @@
       "questions": {
         "important": {
           "type": "noul",
-          "instructions": "Would getting `fork` wrong be hard to reverse, or change product behavior, security, money, tenant isolation, or a public API in a way `acceptance_criteria` does not already settle?",
+          "instructions": "Would choosing the wrong outcome for `fork` change accepted behavior, scope or a costly commitment, with likely rework or harm exceeding the interruption needed to ask? Judge the concrete difference between `options`, not the importance of the topic alone.",
           "criteria": {
-            "true": "Hard to reverse, or changes product, security, money, tenant or public API beyond what the ticket settles.",
-            "false": "Local, reversible, or already settled by the ticket, an existing pattern, or repo rules."
+            "true": "Plausible outcomes differ materially in acceptance or commitment, and choosing wrong costs more than asking.",
+            "false": "Options preserve accepted behavior, the choice is cheap to reverse, or the ticket already settles it."
           },
           "act_at": 0.65,
           "direction": "ask"
         },
         "uncertain": {
           "type": "noul",
-          "instructions": "After `evidence`, do two or more of `options` still have similar force, so that `recommendation` cannot be defended?",
+          "instructions": "Is information needed to choose the accepted outcome absent from `acceptance_criteria` and relevant available `evidence`? A defensible `recommendation` or technical preference does not establish missing user intent. Do not require exhaustive lookup or a prototype for a preference only the user can supply.",
           "criteria": {
-            "true": "No option is clearly better; a senior engineer would stop to ask.",
-            "false": "One option follows from the ticket, a neighbor pattern, YAGNI, or repo rules."
+            "true": "An outcome-changing fact or preference is unavailable in supplied context and relevant sources, even if one option has a confident recommendation.",
+            "false": "Supplied requirements or relevant sources settle the needed information; only routine implementation details remain."
           },
           "act_at": 0.65,
           "direction": "ask"

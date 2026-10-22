@@ -24,7 +24,11 @@ for the end (CI green / handoff).
 
 ### triage / grill / spec
 - Read the **summary** of tracker-context (AC bullets), not the raw 10k tokens again if it is already on disk.
-- Grill is the expensive model. Spec/tickets are synthesis, not a second interview.
+- Discovery reuses available context and loads helpers only for named gaps.
+  Interview skills are optional. Spec/tickets synthesize one executable contract
+  in compact mode, not another design pass.
+- Keep consequential rationale once in STATE. Do not maintain a duplicate TSV
+  unless requested. Questions follow DECISION_POLICY, not a fixed interview tree.
 - Coder prompt = this ticket + decisions + whitelist. Not the grill transcript.
 - `plan_critic` is a table. Spawn only when `risk=elevated`. Skip on debug_fix, light_change, and `risk=low`.
 
@@ -92,3 +96,6 @@ Use plan-shape.py and GRILL.md for compact contracts. Quality edits happen befor
 independent review/tester; final visual evidence follows the validated tree.
 Use [runtime evidence](../bulma-bus/PERFORMANCE.md) for captured logs and matching
 local checks. Paths in STATE are canonical, even when spec and tickets share a file.
+
+Evaluate workflow changes with [matched experiments](../bulma-bus/EXPERIMENTS.md).
+Recursive harness optimization belongs in those experiments, not every delivery.
