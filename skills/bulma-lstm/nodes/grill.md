@@ -17,5 +17,4 @@ dependent work. Chat follows `bulma-memory`. Do not interview through the tree.
 This is not a feature delivery. Implementation decisions resolved → **patch**, never spec,
 never tickets, never a new PR.
 
-Load `how` only for a named subsystem gap, not the monorepo. `why`
-only per [PSTACK.md](../../bulma-feature-delivery/PSTACK.md).
+Load `how` only for a named subsystem gap, not the monorepo.

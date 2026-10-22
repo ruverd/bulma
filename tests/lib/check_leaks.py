@@ -28,7 +28,6 @@ RULES = [
         # changelog, which has to be able to say what it renamed.
         lambda rel: (
             os.path.basename(rel) in ("LINEAR.md", "MCP_CONTEXT.md", "PRODUCT.md")
-            or rel.startswith("skills/why/")
             or rel == "skills/bulma-host/SKILL.md"
             or "/adapters/" in rel
             or not rel.startswith(("skills/", "agents/", "commands/"))

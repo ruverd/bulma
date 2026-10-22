@@ -11,7 +11,7 @@ description: >
 
 Break a plan into independently-grabbable issues using vertical slices (tracer bullets).
 
-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
+If the calling graph names a local output file, write there and do not create tracker issues. Otherwise take the tracker and label vocabulary from the repo's AGENTS.md or CLAUDE.md.
 
 ## Process
 

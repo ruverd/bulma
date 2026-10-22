@@ -1,7 +1,7 @@
 # Bounded discovery
 
 The `grill` node resolves implementation gaps. It is not a mandatory interview.
-Policy: [DECISION_POLICY.md](DECISION_POLICY.md). Load bundled `grill-me` or
+Policy: [DECISION_POLICY.md](DECISION_POLICY.md). Load bundled
 `grill-with-docs` only when the user requests a deeper design interview.
 Formats: [CONTEXT-FORMAT.md](../grill-with-docs/CONTEXT-FORMAT.md),
 [ADR-FORMAT.md](../grill-with-docs/ADR-FORMAT.md).
@@ -38,8 +38,7 @@ open-ended design tree or explore alternatives with no implementation consequenc
 Most runs never hit step 5.
 
 Load bundled `how` only for a named subsystem gap. Do not spawn an explorer
-swarm. Load `why` only if the rationale changes a still-open implementation
-decision. Routine delivery does not load interview skills.
+swarm. Routine delivery does not load interview skills.
 
 Use `architect` when a new module has an unresolved boundary or contract; creating
 a module alone does not require another planning pass.

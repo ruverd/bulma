@@ -6,7 +6,7 @@ Bundled `diagnose`: reproduce → minimise → hypothesise → instrument → (s
 
 Hard / no playbook: bundled `figure-it-out` Phase A–C, then hand a single fix slice to implement.
 
-`how` on the broken subsystem. `why` only per [PSTACK.md](../PSTACK.md).
+`how` on the broken subsystem.
 Load bundled `principle-fix-root-causes`.
 
 Output: root cause + one ticket (RED test that fails on the bug + GREEN plan). If it is a feature, re-route to grill.
