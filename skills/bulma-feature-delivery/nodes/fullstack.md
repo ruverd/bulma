@@ -17,7 +17,7 @@ Follow [FULLSTACK.md](../FULLSTACK.md).
 1. Resolve sibling names ([PRODUCT.md](../PRODUCT.md)). Empty → do not run this node.
 2. Resolve `tracker_branch` (STATE) = `feature/<id-lowercase>`
    ([JOBS.md](../../bulma-bus/JOBS.md)).
-3. Worktree on **backend** and **frontend** (`git worktree add`, or Orca if it is up).
+3. Worktree on **backend** and **frontend** through the host, Orca, or the JOBS.md git fallback.
 4. `spawn_worker` on each ([bulma-host](../../bulma-host/SKILL.md)). BE first when the contract is new.
 5. Wait until both done/escalation.
 6. Update STATE: worktree paths, task/worker ids, status per repo.

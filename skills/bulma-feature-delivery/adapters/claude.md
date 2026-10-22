@@ -6,7 +6,7 @@ Maps [bulma-host](../../bulma-host/SKILL.md) primitives. Graphs stay generic.
 |---|---|
 | `load_skill` / `load_graph` | `/bulma-<name>` |
 | `spawn_worker` | `Agent` / `Task` `general-purpose` (or `bulma-fd-*` when registered) |
-| `worktree` | isolation if the Agent tool has it; else `git worktree add` |
+| `worktree` | Agent isolation first; else Orca, then the [JOBS.md fallback](../../bulma-bus/JOBS.md#worktree) under the memory-resolved worktree root |
 | `schedule_wake` | `/loop` or the session scheduler; else ask the user to re-run |
 | `cancel_wake` | stop that loop |
 | `session_model` | inherit (`model:` in agent files is inherit) |

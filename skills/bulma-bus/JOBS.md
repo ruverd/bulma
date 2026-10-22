@@ -79,14 +79,25 @@ and before the first RED
 Prefer host `spawn_worker` with worktree isolation ([bulma-host](../bulma-host/SKILL.md)).
 Do not also pass `cwd` when isolation is a worktree.
 
-Else git fallback (`.worktrees/` if the repo gitignores it, else a sibling dir):
+Otherwise prefer Orca worktree creation when available, as mapped in
+[bulma-host](../bulma-host/SKILL.md). If neither host isolation nor Orca
+can create the checkout, use the git fallback below. Resolve `WORKTREE_ROOT`
+through [bulma-memory](../bulma-memory/SKILL.md#worktree-location) before
+creating a directory. It defaults to `$BULMA_HOME/workspaces`; a memory
+`worktree_root` preference overrides it. Create `<repo>-<id>` under that root.
+Do not infer a repo-local or sibling directory when the preference is absent.
+Resolve `<repo>` from the main checkout name and use a path-safe job id
+without `/`. A branch name such as `feature/dev-4525` is not a directory id.
 
 ```bash
 git fetch origin
-git rev-parse --show-toplevel
-git check-ignore -q .worktrees
-git worktree add ".worktrees/<id>" -b "<branch>" origin/main
+mkdir -p "$WORKTREE_ROOT"
+git worktree add "$WORKTREE_ROOT/<repo>-<id>" -b "<branch>" origin/main
 ```
+
+If a destination already exists, reuse it only when STATE identifies it as
+this job's checkout and its repo and branch match. Otherwise choose a unique
+`-<n>` suffix. Never overwrite, delete, or adopt an unrelated checkout.
 
 Branch name:
 
@@ -115,12 +126,36 @@ Shared resources: `lsof -i :<port>` before trusting a port. No migration
 on a shared DB. Install deps inside the worktree with the discovered
 `pkg` only if they are missing there.
 
-Keep the worktree until the PR is merged or closed. Cleanup is
+Review-only `rev-pr-*` checkouts follow [review cleanup](#review-cleanup)
+after publication, even while the PR remains open. All other jobs keep the
+worktree until the PR is merged or closed. Cleanup is
 `git worktree remove` + `git branch -D` by a human after `bulma status`
 lists orphans. No auto-remove. `bulma status` also prints the cwd job
 Walk when fd STATE exists (plugin health first, then the job).
 
 Do not run the full test suite as a baseline (too heavy).
+
+## Review cleanup
+
+After the verdict is successfully posted and the report / `REVIEW_RESULT`
+is saved outside the checkout, remove the review-only `rev-pr-*` worktree
+created by this job. The worker exits first; its coordinator performs cleanup.
+For a foreground review, leave the checkout before removing it.
+
+Verify the recorded path, repository and job ownership, a clean index and
+working tree including untracked files, and no running worker, terminal or
+pending CI wake using the checkout. Never remove the main checkout, a reused
+user checkout, another job's checkout, or one with local changes. Pending CI,
+failed publication or uncertain ownership keeps the checkout for resume.
+
+Use the host's non-forcing removal API when it preserves the branch. Orca
+`worktree rm` also attempts local branch deletion; check the version-matched
+CLI guide. When branch retention is required and the host has no such option,
+use Git removal for an external Git checkout. For the git fallback, run
+`git -C "<main-checkout>" worktree remove "<recorded-review-path>"` from outside
+it. Never force removal or delete the branch. If removal refuses, retain the
+checkout and report why. Record `removed` or the retention reason in STATE
+and JOBS so a later resume does not assume the checkout still exists.
 
 ## Worker
 

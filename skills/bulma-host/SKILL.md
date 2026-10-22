@@ -28,7 +28,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `load_skill name` | Inject that skill's SKILL.md (and GRAPH.md if present) into **this** thread | Read the flattened sibling, or `skills/<name>/SKILL.md` in git |
 | `load_graph name` | Same as `load_skill bulma-<name>`. Main thread only | Same |
 | `spawn_worker` | One child session, **general-purpose**. Not a graph name | Tell the user the worker prompt; or run the node inline if isolation is impossible |
-| `worktree` | Isolated checkout of the same branch | `git worktree add` (JOBS.md) |
+| `worktree` | Isolated checkout of the same branch | Orca when available; otherwise `git worktree add` under the memory-resolved worktree root ([JOBS.md](../bulma-bus/JOBS.md#worktree)) |
 | `schedule_wake` | Resume this graph later without blocking the turn | Ask the user to re-run the slash command when CI moves; do not `gh pr checks --watch` |
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
 | `second_opinion` | Run one read-only prompt on another vendor's model through its CLI (§Second opinion) | `second_opinion: failed` with the reason; never a silent skip |
@@ -79,6 +79,14 @@ Prefer host isolation `worktree` when the spawn API has it. Then do
 | Claude Code | `Agent` / `Task` with `general-purpose` (or the fd agent name for implement/test/review) |
 | Codex | child agent spawn; isolation if the CLI exposes a worktree |
 | Cursor | `Task` general-purpose |
+
+## Worktree
+
+Prefer host isolation, then Orca, then the [Git fallback](../bulma-bus/JOBS.md#worktree).
+Resolve its root through [bulma-memory](../bulma-memory/SKILL.md#worktree-location), default `$BULMA_HOME/workspaces`.
+For Orca, read `orca skills get orca-cli` using the session's selected executable; check `orca status --json` and confirm flags and target repo in that guide.
+Keep host-created paths and returned ids. Do not launch an agent just to create a checkout.
+Check whether failed creation left a checkout before retrying. Raw Git does not register with Orca.
 
 ### Worker tier
 

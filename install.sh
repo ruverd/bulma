@@ -172,7 +172,7 @@ plugin_version() {
 }
 
 ensure_bulma_home() {
-  run mkdir -p "${BULMA_HOME:-$HOME/.bulma}"
+  run mkdir -p "${BULMA_HOME:-$HOME/.bulma}/workspaces"
 }
 
 # --- legacy layout migration (begin) -----------------------------------------
