@@ -40,3 +40,11 @@ repeat paired cases with the production model and include full repository replay
 Compare cost per correct result and inspect critical regressions, not output length
 alone. Reject a cheaper arm that loses a required criterion. Keep failed runs in
 the denominator and cost total. Do not update production prompts from one sample.
+
+## Frozen candidate comparisons
+
+Use `--candidate-file` to append a reviewed amendment and select `--arm baseline
+--arm candidate` for a paired comparison. `--baseline-file` and `--cases-file`
+accept frozen experiment inputs. Fixture files contain executable graders and
+must be trusted. The [improvement pilot](../improve/README.md) freezes these
+inputs, validates matched results and keeps development and held-out phases separate.

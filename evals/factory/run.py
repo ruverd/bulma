@@ -19,6 +19,15 @@ def digest(text):
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def baseline_instructions():
+    lessons = (ROOT / 'skills/bulma-feature-delivery/LESSONS.md').read_text()
+    return ('You are implementing one bounded ticket in an isolated evaluation workspace. '
+            'Use only files in this workspace. No network, git, packages or external repositories. '
+            'Read the supplied files, write a regression test before fixing nontrivial logic, and run node tests. '
+            'Implement the complete ticket with a minimal diff following local contracts. '
+            'Report actual verification and remaining limitations. Do not claim tests ran unless they ran.\n\n' + lessons)
+
+
 def prepare(case, workspace):
     for name, content in case['files'].items():
         target = workspace / name
@@ -83,7 +92,10 @@ def main():
     parser.add_argument('--out', required=True, type=Path)
     parser.add_argument('--model', required=True, help='Exact model id, not an alias')
     parser.add_argument('--runs', type=int, default=1)
-    parser.add_argument('--arm', action='append', choices=['baseline', 'compact', 'ponytail'])
+    parser.add_argument('--arm', action='append', choices=['baseline', 'compact', 'ponytail', 'candidate'])
+    parser.add_argument('--candidate-file', type=Path, help='Reviewed instruction amendment to append to baseline')
+    parser.add_argument('--baseline-file', type=Path, help='Frozen baseline instructions for a matched experiment')
+    parser.add_argument('--cases-file', type=Path, help='Frozen trusted fixture set; contains executable verifiers')
     parser.add_argument('--ponytail-file', type=Path, help='Optional pinned full Ponytail prompt, outside the repo')
     parser.add_argument('--case', action='append', default=[])
     parser.add_argument('--budget-per-run', type=float, default=0.25)
@@ -93,23 +105,22 @@ def main():
         parser.error('Runs, timeout and budget must be positive')
     if args.out.resolve().is_relative_to(ROOT):
         parser.error('Runtime artifacts must be outside the repository')
-    cases = json.loads((HERE / 'cases.json').read_text())
+    cases = json.loads((args.cases_file or HERE / 'cases.json').read_text())
     unknown = set(args.case) - {case['id'] for case in cases}
     if unknown:
         parser.error(f'Unknown cases: {sorted(unknown)}')
     cases = [case for case in cases if not args.case or case['id'] in args.case]
-    lessons = (ROOT / 'skills/bulma-feature-delivery/LESSONS.md').read_text()
-    baseline = ('You are implementing one bounded ticket in an isolated evaluation workspace. '
-                'Use only files in this workspace. No network, git, packages or external repositories. '
-                'Read the supplied files, write a regression test before fixing nontrivial logic, and run node tests. '
-                'Implement the complete ticket with a minimal diff following local contracts. '
-                'Report actual verification and remaining limitations. Do not claim tests ran unless they ran.\n\n' + lessons)
+    baseline = args.baseline_file.read_text() if args.baseline_file else baseline_instructions()
     variants = {'baseline': baseline, 'compact': baseline + '\n\n' + (HERE / 'compact-reuse.md').read_text()}
+    if args.candidate_file:
+        variants['candidate'] = baseline + '\n\n' + args.candidate_file.read_text()
     if args.ponytail_file:
         variants['ponytail'] = baseline + '\n\n' + args.ponytail_file.read_text()
     if args.arm:
         if 'ponytail' in args.arm and not args.ponytail_file:
             parser.error('--arm ponytail requires --ponytail-file')
+        if 'candidate' in args.arm and not args.candidate_file:
+            parser.error('--arm candidate requires --candidate-file')
         variants = {arm: variants[arm] for arm in dict.fromkeys(args.arm)}
     args.out.mkdir(parents=True, exist_ok=False)
     meta = {'model': args.model, 'host': subprocess.check_output(['claude', '--version'], text=True).strip(),
@@ -118,6 +129,7 @@ def main():
             'runner_sha256': digest(Path(__file__).read_text()),
             'instructions_sha256': {key: digest(value) for key, value in variants.items()},
             'runs_per_case_arm': args.runs, 'budget_per_run_usd': args.budget_per_run,
+            'timeout_seconds': args.timeout,
             'requested_budget_ceiling_usd': len(cases) * len(variants) * args.runs * args.budget_per_run,
             'scope': 'Reduced coder fixtures, not full factory or historical repository replay'}
     (args.out / 'manifest.json').write_text(json.dumps(meta, indent=2) + '\n')

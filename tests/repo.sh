@@ -59,6 +59,7 @@ check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/te
 check floor-guard env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_floor_guard.py"
 check routing env PYTHONPATH="$LIB" python3 "$LIB/check_routing.py" "$ROOT"
 check factory-verifiers env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_factory_eval.py"
+check improvement-loop env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_improvement.py"
 check routing-checker env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_routing.py"
 
 if [[ "$FAILED" -ne 0 ]]; then
