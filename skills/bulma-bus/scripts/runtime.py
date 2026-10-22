@@ -96,7 +96,9 @@ def run(args):
     record = {'version': 1, 'identity': before, 'fingerprint': digest(before),
               'stable': before == after, 'exit_code': result, 'capture': capture,
               'duration_ms': round((time.monotonic() - started) * 1000),
-              'log': str(folder / 'output.log'), 'recorded_at': time.time()}
+              'log': str(folder / 'output.log'),
+              'log_sha256': hashlib.sha256((folder / 'output.log').read_bytes()).hexdigest(),
+              'recorded_at': time.time()}
     write_json(folder / 'result.json', record)
     print(json.dumps({'evidence': str(folder / 'result.json'), 'exit_code': result,
                       'duration_ms': record['duration_ms'], 'capture': capture}))
@@ -108,7 +110,8 @@ def reusable(record, current):
             and record.get('stable') is True and current.get('reusable') is True
             and record.get('identity') == current
             and record.get('fingerprint') == digest(current)
-            and Path(record.get('log', '')).is_file())
+            and Path(record.get('log', '')).is_file()
+            and record.get('log_sha256') == hashlib.sha256(Path(record['log']).read_bytes()).hexdigest())
 
 
 def check(args):

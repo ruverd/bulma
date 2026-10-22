@@ -23,6 +23,10 @@ assignee: ""
 reviewers: ""
 reviewers_status: ""
 work_kind: ""
+playbook: ""
+playbook_version: ""
+playbook_digest: ""
+verification_recipe: ""
 path: ""
 risk: ""
 risk_reason: ""
@@ -102,6 +106,11 @@ Index: `.bulma-feature-delivery/mcp-sources.md`
 - **risk_reason:**
 - **confidence:**
 - **reason:**
+
+## Playbook
+
+Replace this paragraph with the checklist returned by `scripts/playbook.py select`.
+Keep its identity in frontmatter. Record proof paths here only, not in a second todo.
 
 ## Fullstack (if scope=fullstack)
 

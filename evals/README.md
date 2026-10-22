@@ -79,6 +79,27 @@ Firing is stochastic. Read the scores across several runs, not one exit code.
 When you report numbers, record the Claude Code version and pin `--model`,
 because the default model can change between runs.
 
+The `playbooks` tag covers proof-sensitive decisions: missing refactor baseline,
+read-only investigation, invariant-preserving resume, external QA ownership,
+misleading perf results and missing product intent. These cases grade behavior,
+not whether an agent names a skill or repeats its principles. Run them explicitly:
+
+```bash
+claude plugin eval . --tag playbooks --runs 1 --ablation none --max-cost-usd 2 --no-publish
+```
+
+Keep results outside the checkout with `--keep-temp`, `--output-dir` and `--json <path>` when
+collecting a review packet. Candidate prompts contain no grader or variant names.
+Comparative studies follow [EXPERIMENTS.md](../skills/bulma-bus/EXPERIMENTS.md),
+with pinned model/host and repeated matched trials. A one-run smoke is not a
+measured quality or cost improvement. Deterministic checklist and comparison
+tests run in `tests/repo.sh`; paid behavior runs remain opt-in.
+
+These supplied-context cases check the answer, not a full delivery execution.
+Inspect retained traces to distinguish actual skill reads from correct generic
+reasoning or denied tools. A passing reply alone does not prove the selected
+playbook ran. Use real project fixtures for a full graph evaluation.
+
 ## Rejected changes
 
 Description changes that the evals showed did not help. Read this before you

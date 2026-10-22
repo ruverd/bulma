@@ -40,7 +40,8 @@ are nodes (subagents where the adapter says so).
 | start | fresh goal / ticket | **mcp_context** |
 | mcp_context | mcp_gate=passed / passed_partial | **triage** |
 | mcp_context | mcp_gate=failed | **STOP** + English error |
-| triage | scope=fullstack | **fullstack** (FULLSTACK.md) |
+| triage | work_kind=spike | **diagnose** read-only, then playbook check → `done_report` |
+| triage | scope=fullstack and work_kind≠spike | **fullstack** (FULLSTACK.md) |
 | triage | path=full_feature | **grill** |
 | triage | path=debug_fix | **diagnose** |
 | triage | path=light_change | **tickets** (single) |
@@ -82,7 +83,6 @@ are nodes (subagents where the adapter says so).
 | blocker_handler | blocker open | `waiting_blocker` → **end session** |
 | any | user must decide | `waiting_user` **stop dependent work** |
 | any | context/limit | **handoff** |
-| triage | work_kind=spike | diagnose read-only → `done_report` |
 
 ## Defaults
 
@@ -108,6 +108,11 @@ architect_checkpoint: last_resort_only
 ## Skills
 
 See [PSTACK.md](PSTACK.md). Grill is [GRILL.md](GRILL.md). Voice is [VOICE.md](VOICE.md).
+
+Task proof: [PLAYBOOKS.md](PLAYBOOKS.md). Select at triage; complete baseline
+obligations before product edits. Check proof before final evidence or
+`done_report`. An incomplete required step returns to its owning node within
+existing loop caps, or escalates. It never permits skipping an earlier gate.
 
 ## Anti-patterns
 

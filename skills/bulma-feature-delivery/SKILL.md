@@ -17,6 +17,7 @@ Load now:
 - [GRAPH.md](GRAPH.md)
 - [STATE.schema.md](STATE.schema.md)
 - [ROUTING.md](ROUTING.md)
+- [PLAYBOOKS.md](PLAYBOOKS.md)
 - [PRODUCT.md](PRODUCT.md)
 - [VOICE.md](VOICE.md)
 - [PSTACK.md](PSTACK.md)
@@ -53,7 +54,9 @@ Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 **Fresh:**
 
 1. Init STATE under `$BULMA_ROOT/.bulma-feature-delivery/`. Load `bulma-memory`.
-2. `mcp_context` then `triage`. Critical MCP down → STOP. Do not invent.
+2. Recognize explicit read-only or planning-only intent before `mcp_context`.
+   It disables checkout creation. Then `mcp_context` and `triage` select the
+   task contract under [PLAYBOOKS.md](PLAYBOOKS.md). Critical MCP down → STOP.
 3. Walk GRAPH. Grill / spec / tickets on the main thread. `plan_critic` on the main thread unless `risk=elevated` (then one read-only spawn). Spawn **one** node subagent at a time for implement / review / diagnose / tester / evidence / quality / shipper.
 4. Never merge. Draft PR only from `shipper`.
 5. Near context limit → `handoff`.
@@ -83,6 +86,10 @@ Ship: implement → blast when required → quality → review → tester → fi
 8. Blocker: advance what you can → Draft a tracker issue + contract comment → `waiting_blocker`.
 9. Tokens: [TOKEN_ECONOMY.md](TOKEN_ECONOMY.md).
 10. Limit near: [HANDOFF.md](HANDOFF.md).
+
+Before final evidence or a read-only report, check the selected playbook's proof.
+Keep its identity and one checklist in STATE. Resume reconciles existing rows;
+it never fabricates a baseline or restarts completed work.
 
 ## Files
 

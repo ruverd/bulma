@@ -26,6 +26,9 @@ done_report | escalated
 |---|---|
 | `schema_version: 5` | resume compat. v4 resume: missing `risk` → `normal` |
 | `work_kind` | feature \| bug \| regression \| chore \| spike |
+| `playbook` | Selected id from playbooks.json; missing on older runs selects once from recorded intent |
+| `playbook_version` / `playbook_digest` | Frozen catalog version and selected contract digest; reconcile drift on resume |
+| `verification_recipe` | Existing project-local recipe path, or empty; see bulma-host VERIFICATION.md |
 | `path` | full_feature \| debug_fix \| light_change |
 | `risk` | low \| normal \| elevated |
 | `plan_mode` | compact or detailed; missing on resume means detailed |
@@ -59,7 +62,7 @@ done_report | escalated
 | Node | Reads | Writes |
 |---|---|---|
 | mcp_context | goal, refs, PRODUCT.md, bulma-memory | mcp_gate, forge, tracker, pkg, *_cmd, qa_tool, tracker_*, branch, repos_*, assignee, reviewers, reviewers_status, chat_language |
-| triage | goal, tracker-context | work_kind, scope, path, risk, risk_reason, route_* |
+| triage | goal, tracker-context | work_kind, scope, path, risk, risk_reason, route_*, playbook, playbook_version, playbook_digest |
 | grill | goal, repo, tracker | decisions, approaches, `waiting_user` |
 | spec | decisions | SPEC.md, spec_path |
 | tickets | SPEC.md | TICKETS.md, seams, tickets_path |
@@ -79,6 +82,9 @@ done_report | escalated
 | orchestrator | full | status, run_log |
 
 Orchestrator owns `status` transitions. Nodes report `result`.
+It also owns the single `## Playbook` checklist. Rows come from playbook.py;
+workers report evidence and the coordinator updates their rows. Required rows
+cannot skip. Keep all historical baseline pointers when after evidence expires.
 
 ## Rules
 

@@ -6,6 +6,28 @@ Notable changes per release. Format follows
 
 ## [Unreleased]
 
+### Added
+
+- Task playbooks select a versioned proof contract alongside existing routing.
+  Investigation stays read-only; refactoring requires baseline/output equivalence;
+  performance requires comparable measured work. Feature, bug, maintenance and
+  skill changes reuse the existing graph and keep one proof checklist in STATE.
+- Refactoring output comparisons verify two separate successful captures, the
+  current candidate tree, command, environment and log integrity. Required proof
+  cannot skip. Old receipts without a log hash require recapture.
+- Six opt-in agent behavior cases cover investigation, resume, external QA,
+  refactoring, performance and product intent. Deterministic proof tests run in CI.
+- Project verification recipe authoring and upkeep live in bulma-host, with a
+  template and an executed recipe for this repository. Ordinary delivery reuses
+  an existing recipe without duplicating external QA.
+
+### Changed
+
+- Repeated fixes sharing a premise require a discriminating observation before
+  another attempt. Pause preserves owned work and task proof; status surfaces
+  actionable user decisions. Large runs pilot one unit before scaling, and
+  learning proposals identify executable enforcement and its failure proof.
+
 ### Breaking
 
 - The project is Bulma. Every skill, agent, command, CLI, env var, state

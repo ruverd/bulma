@@ -17,3 +17,7 @@ Vanilla `grill-with-docs` interview-and-wait is off. See
 [`GRILL.md`](skills/bulma-feature-delivery/GRILL.md).
 TDD iron law in [`TDD.md`](skills/bulma-feature-delivery/TDD.md)
 wins over any skip in bundled `tdd`.
+
+Task playbook contracts and the project verification recipe adapt ideas from
+[pstack 0.15.30](https://github.com/cursor/plugins/tree/4ec7ffa173eaa70d3d9467a627baf0954645a353/pstack),
+MIT © Lauren Tan. Bulma retains its own graph edges, host adapters and proof helpers.

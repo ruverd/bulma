@@ -243,8 +243,8 @@ or gate correctness by themselves. No automatic note publication.
 
 ## Runtime evidence
 
-Tester and diagnose nodes use [PERFORMANCE.md](../bulma-bus/PERFORMANCE.md).
-Trail is optional. Pass only session IDs, evidence paths and relevant error
-excerpts to workers. Host token usage is optional metadata; never invent it.
+Tester and diagnose use [PERFORMANCE.md](../bulma-bus/PERFORMANCE.md).
+Project recipes use [VERIFICATION.md](VERIFICATION.md), loaded only when needed.
+Pass session IDs, evidence paths and relevant errors. Never invent token usage.
 Load only the current node contract and its required references. Cache static
 contracts within a session; reload when their file content changes.

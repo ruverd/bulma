@@ -37,6 +37,13 @@ Decompose into atomic, independently-landable units. Sequence riskiest-unknown-f
 - Decide what fans out. Parallelize only across genuine seams, and give each worker its own worktree or branch. Don't over-fan.
 - Write the designed phase list down. That list is what the human reviews.
 
+Before scaling a large program, send one representative unit through build,
+verification and publication of its artifact. Fix the brief or recipe from that
+pilot, then refill a bounded window as units finish. Each branch has one writer;
+reports name its current head and actual verification. Reconcile late results
+against current artifacts before accepting them. Use the existing bus/job records,
+not a second hand-maintained status database. Merge remains outside Bulma's scope.
+
 Then put the design into motion. Add its steps to the todolist as concrete items, after the Phase C entry and before Phase D. Run each under the Phase C loop discipline, and weave the Phase D log through them, a row as each step lands, rather than saving the whole trail for the end.
 
 ## Phase C: Run the loop

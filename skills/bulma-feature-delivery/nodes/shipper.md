@@ -13,6 +13,9 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
 
 1. Pre-checks: review pass, tester pass, quality ok, final evidence current —
    confirm exit codes in `.bulma-feature-delivery/gates.log` if it exists.
+   Recheck the selected playbook with `scripts/playbook.py check`. Required
+   task proof cannot be waived by an optional-step skip. Investigation never
+   enters this node.
 2. `git branch --show-current` must not be `main` or `master`. Fail the node if it is.
    Branch == tracker branch if set.
 3. Forge from [PRODUCT.md](../PRODUCT.md). `github` → `gh`. `gitlab` → `glab`. `git` → push only, no PR (`done_local` unless the user insisted).

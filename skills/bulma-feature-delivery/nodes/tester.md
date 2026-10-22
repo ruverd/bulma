@@ -70,6 +70,14 @@ orchestrator.
 
 ## Capture and reuse
 
+Read the applicable selected playbook contract and complete its tester-owned
+proof rows. Read the content of each proof against acceptance; file existence
+alone is insufficient. Refactoring runs the equivalence helper on captured
+before/after receipts. Performance checks counts, spread and limiter evidence.
+Use the project verification recipe when discovered in STATE, following
+[bulma-host VERIFICATION.md](../../bulma-host/VERIFICATION.md). Recipe execution
+does not start a second QA or override the configured QA provider.
+
 Use [runtime evidence](../../bulma-bus/PERFORMANCE.md) for these commands.
 A successful `runtime.py check` permits reuse only for deterministic local tests
 with a complete environment fingerprint. Otherwise execute. Keep command, exit

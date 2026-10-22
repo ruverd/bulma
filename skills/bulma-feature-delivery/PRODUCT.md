@@ -42,6 +42,9 @@ Branch: [JOBS.md](../bulma-bus/JOBS.md) §Worktree. Tracker id → always
 `feature/<id-lowercase>` (`DEV-4525` → `feature/dev-4525`). Not
 `gitBranchName`. Not `{login}/<id>`. No id → `feature/<slug>`.
 
+Explicit read-only investigations and planning-only requests keep the existing
+checkout. They do not create a branch or worktree, commit, push or open a PR.
+
 ## 3. Toolchain
 
 Lockfile / manifest wins:
@@ -63,6 +66,12 @@ Lockfile / manifest wins:
 
 Commands. Prefer `AGENTS.md`, then `package.json` scripts, then language defaults.
 Write `typecheck_cmd`, `test_cmd`, `lint_cmd`, `e2e_cmd` (empty if none).
+
+Discover an existing project-local verification recipe named by repo instructions
+or memory. Record its path as `verification_recipe`; load only relevant feature
+entries under [bulma-host VERIFICATION.md](../bulma-host/VERIFICATION.md).
+Do not generate or maintain the whole map during ordinary delivery. Recipe
+authoring is separate, requested work, not a prerequisite for every task.
 
 Examples of names to look for, not to invent: `typecheck`, `tsc`, `test`,
 `test:unit`, `lint`, `test:e2e`, `cargo test`, `go test ./...`, `pytest`.
