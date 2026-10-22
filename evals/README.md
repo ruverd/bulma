@@ -95,3 +95,10 @@ accepted changes here.
 reuse instruction on eight isolated, executable fixtures. It records actual host
 usage and uses external assertions. This paid pilot is separate from routing and
 must be started explicitly; it does not change production worker instructions.
+
+## Improvement experiments
+
+[Evidence-driven improvement](improve/README.md) freezes a lookback-backed coder
+instruction amendment and a development/held-out fixture split. It reuses the
+factory runner, rejects paired regressions and produces a manual review packet.
+Paid probes remain opt-in; the tool never updates installed skills.
