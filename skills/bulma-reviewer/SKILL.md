@@ -39,6 +39,9 @@ worker per PR. `--force` if CI red. Pending required CI allows pinned review, th
 (no PR comment) via `wait_ci`. Draft / conflict / CI-red DEFER is
 expected.
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
+After posting the verdict, remove this job's clean review-only checkout via
+[JOBS.md review cleanup](../bulma-bus/JOBS.md#review-cleanup). Pending CI or
+failed publication keeps it for resume.
 
 Does not spawn developer/qa unless the user asks after the report —
 then write `REVIEW_REQUEST` is inbound only; outbound fix = tell the

@@ -63,7 +63,7 @@ grep -qx "repo=$ROOT" "$TEST_HOME/.config/bulma/config" || fail "repo= should be
 assert_link "$TEST_HOME/.agents/skills/unslop"
 assert_link "$TEST_HOME/.local/bin/bulma"
 readlink "$TEST_HOME/.local/bin/bulma" | grep -q 'install.sh' || fail "bin not install.sh"
-assert_file "$TEST_HOME/.bulma"
+assert_dir "$TEST_HOME/.bulma/workspaces"
 assert_not "$TEST_HOME/.bulma/memory.md"
 grep -q 'agent-browser' /tmp/bulma-setup.out || fail "setup should mention agent-browser"
 grep -q "Codex: \$bulma-developer or /skills" /tmp/bulma-setup.out \
@@ -153,6 +153,7 @@ grep -q 'dry-run:' <<< "$out" || fail "dry-run silent"
 assert_not "$DRY_HOME/.config/bulma/config"
 assert_not "$DRY_HOME/.agents/skills/unslop"
 assert_not "$DRY_HOME/.local/bin/bulma"
+assert_not "$DRY_HOME/.bulma/workspaces"
 rm -rf "$DRY_HOME"
 ok dry-run-setup
 
@@ -160,6 +161,19 @@ run_install setup >/tmp/bulma-setup2.out
 grep -q '^ok ' /tmp/bulma-setup2.out || fail "second setup has no ok lines"
 assert_link "$TEST_HOME/.agents/skills/unslop"
 ok setup-idempotent
+
+# A custom global home also gets workspaces, preserving existing memory and files.
+CUSTOM_HOME="$TEST_HOME/custom bulma"
+mkdir -p "$CUSTOM_HOME"
+printf '# Memory\n\n## Preferences\n- worktree_root: /custom/location\n' >"$CUSTOM_HOME/memory.md"
+cp "$CUSTOM_HOME/memory.md" "$TEST_HOME/memory-before.md"
+BULMA_HOME="$CUSTOM_HOME" run_install setup >/dev/null
+assert_dir "$CUSTOM_HOME/workspaces"
+printf 'keep\n' >"$CUSTOM_HOME/workspaces/keep.txt"
+BULMA_HOME="$CUSTOM_HOME" run_install setup >/dev/null
+cmp "$TEST_HOME/memory-before.md" "$CUSTOM_HOME/memory.md" || fail "setup rewrote memory"
+grep -qx 'keep' "$CUSTOM_HOME/workspaces/keep.txt" || fail "setup changed an existing workspace"
+ok setup-custom-home-workspaces
 
 # --- host homes: only the ones that already exist, unless told otherwise ---
 SEL_HOME="$(mktemp -d "${TMPDIR:-/tmp}/bulma-sel.XXXXXX")"

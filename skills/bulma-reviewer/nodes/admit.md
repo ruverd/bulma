@@ -15,4 +15,6 @@ Load `bulma-memory` (read both files). Chat follows that skill.
    Each worker runs `bulma-code-review` for that PR only.
    No `bulma_reviewer` spawn. No browser QA.
 
-Worker writes `jobs/<id>/RESULT.md`. Aggregate in chat.
+Worker writes `jobs/<id>/RESULT.md`. After it exits, aggregate in chat and
+apply [review cleanup](../../bulma-bus/JOBS.md#review-cleanup) for each
+successfully published verdict.

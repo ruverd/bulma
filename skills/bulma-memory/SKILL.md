@@ -52,6 +52,29 @@ Before the first user-facing sentence of any bulma graph, engine, or
 Workers that do not chat skip this. Ship still resolves reviewers
 via [PRODUCT.md](../bulma-feature-delivery/PRODUCT.md) §6.
 
+## Worktree location
+
+The Git fallback worktree directory is a memory preference. Read
+`worktree_root` from `## Preferences` using the normal memory precedence.
+If absent, use `$BULMA_HOME/workspaces`, where `BULMA_HOME` defaults to
+`$HOME/.bulma`. Installation creates this default directory without creating
+or rewriting memory files.
+
+For a custom location, write to home memory, or project memory for a repo-only
+override:
+
+```markdown
+## Preferences
+- worktree_root: /absolute/path/to/workspaces
+```
+
+Resolve the value to an absolute path and pass it as `WORKTREE_ROOT` to
+[JOBS.md](../bulma-bus/JOBS.md#worktree). A leading `~`, `$HOME` or
+`$BULMA_HOME` denotes that directory; expand it as path text, never with
+`eval` or command substitution from the memory value. Create the resolved
+root before Git fallback creation. A custom location does not move existing
+checkouts or change paths chosen by host isolation or Orca.
+
 ## Chat vs forge
 
 | Surface | Language |

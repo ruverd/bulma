@@ -34,21 +34,28 @@ Empty sibling → do not enter this path.
 
 ## 3. Worktrees
 
-Default (always works):
+Use the host worktree capability first, then Orca when available, then the
+[JOBS.md fallback](../bulma-bus/JOBS.md#worktree). Apply the same policy to
+both repos. Resolve `WORKTREE_ROOT` through
+[bulma-memory](../bulma-memory/SKILL.md#worktree-location) separately for each
+repo, including project overrides. Save those values as
+`BACKEND_WORKTREE_ROOT` and `FRONTEND_WORKTREE_ROOT` for the Git fallback:
 
 ```bash
-git -C <backend-root> fetch origin
-git -C <frontend-root> fetch origin
-git -C <backend-root> worktree add ../<backend>-<branch> -b <branch> origin/main
-git -C <frontend-root> worktree add ../<frontend>-<branch> -b <branch> origin/main
+git -C "<backend-root>" fetch origin
+git -C "<frontend-root>" fetch origin
+mkdir -p "$BACKEND_WORKTREE_ROOT" "$FRONTEND_WORKTREE_ROOT"
+git -C "<backend-root>" worktree add "$BACKEND_WORKTREE_ROOT/<backend>-<id>" -b "<branch>" origin/main
+git -C "<frontend-root>" worktree add "$FRONTEND_WORKTREE_ROOT/<frontend>-<id>" -b "<branch>" origin/main
 ```
 
-Reuse if that worktree already exists. Store paths in STATE:
-`worktrees.backend`, `worktrees.frontend`.
+`<backend>` and `<frontend>` are the resolved main checkout names. `<id>` is
+the path-safe job id, such as `dev-4525`, not `feature/dev-4525`.
+Reuse only this job's recorded checkout after verifying repo and branch.
+A different owner or path collision requires a unique suffix, never overwrite.
+Store paths in STATE: `worktrees.backend`, `worktrees.frontend`.
 
-If `orca` is on PATH and `orca status --json` works, you **may**
-create those worktrees with `orca worktree create` using the names
-from PRODUCT.md. Confirm flags with `orca skills get orca-cli`.
+Orca creation follows [bulma-host](../bulma-host/SKILL.md#worktree).
 Orca is optional. Missing Orca is not a blocker.
 
 ## 4. Workers

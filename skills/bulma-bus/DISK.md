@@ -24,6 +24,7 @@ All `.bulma-*` paths in bulma skills are **under `$BULMA_ROOT`**:
 ```
 $BULMA_HOME/
   memory.md                 # you (every repo). bulma-memory
+  workspaces/               # default Git fallback checkouts, created on setup
   insights/
     observations.jsonl      # human-review observations. INSIGHTS.md
   <slug>/                   # = $BULMA_ROOT
@@ -57,3 +58,9 @@ main worktree's slug so every task worktree shares it (`bulma-memory`,
 
 If a leftover `.bulma-*` exists inside the repo, move it into
 `$BULMA_ROOT` and delete the copy in the repo. Do not keep writing there.
+
+Git fallback checkouts default to `$BULMA_HOME/workspaces/<repo>-<id>`.
+The `worktree_root` preference in
+[bulma-memory](../bulma-memory/SKILL.md#worktree-location) overrides the root.
+Runtime state still lives under each checkout's `$BULMA_ROOT` slug, outside
+that checkout. Host-created checkouts keep their provider's paths.
