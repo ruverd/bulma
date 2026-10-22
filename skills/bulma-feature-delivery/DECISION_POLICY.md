@@ -52,14 +52,14 @@ Do not ask for:
 - Rubber-stamping an implementation choice with no unresolved user intent.
 
 An explicit request for a design interview enables deeper exploration. Load
-bundled `grill-me` or `grill-with-docs` only for that request. It does not widen
+bundled `grill-with-docs` only for that request. It does not widen
 delivery scope or require another interview after the answers are recorded.
 
 ## Discovery and implementation
 
 Use [GRILL.md](GRILL.md) for bounded discovery. `ASK last resort` in this graph
 means the criteria above, not exhaustive searching before every question.
-Use `how`, `why` or `architect` only for a named gap their output can resolve.
+Use `how` or `architect` only for a named gap their output can resolve.
 
 Implement does not restart discovery. On `NEEDS_CONTEXT`, resolve from the
 contract and repo; ASK under this policy only if a consequential gap remains.

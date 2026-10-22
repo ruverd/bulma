@@ -10,8 +10,8 @@
   ],
   "negative": [
     {
-      "prompt": "Why did we choose this retry limit?",
-      "owner": "why"
+      "prompt": "What could this change break somewhere else?",
+      "owner": "blast-radius"
     }
   ]
 }

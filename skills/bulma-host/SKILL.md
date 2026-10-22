@@ -67,7 +67,7 @@ makes every spawn a cold read of the node file.
 The child loads the node and any skill **that node names**.
 
 Do not pass GRAPH.md, the parent skill tree, the parent MCP/tool
-catalog, `how` / `why`, or the session history. Isolation is a short
+catalog, `how`, or the session history. Isolation is a short
 prompt, not a copy of this thread.
 
 Prefer host isolation `worktree` when the spawn API has it. Then do

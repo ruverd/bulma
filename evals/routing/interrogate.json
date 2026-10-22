@@ -11,7 +11,7 @@
   "negative": [
     {
       "prompt": "Interview me about my plan until we agree",
-      "owner": "grill-me"
+      "owner": "grill-with-docs"
     }
   ]
 }

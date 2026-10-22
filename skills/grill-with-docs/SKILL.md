@@ -9,13 +9,19 @@ description: >
 
 <what-to-do>
 
-For a requested design interview, follow [grill-me](../grill-me/SKILL.md) and
-challenge consequential decisions against the documented domain model. Routine
-delivery uses [bounded discovery](../bulma-feature-delivery/GRILL.md) instead.
+For a requested design interview, challenge consequential decisions against the
+documented domain model. Routine delivery uses
+[bounded discovery](../bulma-feature-delivery/GRILL.md) instead.
 
 Resolve recoverable facts from supplied context, code and docs. Ask about missing
-intent that changes the plan. Batch independent questions and sequence dependent
-ones. Stop when the requested design is actionable.
+intent that changes the plan. Challenge assumptions with concrete scenarios.
+Explain what each answer changes and give a recommendation when useful;
+confidence does not establish user intent.
+
+Ask dependent questions one at a time. Bundle up to three independent questions
+when this saves a round trip. Preserve answered decisions. Stop when the
+requested scope, constraints and acceptance criteria are actionable or the user
+ends the interview; do not exhaust branches with no consequence for the plan.
 
 </what-to-do>
 

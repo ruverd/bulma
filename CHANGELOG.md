@@ -24,6 +24,18 @@ Notable changes per release. Format follows
   ruverd/bulma` and `claude plugin install bulma@bulma`. `CODEOWNERS` is
   removed.
 
+### Removed
+
+- Bundled `why`, `grill-me`, `show-me-your-work`, and
+  `principle-redesign-from-first-principles`. No graph node loaded them
+  directly. `grill-with-docs` now carries the interview rules from `grill-me`,
+  and `figure-it-out` describes its decision-trail TSV inline. `bulma setup`
+  prunes the old host links.
+- References in bundled third-party skills to skills Bulma does not ship
+  (`arena`, `poteto-mode`, the unbundled pstack principles,
+  `/setup-matt-pocock-skills`, `/improve-codebase-architecture`). `architect`
+  runs its arena pass inline.
+
 ### Changed
 
 - agent-browser is required. `bulma setup` (and `bulma update`) installs it

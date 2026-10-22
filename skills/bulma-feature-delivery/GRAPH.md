@@ -118,6 +118,6 @@ See [PSTACK.md](PSTACK.md). Grill is [GRILL.md](GRILL.md). Voice is [VOICE.md](V
 - Shipping without TDD evidence on behavior change
 - Auto-merge
 - Interviewing the user through the grill tree
-- Pasting GRAPH.md, `why`, or the parent tool catalog into a worker
+- Pasting GRAPH.md or the parent tool catalog into a worker
 - Spawning plan_critic on debug_fix or light_change
 - Spawning plan_critic on every full_feature (normal is main-thread)
