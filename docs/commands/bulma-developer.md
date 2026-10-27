@@ -12,6 +12,7 @@ Engine: [`/bulma-feature-delivery`](bulma-feature-delivery.md).
 - `/developer ABC-123`
 - `/developer the notification inbox on the dashboard`
 - `/developer resume`
+- `/developer ABC-10` where ABC-10 has sub-issues, `/developer ABC-11 ABC-12`, or "stacked: …" (stack mode)
 - Envelope: `QA_RESULT` FAIL + `PR_BUG` (from [QA](bulma-qa.md))
 
 ## Graph
@@ -48,6 +49,20 @@ deliver      fix
 4. **fix** stays on the existing PR branch.
 5. MERGEABLE + CI green → **bot_review** → envelope `QA_REQUEST`.
 6. On `QA_RESULT` PASS → mark the PR ready. Ready is not merge.
+
+## Stacked tasks
+
+A parent with sub-issues, several ids, or an explicit stacked request runs
+**stack** ([STACKED.md](../../skills/bulma-developer/STACKED.md)). The main
+thread only orchestrates:
+
+- one worker per child, each in its own worktree, running
+  `bulma-feature-delivery` end-to-end itself
+- every child PR targets `main`, never another child's branch
+- the orchestrator polls `gh pr checks` for every child and sends a fresh fix
+  worker for any red CI, up to `ci_fix_loops` per child
+- each green child goes through mergeable, bot review, and QA as its own job
+- the parent is done only when every child is
 
 Workers (`bulma-fd-coder`, tester, shipper, …) write the code. The
 graph engineer only walks edges.

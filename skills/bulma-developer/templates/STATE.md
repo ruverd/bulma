@@ -2,6 +2,7 @@
 schema_version: 2
 status: init
 mode: ""
+stack_path: ""
 goal: ""
 tracker: ""
 tracker_id: ""

@@ -50,6 +50,7 @@ Parse `$ARGUMENTS` with [ARGS.md](ARGS.md) **before** anything else.
 |---|---|
 | Goal / ticket / feature / bug / chore | `deliver` = run **bulma-feature-delivery** until CI green |
 | `QA_RESULT` FAIL + `PR_BUG` | `fix` = existing PR branch only |
+| Stacked task (sub-issues, several ids, "stacked") | `stack` = one worker per child running Bulma, PRs on main, orchestrator fixes any red CI ([STACKED.md](STACKED.md)) |
 
 Delivery spine (inside fd): grill → spec → tickets → implement(TDD). Bugs go through diagnose first. TDD iron law. Thermo before PR.
 

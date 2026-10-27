@@ -171,6 +171,8 @@ spawns”, never merge, stay draft.
 | kind | Worker does |
 |---|---|
 | developer | `bulma-feature-delivery` nodes inline (or Fix contract). Draft PR. Write `jobs/<id>/RESULT.md`. |
+| stack child | `bulma-feature-delivery` end-to-end inline in its own worktree, PR `--base main` ([STACKED.md](../bulma-developer/STACKED.md)). Write `RESULT.md` under the orchestrator's `$BULMA_ROOT`. |
+| stack fix | Resume that child's fd at `ci_watch` for one red check. Same branch, no force. Write `RESULT.md`. |
 | reviewer | `bulma-code-review` for **one** PR only. Write `RESULT.md`. |
 | lstm | `bulma-lstm` nodes inline for **one** PR. Same branch. TDD via coder contract (spawn `bulma-fd-coder` on foreground; inline on depth-1 worker). Write `RESULT.md`. |
 

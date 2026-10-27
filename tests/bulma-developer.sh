@@ -263,6 +263,30 @@ repo_of() { (cd "$1" && export BULMA_HOME=/h && eval "$snippet" && printf '%s' "
 rm -rf "$MW"
 ok memory-shared-across-worktrees
 
+# --- stacked task: orchestrator fans out, children run Bulma, CI owned by main ---
+
+ST="$DEV/STACKED.md"
+need "$ST"
+need "$DEV/nodes/stack.md"
+has 'nodes/stack.md' "$DEV/GRAPH.md"
+has '**stack**' "$DEV/GRAPH.md"
+has 'STACKED.md' "$DEV/ARGS.md"
+has 'STACKED.md' "$DEV/nodes/admit.md"
+has 'mode=stack' "$DEV/nodes/resume.md"
+has 'stack' "$DEV/STATE.schema.md"
+has 'STACKED.md' "$FD/GRAPH.md"
+has 'STACKED.md' "$FD/nodes/triage.md"
+has 'stack child' "$ROOT/skills/bulma-bus/JOBS.md"
+has 'end-to-end yourself, in this worktree' "$ST"
+has 'PR with --base main' "$ST"
+has 'Never** base a child' "$ST"
+has 'gh pr checks' "$ST"
+has 'fresh** fix worker' "$ST"
+has 'ci_fix_loops' "$ST"
+has 'every** child' "$ST"
+has 'Run a child'"'"'s fd graph inline on the main thread' "$ST"
+ok stacked-orchestration
+
 echo "all passed"
 
 PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_feature_flow.py"

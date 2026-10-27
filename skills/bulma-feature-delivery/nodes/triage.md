@@ -16,18 +16,21 @@ Do not implement. Do not debug in depth (that is **diagnose** on path debug_fix)
 3. Classify `work_kind`: feature | bug | regression | chore | spike.
 4. Classify **`scope`**: frontend_only | backend_only | mono | **fullstack**
    ([PRODUCT.md](../PRODUCT.md)). Fullstack only if a sibling resolved.
-5. Choose `path`: full_feature | debug_fix | light_change
+5. Stacked task (tracker sub-issues, several ids, or the user asks for one PR
+   per task) → stop routing here and take the **stack** edge
+   ([STACKED.md](../../bulma-developer/STACKED.md)). Each child triages itself.
+6. Choose `path`: full_feature | debug_fix | light_change
    (if fullstack, path is the mode **per worker**; coordination is FULLSTACK.md).
-6. Choose `risk`: low | normal | elevated ([ROUTING.md](../ROUTING.md) §Risk).
+7. Choose `risk`: low | normal | elevated ([ROUTING.md](../ROUTING.md) §Risk).
    Path is the spine. Risk only toggles extra gates. An auth **bug** is
    `debug_fix` + `elevated`, not `full_feature`.
-7. DECISION_POLICY: DECIDE the path and risk. ASK only last-resort. Do not ASK "feature or bug?" when the title already says.
-8. Select the task contract with [PLAYBOOKS.md](../PLAYBOOKS.md). Persist its
+8. DECISION_POLICY: DECIDE the path and risk. ASK only last-resort. Do not ASK "feature or bug?" when the title already says.
+9. Select the task contract with [PLAYBOOKS.md](../PLAYBOOKS.md). Persist its
    identity and checklist in STATE. Investigation sets `work_kind: spike` and
    takes the read-only edge before scope or delivery routing. Performance and
    refactoring keep the path appropriate to their actual change; their proof
    requirements do not remove graph gates.
-9. Write STATE + Decisions.
+10. Write STATE + Decisions.
 
 ## Output
 

@@ -8,6 +8,12 @@ Notable changes per release. Format follows
 
 ### Added
 
+- Stacked tasks in `bulma-developer` (`mode: stack`). A parent issue with
+  sub-issues, several tracker ids, or an explicit stacked request fans out to
+  one worker per child. Each worker runs `bulma-feature-delivery` end-to-end in
+  its own worktree and opens a draft PR with base `main`. The main thread
+  only orchestrates. It polls CI on every child PR, sends a fresh fix worker
+  for any red check, and finishes the parent only when every child is done.
 - Task playbooks select a versioned proof contract alongside existing routing.
   Investigation stays read-only; refactoring requires baseline/output equivalence;
   performance requires comparable measured work. Feature, bug, maintenance and
