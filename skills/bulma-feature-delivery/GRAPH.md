@@ -8,6 +8,7 @@ Bundled primitives.
 goal / resume
   → mcp_context
   → triage
+       ├ stacked task → stack (../bulma-developer/STACKED.md): one worker per child runs this graph; orchestrator fixes red CI
        ├ scope=fullstack → fullstack (same branch, git worktrees; Orca optional) then this path per worker
        ├ full_feature → grill → spec → tickets → plan_critic → implement* → blast? → quality → review → tester
        ├ debug_fix    → diagnose → one ticket → implement → blast? → quality → review → tester
@@ -40,6 +41,7 @@ are nodes (subagents where the adapter says so).
 | start | fresh goal / ticket | **mcp_context** |
 | mcp_context | mcp_gate=passed / passed_partial | **triage** |
 | mcp_context | mcp_gate=failed | **STOP** + English error |
+| triage | stacked task (sub-issues, several ids, "stacked") | **stack** per [STACKED.md](../bulma-developer/STACKED.md); each child stops at CI green (no QA under `/bulma-fd`) |
 | triage | work_kind=spike | **diagnose** read-only, then playbook check → `done_report` |
 | triage | scope=fullstack and work_kind≠spike | **fullstack** (FULLSTACK.md) |
 | triage | path=full_feature | **grill** |
@@ -119,6 +121,7 @@ existing loop caps, or escalates. It never permits skipping an earlier gate.
 - Declaring **delivered** with CI red/pending
 - full_feature on every small bug
 - Main thread writing product code
+- Shipping a stacked task as one PR, or basing a child PR on another child's branch
 - Product changes after final review without revalidation
 - Shipping without TDD evidence on behavior change
 - Auto-merge

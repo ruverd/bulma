@@ -5,14 +5,15 @@
 ## status
 
 ```
-init | delivering | fixing | mergeable | qa_requested | applying_qa | waiting_user | done | done_notes | escalated | handed_off
+init | delivering | stacking | fixing | mergeable | qa_requested | applying_qa | waiting_user | done | done_notes | escalated | handed_off
 ```
 
 ## Fields
 
 | Field | Use |
 |---|---|
-| `mode` | delivery \| fix |
+| `mode` | delivery \| fix \| stack |
+| `stack_path` | `.bulma-developer/STACK.md` when `mode=stack` ([STACKED.md](STACKED.md)) |
 | `goal` | user text; enough to start without a tracker |
 | `fd_status` | mirror of fd graph if delivery |
 | `pr_url` | draft PR |

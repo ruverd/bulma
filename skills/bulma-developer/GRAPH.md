@@ -50,11 +50,18 @@
 | start | `QA_RESULT` FAIL + `PR_BUG` | **admit** then **fix** |
 | start | empty args and live STATE | **resume** |
 | start | no args, no STATE, no goal | **stop** (ask for the ticket or the goal) |
+| admit | idle main, stacked task ([STACKED.md](STACKED.md)) | **stack** |
+| admit | busy main, stacked task | **stop** (stack needs the foreground) |
 | admit | idle main | **deliver** or **fix** |
 | admit | busy main | worker + worktree; **stop** this call |
+| resume | `mode=stack` | **stack** (reconcile STACK.md against `gh pr checks`) |
 | resume | delivery not done | **deliver** (skip finished when invariants match) |
 | resume | delivery done, bot_review in flight | **bot_review** |
 | resume | delivery done | **mergeable** or **apply_qa** as STATE says |
+| stack | each child, CI green | that child: **mergeable** → **bot_review** → **request_qa** |
+| stack | any child CI red + loops left | fresh fix worker for that child, re-check |
+| stack | child loops exhausted | that child **escalated**; others continue |
+| stack | every child terminal | **done** / **escalated** |
 | deliver | fd `status=done` (CI green) | **mergeable** |
 | deliver | escalated / waiting_user / handed_off / waiting_blocker | **stop** |
 | fix | pushed to same PR | **mergeable** |
@@ -77,7 +84,7 @@
 
 ## Node files
 
-`nodes/resume.md` · `nodes/admit.md` · `nodes/deliver.md` · `nodes/fix.md` ·
+`nodes/resume.md` · `nodes/admit.md` · `nodes/deliver.md` · `nodes/stack.md` · `nodes/fix.md` ·
 `nodes/mergeable.md` · `nodes/bot_review.md` · `nodes/request_qa.md` ·
 `nodes/apply_qa.md`
 

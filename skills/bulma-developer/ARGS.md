@@ -13,6 +13,7 @@ Trim. Then, in order:
 | Tracker issue URL, any vendor (detection: PRODUCT.md) | **ticket** |
 | GitHub PR or GitLab MR URL, or envelope `QA_RESULT` FAIL+`PR_BUG` | **fix** (existing PR/MR) |
 | issue id `[A-Z][A-Z0-9]+-\d+` | **ticket** (resolve tracker in PRODUCT.md; not a tracker gate) |
+| several tracker ids, a parent issue with sub-issues, or a stacked / multi-task request | **stack** ([STACKED.md](STACKED.md)) |
 | free text with no resume, no STATE | **local goal** |
 | empty, no STATE, no goal text | **stop** — ask for the ticket or the goal |
 
