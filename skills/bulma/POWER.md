@@ -34,7 +34,7 @@ graph, outside git, shared by every repo on the machine:
   "power": "balanced",
   "power_by_hook": { "qa.gate": "shadow", "dispatch.tier": "shadow" },
   "act_at": { "fd.triage.path": 0.70 },
-  "model": "jev-1.13.0",
+  "model": "jev-1.14.0",
   "tiers": { "claude": { "light": { "model": "haiku" } } }
 }
 ```
@@ -54,28 +54,88 @@ Commands (all offline, no key needed):
 /bulma power cautious         # set the global level
 /bulma power cautious dispatch.tier   # set one hook only
 /bulma tune fd.triage.path 0.70
-/bulma model jev-1.13.0       # pin once thresholds are tuned
+/bulma model jev-1.14.0       # pin once thresholds are tuned
 /bulma report                 # calibration table
 ```
 
 ## Calibration loop
 
-1. Run under `balanced` (or `shadow` for a hook you do not trust yet). Every
-   `ask` logs the answer, the confidence, whether it acted, and the graph's
-   own answer when the orchestrator passed `--graph-answer`.
-2. After 20 or more decisions on a question, `/bulma report` prints
-   `agree%` (Jev vs graph rule), `reversed` (outcomes marked wrong later),
-   a `calls` line with input tokens and p50 latency per call,
-   and `suggest`: the lowest threshold where at least 20 rows agree 95% or
-   more. `need >=20` means keep collecting. `keep` means the current value
-   already holds.
-3. Apply with `/bulma tune <hook.question> <value>`. Raise when `reversed`
-   grows; lower when `suggest` is below the current value and `reversed` is
-   zero.
-4. The default is pinned (`jev-1.13.0`), not `jev-latest`: an alias moving
-   under you changes answers. When a new version ships, run it under
-   `shadow` with `/bulma model <id>`, compare with `/bulma report` (it notes
-   more than one model id), then keep it or go back.
-5. Mark wrong calls when a later node proves them wrong
-   (`bulma.py outcome <decision_id> <question> reversed`); the outcome hooks
-   in [HOOKS.md](HOOKS.md) name the moments.
+1. Run new hooks or models under `shadow`. Each answer records its model,
+   policy fingerprint, question type, source (`live` or `replay`), probability,
+   effective threshold and whether it acted. Older ledgers remain readable in
+   separate `legacy` cohorts. The fingerprint includes the runner, catalog,
+   cache implementation and resolved question criteria.
+2. Mark decisions `confirmed` or `reversed` only after independent evidence
+   settles the answer: tests, QA, or a human-reviewed label. No outcome means
+   unknown, not correct. Graph agreement is a diagnostic, not a label.
+3. `bulma.py report` separates model, policy, source and power. It shows
+   confirmed, reversed and unlabeled counts, automatic coverage (`acted%`),
+   and p95 latency. Cache hits do not contribute to calibration. Replay rows
+   never suggest thresholds. Legacy provenance is unknown.
+4. `suggest effective` needs at least 20 outcome-labeled decisions above a
+   candidate threshold and at least 95% confirmed outcomes. Both Noul tails
+   count: `p=0.1` predicts no with certainty `0.9`; `p=0.9` predicts yes with
+   certainty `0.9`. Noul graph answers normalize `true/false` to `yes/no`.
+   Choice and Score retain API confidence. These numbers are different
+   measures and must not be pooled across question types.
+5. Validate proposed cuts on a held-out set, including uncertain and wrong
+   predictions. Twenty labels are a minimum sample, not proof of 95% accuracy.
+   `no supported threshold` means no tested cut met the rule. For `balanced`,
+   apply with `bulma.py tune <hook.question> <value>`. For other power levels,
+   undo the offset in the table above before tuning, including the reversed
+   offset on `policy.ask`.
+
+## Compare model releases
+
+The default is pinned to `jev-1.14.0`. Existing explicit model settings still
+win. This release changes the default model; the old thresholds have not been
+validated against 1.14. Use shadow comparison before trusting a new model or
+lowering thresholds. Do not use `jev-latest` for a calibrated workflow.
+
+Prepare a batch of representative, complete states with `graph_answer` values
+from independently reviewed labels. Keep a separate held-out batch. Use the
+same batches for each version; no config edit is needed:
+
+```sh
+python3 scripts/bulma.py ask-many --batch labeled.json --model jev-1.13.0 --power shadow --json
+python3 scripts/bulma.py ask-many --batch labeled.json --model jev-1.14.0 --power shadow --json
+python3 scripts/bulma.py report --model jev-1.13.0 --source live
+python3 scripts/bulma.py report --model jev-1.14.0 --source live
+```
+
+For each returned `decision_id` and question, mark `confirmed` when it matches
+its reviewed label and `reversed` otherwise. Preserve the model's original
+answer; `graph_answer` alone does not qualify a row for threshold suggestions:
+
+```sh
+python3 scripts/bulma.py outcome <decision_id> <question> confirmed
+```
+
+Compare labeled errors, coverage, input tokens and p95 latency per question,
+including Portuguese requests and option-order variants. Measure coverage in
+shadow from the returned certainty versus effective threshold, since `acted%`
+is deliberately zero there. Promote only after the held-out comparison, then
+pin the chosen version with `bulma.py model set <id>`. Images, Box and long
+context remain disabled; they are unrelated to this text-only migration.
+
+## Request and retry budgets
+
+`entry.*` requests default to 3 seconds; other hooks default to 8 seconds.
+One monotonic budget covers all attempts and backoff. Each network attempt
+uses only the remaining budget; a Retry-After that would exhaust it triggers
+fallback immediately. Late responses never authorize a decision. This is a
+request/retry budget, not a hard real-time guarantee: OS DNS resolution and
+socket reads can finish after their requested timeout.
+
+```sh
+python3 scripts/bulma.py timeout 8
+python3 scripts/bulma.py timeout 3 --hook entry.route
+python3 scripts/bulma.py timeout --hook entry.route
+```
+
+These commands write `timeout_seconds` and `timeout_by_hook` in the shared
+settings file. Invalid or incomplete API answers fall back per question and
+never enter the cache. Missing required state keys fail before any batch item
+is sent. Truncated states fall back without sending a request. The runner
+filters out top-level fields outside the hook's recipe; keep relevant evidence
+within the recipe caps rather than increasing context size.

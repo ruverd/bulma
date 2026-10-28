@@ -36,7 +36,17 @@ Code builds five recipes, so do not write them by hand. `bulma.py ask <hook> --b
 
 ## Many items
 
-Per-item hooks (`qa.gate` and `triage.classify` per finding, `lstm.verify` per comment) go through one `bulma.py ask-many --batch FILE` call, not one `ask` per item. The batch is a JSON list, or `{"context": {...}, "items": [...]}`; each item is `{"id", "hook", "state", "criteria"?, "graph_answer"?, "context"?}` where `state` and `criteria` are a file path or inline JSON. Every item is validated before any call (exit 4 sends nothing), then all are sent in parallel and logged once. Output is one line per item: `<id> J: …`. Keep one state per item. Do not merge items into one state: unrelated detail lowers Jev accuracy.
+Per-item hooks (`qa.gate` and `triage.classify` per finding, `lstm.verify` per comment) go through one `bulma.py ask-many --batch FILE` call, not one `ask` per item. The batch is a JSON list, or `{"context": {...}, "items": [...]}`; each item is `{"id", "hook", "state", "criteria"?, "graph_answer"?, "context"?}` where `state` and `criteria` are a file path or inline JSON. Every item and required state key is validated before any call (exit 4 sends nothing), then all are sent in parallel and logged once. Output is one line per item: `<id> J: …`. Keep one state per item. Do not merge items into one state: unrelated detail lowers Jev accuracy.
+
+Missing required keys exit 4 before any call, including in a batch. A present
+null or empty field is explicit unknown; it does not establish a fact. Truncated
+states never authorize a decision and are not sent. Refresh a compact evidence
+summary before asking again. Only recipe fields and explicitly declared optional
+fields are sent; `entry.route.pr` is optional and preserved when present.
+Malformed or missing answer values fall back per question without caching them.
+
+Request/retry budgets default to 3 seconds for entry hooks and 8 seconds for
+others. See [POWER.md](POWER.md) for overrides and timeout behavior.
 
 ## Context
 

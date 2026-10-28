@@ -1,0 +1,21 @@
+{
+  "args": "resume",
+  "candidates": [
+    {
+      "id": "resume:dev-4772",
+      "target": "developer",
+      "why": "continue work"
+    },
+    {
+      "id": "lstm:pr-805",
+      "target": "lstm",
+      "why": "review comments"
+    },
+    {
+      "id": "nothing",
+      "target": "none",
+      "why": "nothing open"
+    }
+  ],
+  "world": {}
+}

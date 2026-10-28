@@ -96,14 +96,14 @@ python3 "$BULMA" ask policy.ask --state "$FIX/state-policy-ask.json" --replay "$
 ok ask-policy-direction
 
 # --- dynamic criteria ---
-if python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-next-step.json" --bulma-root "$RR" --json >/dev/null 2>&1; then
+if python3 "$BULMA" ask entry.next_step --state "$FIX/state-next-step.json" --replay "$FIX/replay-next-step.json" --bulma-root "$RR" --json >/dev/null 2>&1; then
   fail "dynamic hook without --criteria must exit 4"
 fi
-python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-next-step.json" \
+python3 "$BULMA" ask entry.next_step --state "$FIX/state-next-step.json" --replay "$FIX/replay-next-step.json" \
   --criteria "$FIX/criteria-next-step.json" --bulma-root "$RR" --json >"$J" || fail "dynamic ask exit"
 [[ "$(jget "$J" answers.candidate.choice)" == "resume:dev-4772" ]] || fail "dynamic choice"
 [[ "$(jget "$J" answers.user_blocked.decisive)" == "yes" ]] || fail "user_blocked decisive"
-python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --criteria "$FIX/criteria-next-step.json" --dry-run --bulma-root "$RR" >"$J" || fail "dry-run exit"
+python3 "$BULMA" ask entry.next_step --state "$FIX/state-next-step.json" --criteria "$FIX/criteria-next-step.json" --dry-run --bulma-root "$RR" >"$J" || fail "dry-run exit"
 grep -F -q '"resume:dev-4772"' "$J" || fail "dry-run request lacks dynamic criteria"
 grep -F -q '"model"' "$J" || fail "dry-run request lacks model"
 ok ask-dynamic
@@ -121,17 +121,17 @@ python3 "$BULMA" ask fd.triage --state "$TMP/big.json" --replay "$FIX/replay-fd-
 [[ "$(jget "$J" truncated)" == "true" ]] || fail "truncated flag not set on 20k string"
 ok redact-truncate
 
-# --- ledger: header once, one row per question, 19 columns, no tabs in values ---
+# --- ledger: header once, one row per question, 22 columns, no tabs in values ---
 TSV="$RR/.bulma-core/DECISIONS.tsv"
 need "$TSV"
 python3 - "$TSV" <<'PY'
 import sys
 lines = open(sys.argv[1], encoding="utf-8").read().rstrip("\n").split("\n")
 header = lines[0].split("\t")
-assert header == ["ts_iso","decision_id","hook","question","power","model","answer","confidence","act_at","acted","graph_answer","outcome","repo","pr","sha","ticket","note","input_tokens","latency_ms"], header
+assert header == ["ts_iso","decision_id","hook","question","power","model","answer","confidence","act_at","acted","graph_answer","outcome","repo","pr","sha","ticket","note","input_tokens","latency_ms","question_type","policy_id","source"], header
 assert lines.count(lines[0]) == 1, "header repeated"
 rows = [l.split("\t") for l in lines[1:]]
-assert all(len(r) == 19 for r in rows), [len(r) for r in rows]
+assert all(len(r) == 22 for r in rows), [len(r) for r in rows]
 # runs so far: fd.triage x5 (4 rows each) + policy.ask x2 (2 rows) + next_step x1 (2 rows) = 26
 assert len(rows) == 26, len(rows)
 first = rows[0]
@@ -157,8 +157,8 @@ python3 "$BULMA" ask fd.triage --state "$FIX/state-fd-triage.json" --replay "$FI
 python3 - "$OLD/.bulma-core/DECISIONS.tsv" <<'PY'
 import sys
 lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
-assert lines[0].endswith("\tinput_tokens\tlatency_ms"), lines[0]
-assert len(lines) == 6 and all(len(l.split("\t")) == 19 for l in lines), [len(l.split("\t")) for l in lines]
+assert lines[0].endswith("\tquestion_type\tpolicy_id\tsource"), lines[0]
+assert len(lines) == 6 and all(len(l.split("\t")) == 22 for l in lines), [len(l.split("\t")) for l in lines]
 assert lines[1].split("\t")[1] == "old1"
 PY
 out="$(python3 "$BULMA" report --repo-only --bulma-root "$OLD")"
@@ -180,7 +180,7 @@ fix = sys.argv[2]
 json.dump({"context": {"repo": "o/r", "pr": "805"}, "items": [
     {"id": "c1", "hook": "fd.triage", "state": fix + "/state-fd-triage.json", "replay": fix + "/replay-fd-triage.json", "graph_answer": {"path": "debug_fix"}},
     {"id": "c2", "hook": "policy.ask", "state": json.load(open(fix + "/state-policy-ask.json")), "replay": fix + "/replay-policy-ask.json"},
-    {"id": "c3", "hook": "entry.next_step", "state": fix + "/state-fd-triage.json", "criteria": fix + "/criteria-next-step.json", "replay": fix + "/replay-next-step.json"},
+    {"id": "c3", "hook": "entry.next_step", "state": fix + "/state-next-step.json", "criteria": fix + "/criteria-next-step.json", "replay": fix + "/replay-next-step.json"},
 ]}, open(sys.argv[1], "w"))
 PY
 out="$(python3 "$BULMA" ask-many --batch "$TMP/batch.json" --bulma-root "$MR")"
@@ -202,7 +202,7 @@ python3 - "$TMP/bad.json" "$FIX" <<'PY'
 import json, sys
 fix = sys.argv[2]
 json.dump([{"hook": "fd.triage", "state": fix + "/state-fd-triage.json", "replay": fix + "/replay-fd-triage.json"},
-           {"hook": "entry.next_step", "state": fix + "/state-fd-triage.json"}], open(sys.argv[1], "w"))
+           {"hook": "entry.next_step", "state": fix + "/state-next-step.json"}], open(sys.argv[1], "w"))
 PY
 before="$(wc -l <"$MR/.bulma-core/DECISIONS.tsv")"
 set +e; python3 "$BULMA" ask-many --batch "$TMP/bad.json" --bulma-root "$MR" >/dev/null 2>&1; code=$?; set -e
@@ -362,7 +362,7 @@ for i in range(24):
     agree = i not in (0, 1)
     rows.append(["2026-09-%02dT10:00:00Z" % (1 + i % 28), "id%02d" % i, "fd.triage", "path", "balanced", "jev-1.13.0",
                  "debug_fix", "%.3f" % conf, "0.75", "true" if conf >= 0.75 else "false",
-                 "debug_fix" if agree else "full_feature", "", "o/r", "", "", "", ""])
+                 "debug_fix" if agree else "full_feature", "confirmed" if agree else "reversed", "o/r", "", "", "", ""])
 for i in range(5):
     rows.append(["2026-09-10T10:00:00Z", "q%d" % i, "qa.gate", "violates_pr_ac", "balanced", "jev-1.13.0", "0.9", "0.9", "0.85", "true", "", "", "o/r", "", "", "", ""])
 open(sys.argv[1], "w").write("\t".join(cols) + "\n" + "".join("\t".join(r) + "\n" for r in rows))
@@ -371,7 +371,7 @@ out="$(python3 "$BULMA" report --repo-only --bulma-root "$REP")"
 grep -E -q '^\| fd\.triage\.path +\| 24 ' <<<"$out" || fail "report row for fd.triage.path: $out"
 grep -E -q 'fd\.triage\.path .* 92% ' <<<"$out" || fail "agree% should be 92% (22/24): $out"
 grep -E -q 'fd\.triage\.path .* 0\.6[05] ' <<<"$out" || fail "suggest should land at 0.60 or 0.65: $out"
-grep -E -q 'qa\.gate\.violates_pr_ac .* need >=20' <<<"$out" || fail "short sample must say need >=20: $out"
+grep -E -q 'qa\.gate\.violates_pr_ac .* need >=20 outcomes' <<<"$out" || fail "short sample must say need >=20: $out"
 ok report
 
 # --- world.sh: candidates in rule order, gh stubbed on PATH ---
@@ -695,12 +695,12 @@ ok graph-files
 # --- entry.* under cautious/shadow never auto-routes, even above act_at ---
 # 0.95 beats cautious act_at 0.85 (base 0.75 + 0.10). Without the entry.*
 # judge gate this would act. Replay only.
-python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-next-step-095.json" \
+python3 "$BULMA" ask entry.next_step --state "$FIX/state-next-step.json" --replay "$FIX/replay-next-step-095.json" \
   --criteria "$FIX/criteria-next-step.json" --power cautious --bulma-root "$RR" --json >"$J" || fail "ask entry cautious exit"
 [[ "$(jget "$J" answers.candidate.act)" == "false" ]] || fail "cautious must not auto-route entry.next_step at .95"
 [[ "$(jget "$J" answers.candidate.act_at)" == "0.85" ]] || fail "cautious entry act_at: $(jget "$J" answers.candidate.act_at)"
 [[ "$(jget "$J" answers.user_blocked.decisive)" == "yes" ]] || fail "user_blocked decisive must stay yes under cautious"
-python3 "$BULMA" ask entry.next_step --state "$FIX/state-fd-triage.json" --replay "$FIX/replay-next-step-095.json" \
+python3 "$BULMA" ask entry.next_step --state "$FIX/state-next-step.json" --replay "$FIX/replay-next-step-095.json" \
   --criteria "$FIX/criteria-next-step.json" --power shadow --bulma-root "$RR" --json >"$J" || fail "ask entry shadow exit"
 [[ "$(jget "$J" answers.candidate.act)" == "false" ]] || fail "shadow must not auto-route entry.next_step"
 ok ask-entry-no-autoroute
@@ -708,3 +708,5 @@ ok ask-entry-no-autoroute
 echo "bulma gate: all green"
 
 PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_decision_cache.py"
+
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_jev_reliability.py"

@@ -38,7 +38,7 @@ Details: [REQUIREMENTS.md](REQUIREMENTS.md).
 1. Load `bulma-memory`. Resolve `$BULMA_ROOT`. Init `.bulma-core/STATE.md`
    from [templates/STATE.md](templates/STATE.md) unless one is live.
 2. Parse args with [ARGS.md](ARGS.md) **before** any Jev call. Local verbs
-   (`power`, `tune`, `model`, `report`, `status`, `doctor`, `watch`,
+   (`power`, `tune`, `model`, `timeout`, `report`, `status`, `doctor`, `watch`,
    `lookback`) run and stop.
 3. Walk [GRAPH.md](GRAPH.md): **admit → inventory → route → overlay → done**.
 

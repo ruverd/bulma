@@ -5,7 +5,7 @@
   → admit        doctor (hard gate) · power · catalog · init STATE
   → inventory    scripts/world.sh → .bulma-core/world.json + candidates.json
   → route        ARGS.md first; else ask entry.route | entry.next_step
-        ├ local verb (power · tune · model · report · status · doctor · watch · lookback) → run, stop
+        ├ local verb (power · tune · model · timeout · report · status · doctor · watch · lookback) → run, stop
         ├ act      → overlay (load_graph target on the main thread)
         └ suggest  → one question, waiting_user, stop
   → overlay      target graph runs; at each HOOKS.md row: ask → apply → J:
@@ -18,7 +18,7 @@
 |---|---|---|
 | start | always | **admit** |
 | admit | doctor exit 2 or 3 | **stop** (requirement message, `status: blocked`) |
-| admit | args are `power`, `tune`, `model` | **power** (no doctor needed), then stop |
+| admit | args are `power`, `tune`, `model`, `timeout` | **power** (no doctor needed), then stop |
 | admit | args are `report`, `status`, `doctor` | **report** (no doctor needed), then stop |
 | admit | args are `watch` | **watch** (no doctor needed), then stop |
 | admit | args are `lookback` | **lookback** (no doctor needed), then stop |
@@ -43,7 +43,7 @@
 
 ```yaml
 power: balanced          # $BULMA_HOME/bulma.json overrides
-model: jev-1.13.0        # pinned; migrate with `bulma.py model set <id>`
+model: jev-1.14.0        # pinned; migrate with `bulma.py model set <id>`
 never_merge: true
 enter_bus_stack: false
 product_code_on_main: false
