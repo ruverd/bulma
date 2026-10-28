@@ -136,6 +136,8 @@ def measure(args):
         value = data.get(key)
         if value is not None and (type(value) is not int or value < 0):
             raise ValueError(key + ' must be a nonnegative integer or null')
+    if data.get('rework') is not None and type(data['rework']) is not bool:
+        raise ValueError('rework must be a boolean or null')
     if any(data.get(key) is not None for key in ('input_tokens', 'output_tokens', 'cached_tokens')):
         if not data.get('usage_source'):
             raise ValueError('token usage requires a host usage_source')
@@ -149,12 +151,27 @@ def report(args):
     rows = [json.loads(p.read_text()) for p in Path(args.directory).glob('*.json')]
     groups = {}
     for row in rows:
+        if args.run is not None and row['run'] != args.run:
+            continue
         key = row['graph'] + '/' + row['node']
         item = groups.setdefault(key, {'samples': 0, 'active_ms': 0, 'wait_ms': 0,
                                        'input_tokens': None, 'output_tokens': None,
-                                       'cached_tokens': None, 'usage_samples': 0})
+                                       'cached_tokens': None, 'usage_samples': 0,
+                                       'retries': None, 'retry_samples': 0,
+                                       'rework_samples': None, 'rework_observed_samples': 0,
+                                       'rework_active_ms': None, 'rework_wait_ms': None})
         item['samples'] += 1
         item[row['kind'] + '_ms'] += row['duration_ms']
+        if row.get('retries') is not None:
+            item['retry_samples'] += 1
+            item['retries'] = (item['retries'] or 0) + row['retries']
+        if row.get('rework') is not None:
+            item['rework_observed_samples'] += 1
+            item['rework_samples'] = (item['rework_samples'] or 0) + int(row['rework'])
+            for kind in ('active', 'wait'):
+                field = 'rework_' + kind + '_ms'
+                item[field] = (item[field] or 0) + (
+                    row['duration_ms'] if row['rework'] and row['kind'] == kind else 0)
         if row.get('input_tokens') is not None:
             item['usage_samples'] += 1
         for name in ('input_tokens', 'output_tokens', 'cached_tokens'):
@@ -184,6 +201,7 @@ def main():
     p.add_argument('--input', required=True)
     p = sub.add_parser('report')
     p.add_argument('--directory', required=True)
+    p.add_argument('--run', help='limit phase totals to one delivery/run ID')
     args = parser.parse_args()
     try:
         return globals()[args.action](args)

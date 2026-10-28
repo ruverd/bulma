@@ -74,7 +74,7 @@ Keep the PNGs on disk. There is no PR yet. Shipper attaches them with
 
 Write `$BULMA_ROOT/.bulma-feature-delivery/pr-body-evidence.md`.
 
-Fill **How tested** (commands + exit codes from `gates.log`) and
+Fill **How tested** (commands + recorded exit codes + runtime receipt paths) and
 **Before → After** (local PNG paths, fenced output, or `n/a`).
 Shipper inlines the fragment into
 [../templates/PR_BODY.md](../templates/PR_BODY.md), then replaces
@@ -100,4 +100,5 @@ summary: ...
 - Do not invent a pass. Missing After on a UI change is a fail.
 - Do not open, merge, or push the PR.
 - Do not change product code.
-- Do not retype `gates.log` exit codes from memory.
+- Read exit codes from the runtime receipts cited in STATE, never from memory
+  or the status of a later log-summary command.

@@ -27,7 +27,7 @@ Objective hard gate with **real commands**.
 4. `e2e_cmd` only if done criteria require it
 5. every command under project memory `## Checks`
    ([bulma-memory](../../bulma-memory/SKILL.md)), from the repo root, through
-   the same `gates.log` wrapper. They are the project's own pre-push guards.
+   the same runtime evidence capture. They are the project's own pre-push guards.
    A non-zero exit is a fail like any other. A command that cannot run here
    (missing tool) is recorded as skipped with the reason, never as a pass
 
@@ -55,8 +55,11 @@ a green advisory status carrying BLOCKED is not QA PASS. Do not start a second Q
 
 `hard_gate: pass | fail | skipped` + `floor_guard: pass | fail | error` +
 `floor_allowed` + commands + exit codes in STATE.
-Exit codes via wrapper (`<cmd>; echo "<cmd> exit=$?" >> .bulma-feature-delivery/gates.log`)
-and **cited** from the file — never retyped from memory. Suites >10 min belong to CI,
+Capture each check through [runtime evidence](../../bulma-bus/PERFORMANCE.md),
+passing the test runner as direct argv. Cite `exit_code` from its JSON receipt
+and include the receipt path. Never use the exit code of a later `echo`, `tail`
+or `tee` as the verdict. Full logs stay outside the checkout; summarize them
+after capture. Suites >10 min belong to CI,
 not this gate (scope to the touched area). Any red = fail; flakes are judged by the
 orchestrator.
 

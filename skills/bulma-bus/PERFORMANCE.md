@@ -18,6 +18,17 @@ Trail's session ID and file path are in `output.log`; query that session through
 only for a reproduction that existing logs cannot explain. Remove probes before
 final validation. Never treat empty logs as a pass. Read the recorded exit code.
 
+Pass the test runner as direct argv after `--`. Do not wrap it in `sh -c`,
+`bash -c`, a pipeline, or `<test>; echo ...`: the shell can return the status of
+`tail`, `tee` or `echo` instead of the test. If the project requires shell syntax,
+use its existing script that propagates failures, including pipeline failures.
+Capture each required check separately. Inspect `output.log` after capture with
+`tail` or another reader; that reader's exit code is never the test verdict.
+The JSON receipt's `exit_code` is authoritative even if the caller later runs a
+successful summary command. RED requires the expected failing assertion and a
+nonzero test exit; GREEN requires zero and executed assertions. Launch errors,
+timeouts and missing prerequisites do not establish RED or GREEN.
+
 The environment fingerprint must identify toolchain versions, installed
 dependencies, relevant configuration and external fixtures. Hash these values;
 never store credentials. An unknown or changing external service means no reuse:
@@ -49,9 +60,37 @@ Record deltas per attempt, not cumulative session totals. Clock durations come
 from execution timestamps, not a model estimate. Observation failure is a note,
 never a reason to repeat product work or block delivery.
 
+Record failed, blocked and repeated attempts too, before scheduling another
+attempt. `retries` is a delta: 0 on the first attempt, 1 on each subsequent
+attempt of the same phase. Do not send the cumulative attempt number. An active
+sample owns that retry count; its separate wait samples record 0, so waits do
+not double-count retries. Missing retry information stays null.
+
+Optional `rework` is a boolean. Set true for an attempt needed to address a
+failed test, review, CI or QA finding, false for first-pass work, and null or omit
+when unknown. A transient infrastructure retry is a retry, but is not product
+rework unless it also addresses a finding. Mark associated wait samples with
+the same rework classification. Each `sample_id` identifies one active or wait
+observation; the same ID must never identify both. Use one `run` ID across a
+delivery's phases so it can be inspected separately.
+
+Example active sample for a second tester attempt after a failed check:
+
+```json
+{"run":"delivery-42","sample_id":"tester-2-active","graph":"fd","node":"tester","kind":"active","duration_ms":4200,"retries":1,"rework":true}
+```
+
 `report --directory ...` aggregates active time, waits and observed usage by node.
 `usage_samples` exposes partial coverage. `bulma report` also includes these measurements alongside its existing
 transition ledger; neither report claims missing host usage is zero.
+
+The report also sums observed `retries`, `rework_samples`, `rework_active_ms`
+and `rework_wait_ms` per graph/node. `retry_samples` and
+`rework_observed_samples` expose coverage; missing observations are not zeros.
+Use `report --directory ... --run <delivery-id>` for one delivery. Durations
+are sums of observed work and waits, not elapsed delivery time when workers
+overlap. Keep the final acceptance outcome in STATE; these totals alone do not
+establish cost per accepted delivery or first-pass success.
 
 Compare matched tasks with the same model, repository snapshot and risk: reviewer,
 LSTM, small feature and elevated-risk feature. Record first-pass success, retries,
