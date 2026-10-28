@@ -11,7 +11,9 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import hashlib
+import http.client
 import json
+import math
 import os
 import re
 import subprocess
@@ -29,9 +31,11 @@ import decision_cache
 import dispatch  # noqa: E402  (sibling module, after the bytecode switch)
 
 API = "https://api.typesafe.ai/v1"
-# Pinned, not the alias: catalog act_at values were set against this version
-# and `jev-latest` moves when a release ships. Migrate with `model set`.
-DEFAULT_MODEL = "jev-1.13.0"
+# Pin releases so an alias cannot change decisions between runs. Compare new
+# models under shadow before retuning the catalog thresholds.
+DEFAULT_MODEL = "jev-1.14.0"
+DEFAULT_TIMEOUT = 8.0
+ENTRY_TIMEOUT = 3.0
 LEVELS = {"shadow": None, "cautious": 0.10, "balanced": 0.0, "bold": -0.10}
 # Hooks that stay under this level until power_by_hook, env or flag names one.
 HOOK_DEFAULT_POWER = {"dispatch.tier": "shadow", "insight.classify": "shadow"}
@@ -45,6 +49,7 @@ TSV_COLUMNS = [
     "ts_iso", "decision_id", "hook", "question", "power", "model", "answer",
     "confidence", "act_at", "acted", "graph_answer", "outcome", "repo", "pr",
     "sha", "ticket", "note", "input_tokens", "latency_ms",
+    "question_type", "policy_id", "source",
 ]
 LOG_TAIL_LINES = 200
 PR_BODY_CAP = 3000
@@ -285,50 +290,96 @@ def api_key():
     return key
 
 
-def post_json(path, body, timeout=20):
+def decision_timeout(hook_id, cfg):
+    default = ENTRY_TIMEOUT if hook_id.startswith("entry.") else DEFAULT_TIMEOUT
+    value = cfg.get("timeout_by_hook", {}).get(hook_id, cfg.get("timeout_seconds", default))
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value <= 0:
+        raise BulmaError(4, "decision timeout must be a finite positive number")
+    return float(value)
+
+
+def post_json(path, body, timeout=DEFAULT_TIMEOUT):
     key = api_key()
     data = json.dumps(body).encode("utf-8")
     request = urllib.request.Request(
         API + path, data=data, method="POST",
         headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "bulma"},
     )
+    deadline = time.monotonic() + timeout
     delays = [1, 2, 4]
     for attempt in range(4):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise BulmaError(3, "decision timeout")
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
+            with urllib.request.urlopen(request, timeout=remaining) as response:
+                result = json.loads(response.read().decode("utf-8"))
+            if time.monotonic() >= deadline:
+                raise BulmaError(3, "decision timeout")
+            if not isinstance(result, dict):
+                raise BulmaError(3, "API response must be an object")
+            return result
         except urllib.error.HTTPError as err:
-            if err.code == 429 or err.code >= 500:
-                if attempt == 3:
-                    raise BulmaError(3, "HTTP %s after 3 retries" % err.code)
-                retry_after = err.headers.get("retry-after") if err.headers else None
-                wait = float(retry_after) if retry_after and re.fullmatch(r"\d+(\.\d+)?", retry_after) else delays[attempt]
-                time.sleep(wait)
-                continue
-            detail = err.read().decode("utf-8", errors="replace")[:200]
-            raise BulmaError(3, "HTTP %s: %s" % (err.code, detail))
-        except (urllib.error.URLError, TimeoutError, OSError) as err:
+            err.close()
+            if err.code != 429 and err.code < 500:
+                raise BulmaError(3, "HTTP %s" % err.code)
+            if attempt == 3:
+                raise BulmaError(3, "HTTP %s after 3 retries" % err.code)
+            retry_after = err.headers.get("retry-after") if err.headers else None
+            wait = float(retry_after) if retry_after and re.fullmatch(r"\d+(\.\d+)?", retry_after) else delays[attempt]
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as err:
             if attempt == 3:
                 raise BulmaError(3, "network: %s" % err)
-            time.sleep(delays[attempt])
+            wait = delays[attempt]
+        except (ValueError, UnicodeError):
+            raise BulmaError(3, "API response is not valid JSON")
+        remaining = deadline - time.monotonic()
+        if wait >= remaining:
+            raise BulmaError(3, "decision timeout before retry")
+        time.sleep(wait)
     raise BulmaError(3, "unreachable")
 
 
+def probability(value):
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and 0 <= value <= 1 and math.isfinite(value))
+
+
+def valid_answer(question, raw):
+    if not isinstance(raw, dict):
+        return False
+    kind = question["type"]
+    if kind == "noul":
+        return probability(raw.get("noul"))
+    if not probability(raw.get("confidence")):
+        return False
+    value = raw.get(kind)
+    criteria = question.get("criteria")
+    if kind == "choice":
+        return isinstance(value, str) and isinstance(criteria, dict) and value in criteria
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and 0 <= value <= 1 and math.isfinite(value))
+
+
 def judge(question, raw, act_at, power, hook_id=""):
+    if not valid_answer(question, raw):
+        return {"act": False, "act_at": act_at, "invalid": True}
     live = power != "shadow"
     if str(hook_id).startswith("entry.") and power in ("cautious", "shadow"):
         live = False
     qtype = question["type"]
     if qtype == "noul":
-        value = float(raw.get("noul", 0.0))
-        if value >= act_at:
+        value = float(raw["noul"])
+        if value == 0.5:
+            decisive = "undecided"
+        elif value >= act_at:
             decisive = "yes"
         elif value <= round(1 - act_at, 2):
             decisive = "no"
         else:
             decisive = "undecided"
         return {"noul": round(value, 3), "act_at": act_at, "decisive": decisive, "act": live and decisive != "undecided"}
-    confidence = float(raw.get("confidence", 0.0))
+    confidence = float(raw["confidence"])
     picked = raw.get("choice") if qtype == "choice" else raw.get("score")
     out = {qtype: picked, "confidence": round(confidence, 3), "act_at": act_at, "act": live and confidence >= act_at}
     if raw.get("probabilities") is not None:
@@ -430,6 +481,9 @@ def rows_for(doc, hook, thresholds, graph_answers, context, note):
             "note": note,
             "input_tokens": input_tokens,
             "latency_ms": doc.get("latency_ms", ""),
+            "question_type": hook["questions"][qid]["type"],
+            "policy_id": doc.get("policy_id", ""),
+            "source": doc.get("source", ""),
         })
     return rows
 
@@ -685,16 +739,21 @@ def prepare(hook, state, cfg, power_flag, model, criteria):
         raise BulmaError(4, "state must be a JSON object, array or string")
     power, source = resolve_power(power_flag, hook["id"], cfg)
     budget = {"remaining": TOTAL_CAP, "truncated": False}
+    missing = missing_keys(state if isinstance(state, dict) else {}, hook["state_keys"])
+    if missing:
+        raise BulmaError(4, "state missing key(s): %s" % ", ".join(missing))
+    roots = {key.split(".")[0] for key in hook["state_keys"] + hook.get("optional_state_keys", [])}
+    state = {key: value for key, value in state.items() if key in roots}
     request = build_request(hook, sanitize(state, budget), model, criteria)
     overrides = cfg.get("act_at", {})
     thresholds = {
         qid: effective_act_at(overrides.get("%s.%s" % (hook["id"], qid), q["act_at"]), power, q.get("direction", "act"))
         for qid, q in hook["questions"].items()
     }
-    warnings = ["state missing key: %s" % k for k in missing_keys(state if isinstance(state, dict) else {}, hook["state_keys"])]
     doc = {
         "hook": hook["id"], "decision_id": new_decision_id(hook["id"]), "model": model,
-        "power": power, "power_source": source, "truncated": budget["truncated"], "warnings": warnings,
+        "power": power, "power_source": source, "truncated": budget["truncated"], "warnings": [],
+        "timeout_seconds": decision_timeout(hook["id"], cfg),
     }
     return request, thresholds, doc
 
@@ -704,44 +763,64 @@ def ask_one(hook, request, thresholds, doc, replay, graph_answers, context):
     started = time.monotonic()
     policy = hashlib.sha256(CATALOG_PATH.read_bytes() + Path(__file__).read_bytes()
                             + Path(decision_cache.__file__).read_bytes()).hexdigest()
+    doc["policy_id"] = hashlib.sha256((policy + json.dumps(request["questions"], sort_keys=True)).encode()).hexdigest()[:16]
+    doc["source"] = "replay" if replay else "live"
+    if doc["truncated"]:
+        doc["answers"] = {qid: {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]}
+                          for qid in hook["questions"]}
+        doc["warnings"].append("truncated state: refresh relevant evidence before asking again")
+        return doc, rows_for(doc, hook, thresholds, graph_answers, context, "truncated"), 0
     key = None if replay else decision_cache.cache_key(
         hook, request, thresholds, doc, graph_answers, context, policy)
     folder = bulma_home() / "jev-cache"
     response = decision_cache.read(folder, key)
-    if response is not None and not all(
-            isinstance((response.get("answers") or {}).get(qid), dict) for qid in hook["questions"]):
+    if response is not None and (not isinstance(response.get("answers"), dict) or not all(
+            valid_answer(request["questions"][qid], response["answers"].get(qid)) for qid in hook["questions"])):
         response = None
     hit = response is not None
     doc["cache_hit"] = hit
     try:
         if not hit:
-            response = load_json_file(replay) if replay else post_json("/systemone", request)
+            response = load_json_file(replay) if replay else post_json("/systemone", request, timeout=doc["timeout_seconds"])
     except BulmaError as err:
         if err.code != 3:
             raise
+        doc["latency_ms"] = int((time.monotonic() - started) * 1000)
         doc["error"] = {"code": 3, "message": str(err)}
         doc["answers"] = {qid: {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]} for qid in hook["questions"]}
         return doc, rows_for(doc, hook, thresholds, graph_answers, context, ("error:" + str(err))[:80]), 3
     if not replay:
         doc["latency_ms"] = int((time.monotonic() - started) * 1000)
-    doc["model"] = response.get("model", doc["model"])
+    if not isinstance(response, dict):
+        response = {}
+    doc["model"] = response.get("model") or doc["model"]
+    answers = response.get("answers")
+    if not isinstance(answers, dict):
+        answers = {}
     doc["answers"] = {}
     for qid, question in hook["questions"].items():
-        raw = (response.get("answers") or {}).get(qid)
+        raw = answers.get(qid)
         if raw is None:
             doc["warnings"].append("no answer for %s" % qid)
             doc["answers"][qid] = {"act": False, "act_at": thresholds[qid], "fallback": hook["fallback"]}
             continue
-        judged = judge(question, raw, thresholds[qid], doc["power"], hook["id"])
+        judged = judge(request["questions"][qid], raw, thresholds[qid], doc["power"], hook["id"])
+        if judged.get("invalid"):
+            doc["warnings"].append("invalid answer for %s" % qid)
         if not judged["act"]:
             judged["fallback"] = hook["fallback"]
         doc["answers"][qid] = judged
-    doc["usage"] = {"input_tokens": 0} if hit else response.get("usage", {})
-    complete = all(qid in (response.get("answers") or {}) for qid in hook["questions"])
+    usage = response.get("usage")
+    doc["usage"] = {"input_tokens": 0} if hit else usage if isinstance(usage, dict) else {}
+    complete = all(valid_answer(request["questions"][qid], answers.get(qid)) for qid in hook["questions"])
     if not hit and not replay and complete:
         decision_cache.write(folder, key, response)
-    note = "cache_hit" if hit else "truncated" if doc["truncated"] else ""
-    return doc, rows_for(doc, hook, thresholds, graph_answers, context, note), 0
+    note = "cache_hit" if hit else ""
+    rows = rows_for(doc, hook, thresholds, graph_answers, context, note)
+    for row in rows:
+        if not valid_answer(request["questions"][row["question"]], answers.get(row["question"])):
+            row["note"] = "invalid_answer"
+    return doc, rows, 0
 
 
 def find_hook(catalog, hook_id):
@@ -963,16 +1042,51 @@ def parse_ts(value):
         return None
 
 
-def suggest_threshold(rows, current):
-    with_graph = [r for r in rows if r["graph_answer"]]
-    if len(with_graph) < 20:
-        return "need >=20"
+def row_evaluation(row, catalog):
+    if (row.get("note", "").startswith(("invalid_answer", "truncated", "error:"))
+            or not row.get("answer")):
+        return None
+    question = catalog.get(row["hook"], {}).get("questions", {}).get(row["question"], {})
+    kind = row.get("question_type") or question.get("type")
+    try:
+        value = float(row["confidence"])
+        if not probability(value):
+            return None
+        if kind == "noul":
+            p = float(row["answer"])
+            if not probability(p) or p == 0.5:
+                return None
+            return ("yes" if p > 0.5 else "no"), max(p, 1 - p)
+        if not row["answer"]:
+            return None
+        return row["answer"], value
+    except (ValueError, TypeError):
+        return None
+
+
+def graph_label(value, kind):
+    if kind == "noul":
+        return {"true": "yes", "false": "no", "yes": "yes", "no": "no"}.get(value.lower(), value)
+    return value
+
+
+def suggest_threshold(rows, current, catalog=None):
+    catalog = load_catalog() if catalog is None else catalog
+    labeled = [(r, row_evaluation(r, catalog)) for r in rows
+               if r["outcome"] in ("confirmed", "reversed") and not r.get("note", "").startswith("cache_hit")]
+    labeled = [(r, result) for r, result in labeled if result is not None]
+    if len(labeled) < 20:
+        return "need >=20 outcomes"
     for step in range(10, 20):
-        t = step / 20.0
-        sub = [r for r in with_graph if float(r["confidence"] or 0) >= t]
-        if len(sub) >= 20 and sum(1 for r in sub if r["answer"] == r["graph_answer"]) / len(sub) >= 0.95:
-            return "keep" if abs(t - current) < 0.001 else "%.2f" % t
-    return "keep"
+        threshold = step / 20.0
+        selected = [r for r, (_, certainty) in labeled if certainty >= threshold]
+        if len(selected) >= 20 and sum(r["outcome"] == "confirmed" for r in selected) / len(selected) >= 0.95:
+            return "keep" if abs(threshold - current) < 0.001 else "%.2f" % threshold
+    return "no supported threshold"
+
+
+def percentile(values, fraction):
+    return sorted(values)[max(0, math.ceil(len(values) * fraction) - 1)] if values else "-"
 
 
 def cmd_report(args):
@@ -984,49 +1098,73 @@ def cmd_report(args):
     if args.since:
         cutoff = datetime.now(timezone.utc) - timedelta(days=int(args.since))
         rows = [r for r in rows if (parse_ts(r["ts_iso"]) or cutoff) >= cutoff]
-    if args.hook:
-        rows = [r for r in rows if r["hook"] == args.hook]
+    for field in ("hook", "model", "policy_id", "source"):
+        wanted = getattr(args, field, None)
+        if wanted:
+            rows = [r for r in rows if (r.get(field) or "legacy") == wanted]
     if not rows:
         print("no decisions found under %s" % (root if args.repo_only else bulma_home()))
         return 0
+    catalog = load_catalog()
     groups = {}
     for row in rows:
-        if row["note"] != "cache_hit":
-            groups.setdefault((row["hook"], row["question"]), []).append(row)
-    print("| hook.question | n | acted% | conf | agree% | reversed | act_at | suggest |")
-    print("|---|---|---|---|---|---|---|---|")
-    for (hook, question), items in sorted(groups.items()):
-        n = len(items)
-        acted = sum(1 for r in items if r["acted"] == "true")
-        confs = [float(r["confidence"]) for r in items if r["confidence"] not in ("", None)]
-        mean = sum(confs) / len(confs) if confs else 0.0
-        with_graph = [r for r in items if r["graph_answer"]]
-        agree = ("%d%%" % round(100 * sum(1 for r in with_graph if r["answer"] == r["graph_answer"]) / len(with_graph))) if with_graph else "-"
-        reversed_count = sum(1 for r in items if r["outcome"] == "reversed")
-        current = float(items[-1]["act_at"] or 0)
-        print("| %s.%s | %d | %d%% | %.2f | %s | %d | %.2f | %s |" % (
-            hook, question, n, round(100 * acted / n), mean, agree, reversed_count, current, suggest_threshold(items, current)))
-    models = sorted({r["model"] for r in rows if r["model"]})
-    if len(models) > 1:
-        print()
-        print("note: %d model ids in these rows (%s). Pin one with `bulma.py model set <id>` once thresholds are tuned." % (len(models), ", ".join(models)))
+        if not row["note"].startswith("cache_hit"):
+            key = (row["model"], row.get("policy_id") or "legacy", row.get("source") or "legacy", row["power"])
+            groups.setdefault(key, {}).setdefault((row["hook"], row["question"]), []).append(row)
+    for (model, policy, source, power), questions in sorted(groups.items()):
+        print("model=%s policy=%s source=%s power=%s" % (model, policy, source, power))
+        print("| hook.question | n | acted% | certainty | agree% | confirmed | reversed | unlabeled | act_at | suggest effective | p95 ms |")
+        print("|---|---|---|---|---|---|---|---|---|---|---|")
+        for (hook, question), items in sorted(questions.items()):
+            n = len(items)
+            acted = sum(r["acted"] == "true" for r in items)
+            evaluated = [(r, row_evaluation(r, catalog)) for r in items]
+            certainty = [result[1] for _, result in evaluated if result is not None]
+            kind = items[-1].get("question_type") or catalog.get(hook, {}).get("questions", {}).get(question, {}).get("type")
+            with_graph = [(r, result) for r, result in evaluated if r["graph_answer"] and result is not None]
+            agree = ("%d%%" % round(100 * sum(result[0] == graph_label(r["graph_answer"], kind)
+                                               for r, result in with_graph) / len(with_graph))) if with_graph else "-"
+            confirmed = sum(r["outcome"] == "confirmed" for r in items)
+            reversed_count = sum(r["outcome"] == "reversed" for r in items)
+            current = float(items[-1]["act_at"] or 0)
+            latencies = [int(r["latency_ms"]) for r in items if r["latency_ms"].isdigit()]
+            suggestion = "replay only" if source == "replay" else suggest_threshold(items, current, catalog)
+            print("| %s.%s | %d | %d%% | %.2f | %s | %d | %d | %d | %.2f | %s | %s |" % (
+                hook, question, n, round(100 * acted / n), sum(certainty) / len(certainty) if certainty else 0,
+                agree, confirmed, reversed_count, n - confirmed - reversed_count, current, suggestion,
+                percentile(latencies, .95)))
     calls = {}
     for row in rows:
         calls.setdefault(row["decision_id"], row)
-    cache_hits = sum(r["note"] == "cache_hit" for r in calls.values())
+    cache_hits = sum(r["note"].startswith("cache_hit") for r in calls.values())
     if cache_hits:
         print("decision cache: %d hits, %d fresh/replayed decisions" % (cache_hits, len(calls) - cache_hits))
     tokens = [int(r["input_tokens"]) for r in calls.values() if r["input_tokens"].isdigit()]
-    latencies = sorted(int(r["latency_ms"]) for r in calls.values() if r["latency_ms"].isdigit())
+    latencies = [int(r["latency_ms"]) for r in calls.values() if r["latency_ms"].isdigit()]
     if tokens or latencies:
-        print()
-        print("calls: %d · input_tokens: %d (avg %d) · latency p50 %s ms, max %s ms" % (
+        print("calls: %d · input_tokens: %d (avg %d) · latency p50 %s ms, p95 %s ms, max %s ms" % (
             len(calls), sum(tokens), sum(tokens) // len(tokens) if tokens else 0,
-            latencies[len(latencies) // 2] if latencies else "-", latencies[-1] if latencies else "-"))
-    shadow = sum(1 for r in rows if r["power"] == "shadow")
-    if shadow and shadow * 2 > len(rows):
-        print("note: %d of %d rows ran under shadow; agree%% is the only live signal there." % (shadow, len(rows)))
+            percentile(latencies, .5), percentile(latencies, .95), max(latencies) if latencies else "-"))
+    print("note: agree% compares the graph heuristic, not correctness; unlabeled outcomes are unknown.")
+    print("note: Noul certainty is max(p, 1-p); Choice/Score use API confidence. Cached rows do not calibrate.")
+    if any(r.get("source") in ("", "replay") for r in rows):
+        print("note: legacy rows have unknown provenance; replay usage is fixture data, not billing.")
     return 0
+
+
+def cmd_timeout(args):
+    cfg = load_config()
+    if args.hook:
+        find_hook(load_catalog(), args.hook)
+    if args.seconds is not None:
+        if not math.isfinite(args.seconds) or args.seconds <= 0:
+            raise BulmaError(4, "decision timeout must be a finite positive number")
+        if args.hook:
+            cfg.setdefault("timeout_by_hook", {})[args.hook] = args.seconds
+        else:
+            cfg["timeout_seconds"] = args.seconds
+        save_config(cfg)
+    print("timeout=%g seconds" % decision_timeout(args.hook or "", cfg))
 
 
 def add_builder_args(p):
@@ -1101,8 +1239,16 @@ def build_parser():
     p.add_argument("--bulma-root")
     p.set_defaults(func=cmd_outcome)
 
+    p = sub.add_parser("timeout", help="show or set the shared request/retry budget")
+    p.add_argument("seconds", type=float, nargs="?")
+    p.add_argument("--hook")
+    p.set_defaults(func=cmd_timeout)
+
     p = sub.add_parser("report", help="calibration table from DECISIONS.tsv")
     p.add_argument("--hook")
+    p.add_argument("--model")
+    p.add_argument("--policy-id")
+    p.add_argument("--source", choices=("live", "replay", "legacy"))
     p.add_argument("--since", type=int)
     p.add_argument("--repo-only", action="store_true")
     p.add_argument("--bulma-root")

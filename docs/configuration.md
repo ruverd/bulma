@@ -14,7 +14,9 @@ it by hand.
   "power": "balanced",
   "power_by_hook": { "qa.gate": "shadow", "dispatch.tier": "shadow" },
   "act_at": { "fd.triage.path": 0.70 },
-  "model": "jev-1.13.0",
+  "model": "jev-1.14.0",
+  "timeout_seconds": 8,
+  "timeout_by_hook": { "entry.route": 3, "entry.next_step": 3 },
   "tiers": { "claude": { "light": { "model": "haiku" } } }
 }
 ```
@@ -24,7 +26,9 @@ it by hand.
 | `power` | `/bulma power <level>` | How much Jev decides everywhere. Default `balanced` |
 | `power_by_hook` | `/bulma power <level> <hook>` | The same, for one hook. Overrides `power` |
 | `act_at` | `/bulma tune <hook.question> <value>` | The confidence Jev needs before Bulma uses its answer on one question |
-| `model` | `/bulma model <id>` | The pinned Jev model. Default `jev-1.13.0` |
+| `model` | `/bulma model <id>` | The pinned Jev model. Default `jev-1.14.0` |
+| `timeout_seconds` | `bulma.py timeout <seconds>` | Shared budget for a request and its retries. Default 3 seconds for entry hooks, 8 for other hooks |
+| `timeout_by_hook` | `bulma.py timeout <seconds> --hook <hook>` | Override the budget for one hook |
 | `tiers` | See [DISPATCH.md](../skills/bulma/DISPATCH.md) | Which model each worker tier uses on each agent |
 
 A hook is one point in a run where Bulma asks Jev.
@@ -50,10 +54,12 @@ first one in this list wins:
 
 To raise Jev's authority safely:
 
-1. Run in `shadow` until a question has 20 or more logged decisions.
+1. Run in `shadow` and collect independently checked outcome labels.
 2. Run `/bulma report`. For each question, it prints `agree%` (how often Jev
-   matched the built-in rule), `reversed` (answers later proved wrong), and
-   `suggest` (a threshold that the log supports).
+   matched the built-in rule), outcome counts, and `suggest effective`. A
+   suggestion needs at least 20 outcome-labeled decisions above the cut;
+   agreement with the built-in rule alone never qualifies. Validate on a
+   held-out set. Model, policy, source and power cohorts stay separate.
 3. Raise one hook at a time, for example `/bulma power balanced fd.triage`.
 
 [POWER.md](../skills/bulma/POWER.md) has the full decision rule.
@@ -95,6 +101,7 @@ To set this repo's reviewers without editing the repo, use memory:
 | `/bulma report` | no | Shows how often Jev agreed with the built-in rules |
 | `/bulma power [<level>] [<hook>]` | no | Prints or sets the power level |
 | `/bulma tune <hook.question> <value>` | no | Sets one threshold |
+| `/bulma timeout [<seconds>] [--hook H]` | no | Shows or changes the request/retry budget |
 | `/bulma model [<id>]` | no | Prints or pins the Jev model |
 | `/bulma doctor` | no | Checks the setup |
 | `/bulma status` | no | Shows the current run, the power level, and the last five Jev decisions |

@@ -10,6 +10,8 @@ path, must be free of it, case-insensitively.
 Identity is not branding: the author name, email, and owner URL in
 plugin.json, and the repository slug, are removed from each line before the
 check, so the maintainer can still sign the license and be the contact.
+Julius learning filenames may carry their frontmatter author as a suffix;
+only that matching suffix and author field are identity, not branding.
 """
 import json
 import os
@@ -40,6 +42,22 @@ def identity(root):
     return sorted({v for v in found if v}, key=len, reverse=True)
 
 
+def learning_identity(rel, lines):
+    if (not re.fullmatch(r"\.julius/learnings/\d{4}-\d{2}-\d{2}-.+\.md", rel)
+            or not lines or lines[0] != "---"):
+        return rel, None
+    for lineno, line in enumerate(lines[1:], 2):
+        if line == "---":
+            break
+        if not line.startswith("author:"):
+            continue
+        author = line.partition(":")[2].strip().strip("\"'")
+        suffix = "-" + author.lower() + ".md"
+        if re.fullmatch(r"[A-Za-z0-9_-]+", author) and rel.lower().endswith(suffix):
+            return rel[:-len(suffix)] + ".md", lineno
+    return rel, None
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "."
     word = legacy_word(root)
@@ -48,15 +66,20 @@ def main():
     tracked = subprocess.run(["git", "-C", root, "ls-files", "-z"], capture_output=True, text=True, check=True)
     errors = []
     for rel in filter(None, tracked.stdout.split("\0")):
-        if pattern.search(rel):
-            errors.append("%s: path contains the legacy name" % rel)
         path = os.path.join(root, rel)
         try:
             lines = open(path, encoding="utf-8").read().splitlines()
         except (UnicodeDecodeError, FileNotFoundError, IsADirectoryError):
+            if pattern.search(rel):
+                errors.append("%s: path contains the legacy name" % rel)
             continue
+        checked_path, author_line = learning_identity(rel, lines)
+        if pattern.search(checked_path):
+            errors.append("%s: path contains the legacy name" % rel)
         inside = False
         for lineno, line in enumerate(lines, 1):
+            if lineno == author_line:
+                continue
             if rel in BLOCK_FILES and BEGIN in line:
                 inside = True
             bare = line

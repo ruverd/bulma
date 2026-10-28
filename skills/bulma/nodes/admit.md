@@ -6,7 +6,7 @@
 ## Steps
 
 1. Load `bulma-memory` (both files). Resolve `$BULMA_ROOT` (DISK.md).
-2. Parse args with `../ARGS.md`. `power`, `tune`, `model` → **power**.
+2. Parse args with `../ARGS.md`. `power`, `tune`, `model`, `timeout` → **power**.
    `report`, `status`, `doctor` → **report**. `watch` → **watch**. `lookback` →
    **lookback**. These need no key.
 3. Otherwise run `python3 scripts/bulma.py doctor`.

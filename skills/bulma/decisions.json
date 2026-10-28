@@ -8,6 +8,7 @@
       "stakes": "low",
       "fallback": "suggest the top candidates and wait for the user",
       "state_keys": ["args", "world", "user_login"],
+      "optional_state_keys": ["pr"],
       "questions": {
         "target": {
           "type": "choice",

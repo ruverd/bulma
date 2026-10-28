@@ -9,8 +9,9 @@ this table **before** any Jev call. Trim, then match in order.
 | `power [shadow\|cautious\|balanced\|bold]` | print or set the global level; stop |
 | `power <level> <hook>` | set one hook's level (`power_by_hook`); stop |
 | `tune <hook.question> <0.50-0.99>` | per-question `act_at`; stop |
+| `timeout [<seconds>] [--hook H]` | print or set the request/retry budget; stop |
 | `model [<id>]` | print or pin the model; stop |
-| `report [--hook H] [--since D] [--repo-only]` | calibration table; stop |
+| `report [--hook H] [--model M] [--policy-id P] [--source S] [--since D] [--repo-only]` | calibration table; stop |
 | `status` | STATE + power + last five ledger rows; stop |
 | `doctor` | run doctor and print; stop |
 | `watch [--stale-hours N] [--no-gh]` | stalled work across every workspace; stop |
