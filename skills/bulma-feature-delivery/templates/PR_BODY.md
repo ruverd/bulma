@@ -8,7 +8,7 @@
 
 ## How tested
 
-<!-- Commands and exit codes copied from `.bulma-feature-delivery/gates.log`. Do not retype them. Evidence: fenced output or n/a. -->
+<!-- Commands, recorded exit codes and receipt paths from runtime evidence cited in STATE. Do not infer success from a log-summary command. Evidence: fenced output or n/a. -->
 
 ## How to test
 

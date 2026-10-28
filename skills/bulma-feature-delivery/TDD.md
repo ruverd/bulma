@@ -58,7 +58,12 @@ green: <command> → pass
 files_changed: [...]
 ```
 
-Parent writes `## TDD evidence` in STATE. Reviewer **fails** the ticket if evidence is missing. Prose does not replace the exit code in `.bulma-feature-delivery/gates.log`.
+Parent writes `## TDD evidence` in STATE. Reviewer **fails** the ticket if evidence
+is missing. Capture RED and GREEN separately through
+[runtime evidence](../bulma-bus/PERFORMANCE.md). Return both receipt paths and
+cite their recorded `exit_code`. Prose or the status of a log-summary command
+does not replace the test exit code. RED must fail on the intended assertion,
+not a timeout or launch error. Never reuse a RED receipt for another execution.
 
 ## What may skip TDD
 

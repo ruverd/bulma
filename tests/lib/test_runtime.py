@@ -85,6 +85,68 @@ class EvidenceTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertFalse((self.repo / 'state').exists())
 
+    def test_failed_test_receipt_survives_output_summary(self):
+        command = [sys.executable, '-c',
+                   'import unittest; unittest.TestCase().assertEqual(1, 2)']
+        result, record = self.capture(command)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(record['exit_code'], 1)
+        summary = subprocess.run(['tail', '-n', '2', record['log']],
+                                 capture_output=True, text=True)
+        self.assertEqual(summary.returncode, 0)
+        self.assertIn('AssertionError', Path(record['log']).read_text())
+        self.assertFalse(runtime.reusable(record, record['identity']))
+
+    def test_report_retries_rework_and_run_filter(self):
+        folder = self.root / 'metrics'
+        source = self.root / 'measurement.json'
+        base = {'run': 'delivery-1', 'graph': 'fd', 'node': 'tester'}
+        samples = [
+            base | {'sample_id': 'first', 'kind': 'active', 'duration_ms': 100,
+                    'retries': 0, 'rework': False},
+            base | {'sample_id': 'retry', 'kind': 'active', 'duration_ms': 70,
+                    'retries': 1, 'rework': True},
+            base | {'sample_id': 'wait', 'kind': 'wait', 'duration_ms': 20,
+                    'retries': 0, 'rework': True},
+            base | {'run': 'delivery-2', 'sample_id': 'first', 'kind': 'active',
+                    'duration_ms': 900},
+        ]
+        for data in samples + [samples[1]]:
+            source.write_text(json.dumps(data))
+            result = self.cli('measure', '--repo', str(self.repo), '--directory',
+                              str(folder), '--input', str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.cli('report', '--directory', str(folder))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = json.loads(result.stdout)['fd/tester']
+        self.assertEqual(row['samples'], 4)
+        self.assertEqual(row['active_ms'], 1070)
+        self.assertEqual(row['wait_ms'], 20)
+        self.assertEqual(row['retries'], 1)
+        self.assertEqual(row['retry_samples'], 3)
+        self.assertEqual(row['rework_observed_samples'], 3)
+        self.assertEqual(row['rework_samples'], 2)
+        self.assertEqual(row['rework_active_ms'], 70)
+        self.assertEqual(row['rework_wait_ms'], 20)
+        result = self.cli('report', '--directory', str(folder), '--run', 'delivery-2')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = json.loads(result.stdout)['fd/tester']
+        self.assertEqual(row['samples'], 1)
+        self.assertEqual(row['active_ms'], 900)
+        for key in ('retries', 'rework_active_ms', 'rework_wait_ms', 'rework_samples'):
+            self.assertIsNone(row[key])
+        self.assertEqual(row['retry_samples'], 0)
+        self.assertEqual(row['rework_observed_samples'], 0)
+
+    def test_measure_rejects_non_boolean_rework(self):
+        source = self.root / 'measurement.json'
+        for value in (0, 1, 'yes', []):
+            source.write_text(json.dumps({'run': 'r', 'sample_id': 's', 'graph': 'fd',
+                'node': 'tester', 'kind': 'active', 'duration_ms': 10, 'rework': value}))
+            result = self.cli('measure', '--repo', str(self.repo), '--directory',
+                              str(self.root / 'metrics'), '--input', str(source))
+            self.assertEqual(result.returncode, 2, result.stderr)
+
     def test_measure_idempotent_and_usage_unknown(self):
         data = {'run': 'r', 'sample_id': '1', 'graph': 'fd', 'node': 'tester',
                 'kind': 'active', 'duration_ms': 123}

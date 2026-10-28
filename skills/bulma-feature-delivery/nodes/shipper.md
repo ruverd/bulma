@@ -12,7 +12,7 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
 ## Sequence
 
 1. Pre-checks: review pass, tester pass, quality ok, final evidence current —
-   confirm exit codes in `.bulma-feature-delivery/gates.log` if it exists.
+   confirm recorded exit codes in the runtime receipts cited in STATE.
    Recheck the selected playbook with `scripts/playbook.py check`. Required
    task proof cannot be waived by an optional-step skip. Investigation never
    enters this node.

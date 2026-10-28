@@ -69,8 +69,8 @@ done_report | escalated
 | plan_critic | SPEC.md, TICKETS.md, decisions | plan_critic_verdict, plan_critic section |
 | diagnose | sentry/linear, repo | debug (root cause, evidence, one ticket) |
 | implement | one ticket + spec excerpt | code, tdd evidence, files_touched |
-| review | spec, ticket, diff, gates.log | spec_verdict, quality_verdict, review |
-| tester | files, scripts | hard gate, floor_guard, floor_allowed + gates.log |
+| review | spec, ticket, diff, runtime receipts | spec_verdict, quality_verdict, review |
+| tester | files, scripts | hard gate, floor_guard, floor_allowed + runtime receipt paths |
 | evidence | qa_tool, pr_url, sha | fragment, before/after png paths |
 | blast | diff | blast section |
 | quality | diff, files | quality section |
@@ -90,5 +90,7 @@ cannot skip. Keep all historical baseline pointers when after evidence expires.
 
 - Decision log required before spec/tickets.
 - `tdd: required` — reviewer/shipper refuse without evidence on behavior change.
-- Exit codes in `.bulma-feature-delivery/gates.log`. Cite them. Do not retype from memory.
+- Cite recorded exit codes and receipt paths from
+  [runtime evidence](../bulma-bus/PERFORMANCE.md), never from memory or a
+  log-summary command's status.
 - No secrets in STATE.
