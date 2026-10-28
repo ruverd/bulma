@@ -53,6 +53,7 @@ check graphs python3 "$LIB/check_graphs.py" "$ROOT"
 check leaks python3 "$LIB/check_leaks.py" "$ROOT"
 check branch-name python3 "$LIB/check_branch_name.py" "$ROOT"
 check legacy-name python3 "$LIB/check_legacy_name.py" "$ROOT"
+check legacy-name-fixtures env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_legacy_name.py"
 
 check trail-adapter env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_trail_adapter.py"
 check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_runtime.py"
