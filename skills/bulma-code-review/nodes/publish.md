@@ -47,11 +47,14 @@ an ambiguous network failure until checking whether the review was created.
 
 Section order is fixed. The words inside are Voice, not labels pasted as the comment.
 
-Every APPROVE and REQUEST_CHANGES body must include the `Model` row below,
-filled from this pass's `reviewer_model`. Keep it in DEFER bodies, dry-run
-payloads, and the `422` retry too. It identifies the reviewer responsible for
-the verdict, not the orchestrator or critic. Use `unknown` when the host exposes
-no identity; never omit the row or invent a model name or version. Escape any
+Every verdict body must include the `Model` and `Reasoning effort` rows below,
+filled from this pass's `reviewer_model` and `reviewer_effort`. Keep both in
+APPROVE, REQUEST_CHANGES, COMMENT, DEFER, dry-run and `422` retry bodies.
+These identify the reviewer responsible for the verdict, not the orchestrator or critic. Use `unknown` when the host exposes
+no identity or effort for that field; never omit or leave either row empty,
+or invent a model version or reasoning effort. For retained analysis completed
+by another session, preserve each contributing reviewer model/effort pair with
+its role; a critic does not replace reviewer attribution. Escape any
 Markdown table delimiters or line breaks in the value before rendering it.
 
 ```markdown
@@ -62,6 +65,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | | |
 |---|---|
 | Model | <reviewer_model> |
+| Reasoning effort | <reviewer_effort> |
 | Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review |
 | CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; or CI did not run |
@@ -129,9 +133,9 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
 `## ⏸️ Deferred: <repo>#<pr>`, `## 💬 Reviewed, no blockers: <repo>#<pr>` (bot
-quorum). The table rows `Model`, `Reviewed head`, `CI`, `Review context`,
+quorum). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
 `Human sign-off` and `Coverage` are required on every review body, compact or
-not; `gate.py` rejects a body without them. Findings in the bind `body` bucket
+not; `gate.py` rejects a body without them or with empty attribution. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
 Acceptance when `AC.md` is `none`. Inline findings still appear in the body
 list so the summary stands alone. Do not print `axis` labels on the PR; the
@@ -181,7 +185,7 @@ Never call `gh pr review` on a DEFER.
 ### Post-verify
 
 ```bash
-gh api "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID" --jq '{user: .user.login, state, commit_id}'
+gh api "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID" --jq '{user: .user.login, state, commit_id, body}'
 gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid
 ```
 
@@ -189,5 +193,8 @@ gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid
 Compare `commit_id` and the live head with `reviewed_sha`. A concurrent push
 makes this review stale; dismiss it, report it and require review of the new head.
 
+Read back the saved body and verify both attribution rows match this pass.
+For DEFER, read back the saved issue comment body and apply the same check.
+Repair missing or incorrect attribution before reporting publication complete.
 DEFER: print the comment URL instead. `--dry-run`: print the payload, post nothing,
 and label the chat summary `DRY-RUN`.

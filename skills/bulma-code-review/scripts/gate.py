@@ -21,7 +21,7 @@ from typing import Any
 MARKER = re.compile(r"<!--\s*bulma-review:(.*?)-->", re.S)
 PAIR = re.compile(r"(\w+)=(\S+)")
 ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|\s*$", re.M)
-REQUIRED_ROWS = ("Model", "Reviewed head", "CI", "Review context", "Human sign-off", "Coverage")
+REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review context", "Human sign-off", "Coverage")
 BUILD_TEST = re.compile(
     r"\b(build|builds|test|tests|unit|integration|e2e|jest|vitest|playwright|cypress|pytest)\b", re.I
 )
@@ -188,6 +188,9 @@ def needs_deep(reviews: list[dict[str, Any]], comments: list[dict[str, Any]], me
 def template(body: str, head: str) -> list[str]:
     rows = {name.strip(): value for name, value in ROW.findall(body)}
     reasons = [f"template row missing: {name}" for name in REQUIRED_ROWS if name not in rows]
+    for name in ("Model", "Reasoning effort"):
+        if name in rows and not rows[name].strip():
+            reasons.append(f"template row empty: {name}")
     if head not in rows.get("Reviewed head", ""):
         reasons.append("Reviewed head row does not name the live head")
     mark = marker(body)

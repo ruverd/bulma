@@ -25,6 +25,7 @@ init | waiting_ci | reviewing | published | deferred | done
 | `human_signoff` | required \| not_required; sensitive paths from the full PR file list |
 | `ci_evidence` | run/check IDs, links, SHA and execution results; local tests recorded separately |
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
+| `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; preserve paired role attribution across contributing sessions |
 | `ci` | pending \| green \| red \| unknown |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
 | `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum) |

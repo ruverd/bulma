@@ -12,6 +12,7 @@ review_context: unknown
 human_signoff: ""
 ci_evidence: ""
 reviewer_model: "unknown"
+reviewer_effort: "unknown"
 ci: ""
 pass: ""
 verdict: ""

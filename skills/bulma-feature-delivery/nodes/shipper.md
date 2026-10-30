@@ -37,8 +37,18 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
    skill may fill leftover fields. It is not the body.
    If the repo has its own PR template, keep it and append any missing
    **How to test** and **Agent run** sections. **Agent run** is always
-   last: model, wall-clock time and `session_usage` tokens (`n/a` when
-   the host does not report them). Refresh it on every PR update.
+   last: model, reasoning effort, wall-clock time and `session_usage` tokens
+   (`n/a` when the host does not report tokens). Follow
+   [PR run attribution](../../bulma-host/PR_ATTRIBUTION.md), including
+   worker contributions and `unknown` for unavailable model/effort fields.
+   Every stacked child and fullstack sibling needs its own section. Refresh
+   and read back each saved PR description on creation and every update;
+   missing or empty model/effort fields mean packaging is incomplete.
+   Include **Code review model** and **Code review reasoning effort** in
+   `Agent run`, copied from the reviewer result for this PR's final tree.
+   These are separate from implementation attribution. Preserve these fields
+   with repository templates too, including every stacked child. Missing
+   reviewer metadata uses `unknown`; never fill it from the shipper session.
 8. **Reviewers + assignee** per PRODUCT.md §6 (re-read at PR open).
    ```bash
    ME=$(gh api user --jq .login)   # or glab equivalent

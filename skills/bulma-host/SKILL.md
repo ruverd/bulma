@@ -45,8 +45,8 @@ in config, a requested worker tier, or a parent's model. If only a family or
 alias is exposed, keep that value without adding a version. If no identity is
 exposed, return `unknown`. This lookup does not select or change a model.
 
-Each review worker resolves its own identity. A critic's model does not replace
-the model of the worker responsible for the verdict.
+Each review worker resolves its own model and actual effort from runtime metadata or explicit system settings, else `unknown` per field.
+Never infer effort from requested tiers, defaults or parents. A critic does not replace the verdict reviewer. PR creation follows [PR run attribution](PR_ATTRIBUTION.md).
 
 ## spawn_worker
 

@@ -32,8 +32,8 @@ Review preserves the user's checkout. Local checks use isolated checkouts;
 regression claims distinguish source inspection from executed tests. Changes
 that depend on another deployment include counterpart and rollout checks via
 the engine's [evidence rules](../bulma-code-review/references/EVIDENCE.md).
-Its approval and changes-requested bodies include a `Model` row identifying
-the executing reviewer, or `unknown` when the runtime exposes no identity.
+Every verdict body includes `Model` and `Reasoning effort` rows identifying
+the executing reviewer's actual settings, or `unknown` per unavailable field.
 Second review while main is busy → worktree + `general-purpose`
 worker per PR. `--force` if CI red. Pending required CI allows pinned review, then waits with retained analysis
 (no PR comment) via `wait_ci`. Draft / conflict / CI-red DEFER is

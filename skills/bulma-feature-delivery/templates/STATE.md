@@ -194,6 +194,8 @@ Keep its identity in frontmatter. Record proof paths here only, not in a second 
 
 ## Review
 
+- **reviewer_model:** unknown
+- **reviewer_effort:** unknown
 - **spec_verdict:** pending | pass | fail
 - **quality_verdict:** pending | pass | fail
 - **Verdict:** pending (pass only if both pass)

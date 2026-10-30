@@ -20,3 +20,8 @@ commit sha, files, tests, same `pr_url`.
 If the SHA changed, recapture After and `gh pr edit --body` so the
 Before → After section matches HEAD.
 [evidence.md](../../bulma-feature-delivery/nodes/evidence.md).
+
+Before completing the PR update, refresh and read back its `## Agent run`
+section per [PR run attribution](../../bulma-host/PR_ATTRIBUTION.md).
+Include the fix workers' actual model/effort pairs. Each affected stacked child
+needs its own section, even when the parent already has one.

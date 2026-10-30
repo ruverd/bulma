@@ -9,6 +9,8 @@ GitHub body into chat.
 
 | | |
 |---|---|
+| Model | <reviewer_model> |
+| Reasoning effort | <reviewer_effort> |
 | Head | <sha7> |
 | Prior | none | deep@<sha7> APPROVED | ... |
 | CI | success \| failure \| pending \| unknown |
