@@ -16,7 +16,7 @@ discover actual schemas and provider settings rather than inventing commands.
    roles, tenant/org membership, flags, record ownership and lifecycle state.
    Use dedicated QA accounts and synthetic records. Prefer documented seed or
    admin helpers; targeted SQL is allowed after inspecting schema and constraints.
-3. For local auth, including Zitadel when present, configure the QA user's
+3. For the local identity provider discovered in the repo, configure the QA user's
    verification/activation state, org/project grants, role assignments, required
    claims and documented dev client settings as the scenario needs. Check both
    identity-provider assignments and application DB membership. Use existing
