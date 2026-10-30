@@ -35,6 +35,8 @@ the repo has an index.
 - review/test findings if this is a re-fix
 - recurring lessons for this repo (`lessons.py` block), when the parent has any
 - project gotchas that match the ticket, when the parent has any
+- project `## Prevention` entries for `development` matching this ticket,
+  per [FEEDBACK.md](../../bulma-bus/FEEDBACK.md)
 - neighbor paths if needed
 
 ## Lessons

@@ -23,6 +23,10 @@ Do not Read product files in this phase.
   matches `FILES.txt` or the patch. They are domain facts (units, ids,
   provider quirks) that the code alone does not show. Treat each as a lead:
   a finding still needs the trigger in this diff, never the note alone.
+- Verified prevention: matching project memory `## Prevention` entries for
+  `review`, per [FEEDBACK.md](../../bulma-bus/FEEDBACK.md). Map each to an
+  applicable check and record evidence or why it does not apply. A lesson is
+  a lead; findings still require the trigger in the current diff.
 - PR title and body: stated intent and acceptance criteria.
 - Tracker ticket: extract `[A-Z][A-Z0-9]+-\d+` from `headRefName` or title. If
   found, one `tracker_fetch_issue` call

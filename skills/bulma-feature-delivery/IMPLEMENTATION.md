@@ -23,6 +23,10 @@ ticket. Re-fix of the same ticket reuses that coder except on the last
   [LESSONS.md](LESSONS.md). Empty output means paste nothing. A failed run is
   a chat note, never a reason to hold the spawn. Run it once per ticket, not
   on every re-fix.
+- **Verified prevention**: matching project memory `## Prevention` entries
+  for `development`, including source links and concrete checks, per
+  [FEEDBACK.md](../bulma-bus/FEEDBACK.md). Paste only entries matching this
+  ticket. They guide implementation without inventing acceptance criteria.
 - **Project gotchas**: the `## Gotchas` lines from project memory
   ([bulma-memory](../bulma-memory/SKILL.md)) whose path glob or keyword
   matches the ticket's files or text, pasted as-is. None match → paste nothing.

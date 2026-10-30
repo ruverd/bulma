@@ -84,3 +84,11 @@ python3 ../bulma-bus/scripts/observe.py --source fd \
 - Record only defects: spec misses, missing tests, and quality or security
   findings. Do not record style nits the gate waived.
 
+
+## Verified prevention assessments
+
+[FEEDBACK.md](FEEDBACK.md) adds evidence-based stage attribution, scoped
+prevention and eligible issue drafts. Its records are separate from this
+append-only telemetry, include verified bot findings, and never interpret a
+proximity match or an unknown claim as proof. Read assessments when deciding
+whether to promote a lookback proposal.

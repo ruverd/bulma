@@ -178,3 +178,25 @@ Open is not grill. Ticket ASK stays [DECISION_POLICY.md](../bulma-feature-delive
 - Block CI, ship, or execute to drain Open
 - Interview a first-run questionnaire
 - Let chat language leak onto the forge
+
+## Verified prevention
+
+`## Prevention` lives only in project memory. Load it with other project
+sections. Each entry has a stable pattern key, stages `development`, `review`
+and/or `qa`, path glob or flow keyword, concrete check and source evidence.
+Pass only matching entries to the affected stage. Missing entries add no work.
+Rules guide investigation and never replace current evidence or product ACs.
+
+```markdown
+## Prevention
+- save-path-parity | development,review,qa | editor/save | Check manual save and autosave reject the same invalid input. | source: <verified finding URL and SHA>
+```
+
+LSTM and reviewer maintain these through [FEEDBACK.md](../bulma-bus/FEEDBACK.md).
+Reuse an existing rule instead of copying it here. Keep domain facts under
+`## Gotchas`. Concurrent workers hand shared writes to the coordinator.
+
+When authorized by the user, project `## Preferences` may also record
+`feedback_issues: publish` and `feedback_repo: owner/repo`. Without publication
+authorization or a known destination, feedback tasks remain local drafts.
+These settings never authorize issue comments, product fixes or skill rewrites.

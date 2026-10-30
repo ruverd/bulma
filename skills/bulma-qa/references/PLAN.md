@@ -14,6 +14,12 @@ gh pr diff "$PR" --name-only
 
 Also: tracker ACs when a ticket id exists; envelope `QA_REQUEST` ACs.
 
+Read project memory `## Prevention` entries for `qa` whose paths/flows match
+this change, per [FEEDBACK.md](../../bulma-bus/FEEDBACK.md). Map applicable
+checks to behavioral plan steps with the source key. Record missing fixtures
+as coverage gaps. Do not turn an advisory lesson into a new product AC or
+claim an earlier QA miss without evidence. Honor the configured QA provider.
+
 Never invent ACs. If the tracker is down, plan from PR body + diff only.
 
 ## Inventory

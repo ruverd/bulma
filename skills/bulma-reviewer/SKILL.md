@@ -48,3 +48,8 @@ then write `REVIEW_REQUEST` is inbound only; outbound fix = tell the
 user or write `PR_BUG_FIX` only if authorized **and** the issue is the PR.
 
 Not the fd node `bulma-fd-reviewer`.
+
+Verified external concerns feed [FEEDBACK.md](../bulma-bus/FEEDBACK.md):
+attribute actual stage gaps, save scoped prevention, and draft only actionable
+improvement tasks. A request for changes or LSTM invocation alone proves no
+miss. Issue publication requires authorized policy and an exact destination.

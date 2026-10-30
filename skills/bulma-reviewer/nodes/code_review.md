@@ -29,3 +29,14 @@ just wrote.
 [INSIGHTS.md](../../bulma-bus/INSIGHTS.md) has the rules. Ids already in the
 file print `duplicate`, so a re-review adds only new comments. A failed write is
 a chat note, never a reason to change the review.
+
+## Learn from external concerns
+
+Before the engine pass, read matching project `## Prevention` entries for
+`review`, as required by its Phase 1. Compare current external concerns with
+prior review evidence at the affected head. After the verdict, assess confirmed
+gaps through [FEEDBACK.md](../../bulma-bus/FEEDBACK.md). A request for changes
+alone is not confirmation; leave unverified concerns pending. Include bot
+findings in assessments, while preserving human-only observation rules above.
+Reuse LSTM source keys and existing tasks. Never launch LSTM, a developer or QA
+for this assessment. It cannot change or bypass the engine publication gate.
