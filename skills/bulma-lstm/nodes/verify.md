@@ -85,3 +85,20 @@ acceptance, uses the highest risk, and limits a combined group to eight comments
 and six files. A single wide fix stays intact and requires complicated-fix review.
 Never drop an unclear row because grouping succeeded; resolve its decision first.
 Record group IDs in STATE. New comments require verification before regrouping.
+
+## Human sign-off requests
+
+Detect explicit requests for human sign-off, manual validation, or visual proof
+in review bodies, inline threads, issue comments, and the user's instructions.
+Record `signoff_required=yes`, source comment IDs or user instruction, and
+`signoff_status=pending`. This includes bot-authored requests and requests with
+no defect or suggested code change. Do not manufacture a fix to obtain evidence.
+
+Write `signoff_path` beside STATE with the exact requests, feature/bug ACs,
+affected flows, expected results, role/tenant cases and known setup needs.
+An evidence request without a code location binds to its requested flow and PR
+ACs instead of an invented path:line. Preserve any separate human decision that
+cannot be proved by exercising the product, such as policy acceptance.
+
+Fix rows still follow patch → prove. With no fix rows, a sign-off request goes
+to **request_qa**, not the skip-only shortcut to reply.

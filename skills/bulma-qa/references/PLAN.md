@@ -98,9 +98,9 @@ Rules:
      client check and hit the endpoint.
 - Do not skip a user-break because the PR did not add an error state.
   Users still make those mistakes on fields this change now depends on.
-- Skip a user-break only when the repo has no fixture for it (no
-  second role, no OTP helper). Write that under Coverage gaps with
-  why. "Unlikely" is not a reason.
+- Skip a user-break only when its fixture cannot be prepared through
+  [LOCAL_SETUP.md](LOCAL_SETUP.md), such as missing credentials for a second
+  role or OTP helper. Write the attempted setup and blocker under Coverage gaps. "Unlikely" is not a reason.
 - Other screens that **read the same state**, after happy *and* after
   a user-break that wrote data.
 - Desktop + mobile only when layout/CSS/media/DS changed.
@@ -138,3 +138,20 @@ extra step → rewrite, do not execute.
 
 Chat (`bulma-memory`): list the steps in one short block, then execute.
 Do not wait for approval unless the user asked to review the plan.
+
+## Human-signoff coverage and setup
+
+For `QA_REQUEST` with `purpose: human-signoff`, treat the bound review requests
+and feature/bug ACs as required coverage in addition to the diff. Include
+requested existing flows even when no code changed. Build a matrix with request
+or AC ID, scenario/role, step IDs, expected result, actual result and attachment.
+Fill actual results and evidence during execute. Behavioral QA supports the
+human's decision; never label it human approval.
+
+Discover and prepare missing local data/auth states through
+[LOCAL_SETUP.md](LOCAL_SETUP.md). Record prerequisites and cleanup before
+execute, including database fixtures and QA user/provider roles when required.
+For human-signoff, any required case left as a coverage gap prevents complete
+PASS; prepare it or return BLOCKED. CI and source inspection alone are not
+visual proof. Infra/docs requests without a runnable route or endpoint must
+report that limitation rather than inventing a browser walk.

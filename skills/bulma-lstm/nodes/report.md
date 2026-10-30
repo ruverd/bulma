@@ -15,6 +15,8 @@ Do not paste GitHub reply bodies.
 | Reviews | ids … (new / already processed) |
 | Dispositions | N fix · N skip · N unclear |
 | Patched | yes \| no |
+| Sign-off | not requested \| pending \| evidence ready, human approval pending |
+| QA evidence | tested SHA + attached QA comment URL, or blocker |
 | Ack | 👍 + reply on comment ids … (none missing) |
 | Dismissed | fully addressed review ids … \| none |
 | Summary | COMMENT URL |

@@ -35,3 +35,18 @@ Zero callers = UNKNOWN (Coverage gaps or extra step). Not skip.
 ## Coverage gaps
 
 - (ACs or files with no step — say why)
+
+## Local setup and cleanup
+
+- App / database / auth target scope:
+- QA identities, tenant and roles:
+- Required synthetic data and setup log path:
+- Cleanup steps and outcome:
+
+## Requested sign-off coverage
+
+For human-signoff requests, every requested case needs observed proof.
+
+| Request / AC | Scenario / role | Steps | Expected | Actual | Attachment |
+|---|---|---|---|---|---|
+| | | | | | |

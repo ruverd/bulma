@@ -5,7 +5,7 @@
 ## status
 
 ```
-init | resolving | rebasing | verifying | grilling | patching | proving | replying | waiting_user | done | escalated
+init | resolving | rebasing | verifying | grilling | patching | proving | qa_requested | replying | waiting_user | done | escalated
 ```
 
 ## Fields
@@ -37,6 +37,13 @@ init | resolving | rebasing | verifying | grilling | patching | proving | replyi
 | `coder_status` | DONE / NEEDS_CONTEXT / BLOCKED |
 | `spec_verdict` | pending \| pass \| fail |
 | `quality_verdict` | pending \| pass \| fail |
+| `signoff_required` | yes / no, including evidence-only review requests |
+| `signoff_status` | pending / evidence_ready; never human approval |
+| `signoff_path` | requests, source IDs and required ACs beside STATE |
+| `qa_provider` | bulma / external, honoring explicit repository policy |
+| `qa_request_id` / `qa_sha` | request identity and final head sent to QA |
+| `qa_status` | pending / PASS / FAIL / BLOCKED / PENDING_TRIAGE |
+| `qa_comment_url` / `qa_evidence_path` | published evidence and coverage matrix |
 | `tester` | pending \| pass \| fail |
 | `prove_fix_loops` / `prove_fix_loops_used` | remaining + used. Default 2 |
 | `job_id` | bus JOBS id (`lstm-pr-N`) |

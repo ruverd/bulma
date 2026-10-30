@@ -11,6 +11,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
   → grill?           # complicated should-fix only
   → patch            # bulma-fd-coder + TDD, same branch
   → prove            # spec_verdict + quality_verdict + tester
+  → request_qa?      # human sign-off requested, including evidence-only runs
   → reply            # 👍 + unslopped reply on every comment, resolve fixed threads, dismiss proved change requests; re-request non-approved reviewers after changes
   → report
 ```
@@ -29,7 +30,8 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | resolve | else | **verify** |
 | conflict | rebased / still dirty after try | **verify** |
 | verify | ≥1 should-fix | **patch** (grill first if complicated) |
-| verify | only skip / nits / nothing new | **reply** |
+| verify | no fixes, human sign-off requested | **request_qa** |
+| verify | only skip / nits / nothing new, no sign-off request | **reply** |
 | verify | unclear + last-resort ASK | **stop** (`waiting_user`) |
 | patch | complicated and grill not done | **grill** |
 | grill | implementation decisions resolved | **patch** (coder) |
@@ -37,7 +39,12 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | patch | coder DONE, more groups | **patch** (next group, sequential) |
 | patch | all groups DONE / pushed | **prove** (final combined tree) |
 | patch | coder NEEDS_CONTEXT | DECIDE or ASK last resort |
-| prove | spec_verdict=pass and quality_verdict=pass and tester pass | **reply** |
+| prove | all proof passes, human sign-off requested | **request_qa** |
+| prove | all proof passes, no sign-off request | **reply** |
+| request_qa | admitted or queued | bus switch to **qa**; wait for matching `QA_RESULT` |
+| request_qa | fresh complete visual QA PASS | **reply**, human approval still pending |
+| request_qa | FAIL with triaged PR_BUG and loops left | **verify** then **patch**, **prove**, QA again |
+| request_qa | BLOCKED / PENDING_TRIAGE / incomplete evidence / provider external / stack refused | report blocker, keep sign-off pending; **escalate** when no independent work remains |
 | prove | either fail + loops left | **patch** |
 | prove | either fail + loops exhausted | **escalate** |
 | reply | always | **report** |
@@ -48,7 +55,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 
 `nodes/admit.md` · `nodes/resume.md` · `nodes/resolve.md` ·
 `nodes/conflict.md` · `nodes/verify.md` · `nodes/grill.md` ·
-`nodes/patch.md` · `nodes/prove.md` · `nodes/reply.md` ·
+`nodes/patch.md` · `nodes/prove.md` · `nodes/request_qa.md` · `nodes/reply.md` ·
 `nodes/report.md`
 
 Concurrency: `../bulma-bus/JOBS.md`.

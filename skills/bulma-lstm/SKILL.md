@@ -31,7 +31,10 @@ Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 
 Orchestrator does **not** write product code. **patch** spawns
 `bulma-fd-coder` per evidenced cause group (TDD), preserving per-comment acceptance. **prove** runs the fd reviewer (spec + quality)
-and tester before **reply**. Grill only when the fix is complicated.
+and tester before **reply**. A human sign-off request also requires a bus
+switch to `bulma-qa` for visual behavioral evidence, even without a code fix
+([request_qa.md](nodes/request_qa.md)). QA evidence supports the human decision;
+it never grants human approval. Grill only when the fix is complicated.
 ASK last resort: [DECISION_POLICY.md](../bulma-feature-delivery/DECISION_POLICY.md).
 
 Chat: `bulma-memory`. Unslop always. Every GitHub reply

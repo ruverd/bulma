@@ -55,7 +55,7 @@ sha: <head>
 ```
 
 Pass only when every fix slice has both verdicts pass and tester pass.
-Then **reply**.
+Then **request_qa** when `signoff_required=yes`; otherwise **reply**.
 
 ## Final group proof
 
