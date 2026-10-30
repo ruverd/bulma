@@ -21,3 +21,10 @@ Never FAIL a suspected product bug without triage unless unambiguous.
 
 This node is not the only exit. `blocked`, `handed_off` and `escalated`
 release the lease too — `../../bulma-bus/JOBS.md`.
+
+For `purpose: human-signoff`, attach the completed per-request coverage matrix
+and sanitized setup/cleanup summary to the QA comment. Return request ID, tested
+SHA, comment URL and evidence/matrix path in `QA_RESULT` to `lstm`. Unwalked
+required cases or missing attachments cannot PASS. Label the result automated
+behavioral evidence; human approval remains pending. LSTM applies the result
+through its request_qa node after pop, without developer ready/merge actions.

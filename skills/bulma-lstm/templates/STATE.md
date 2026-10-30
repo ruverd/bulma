@@ -23,6 +23,15 @@ grill: ""
 coder_status: ""
 spec_verdict: pending
 quality_verdict: pending
+signoff_required: no
+signoff_status: pending
+signoff_path: ""
+qa_provider: ""
+qa_request_id: ""
+qa_sha: ""
+qa_status: pending
+qa_comment_url: ""
+qa_evidence_path: ""
 prove_fix_loops: 2
 prove_fix_loops_used: 0
 job_id: ""

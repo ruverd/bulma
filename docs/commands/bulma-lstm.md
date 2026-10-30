@@ -10,6 +10,14 @@ resolve fixed threads, dismiss fully addressed change requests with proof, and
 request re-review after code changes unless the reviewer or PR is approved.
 On Codex, invoke `$bulma-lstm` or select it through `/skills`.
 
+Human sign-off or visual-proof requests trigger `bulma-qa` through the bus,
+even without a code fix. QA walks every requested behavior, attaches UI clips
+and stills or endpoint HTTP stills, and maps evidence to each request. It can
+prepare isolated local database fixtures and QA auth users, including identity-provider
+roles, grants and claims when needed. Setup is reversible and preserves the
+authorization checks being tested. Missing proof keeps sign-off pending.
+Automated QA supplies evidence; the human still decides approval.
+
 Never opens a new PR. Draft stays draft.
 
 Skill: [`../../skills/bulma-lstm`](../../skills/bulma-lstm).
@@ -32,6 +40,7 @@ URL | resume | LSTM_REQUEST
   → verify (claim_true + fix_ok_here, bind HEAD)
   → group verified comments by root cause → patch groups (TDD)
   → prove (spec + quality + tester)
+  → bulma-qa when human sign-off or visual proof was requested
   → 👍 + unslopped reply on every comment
   → COMMENT summary → resolve fixed threads → dismiss proved change requests
   → re-request after changes if not approved

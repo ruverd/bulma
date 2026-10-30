@@ -47,7 +47,7 @@ that is the cycle, one frame earlier.
 
 | type | from → to | Meaning |
 |---|---|---|
-| `QA_REQUEST` | developer → qa | CI green + MERGEABLE; validate behavior |
+| `QA_REQUEST` | developer / lstm → qa | Developer: CI green + MERGEABLE; LSTM: behavioral proof for human sign-off, including evidence-only requests |
 | `TRIAGE_REQUEST` | qa → triage | Potential product error; PR link required |
 | `PR_BUG_FIX` | (legacy) | Unused. PR_BUG fix enters via `QA_RESULT` FAIL |
 | `REVIEW_REQUEST` | any → reviewer | Diagnose PR / CI / branch |

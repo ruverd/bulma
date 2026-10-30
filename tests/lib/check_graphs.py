@@ -42,6 +42,13 @@ NEEDS = [
         extra_files=(),
     ),
     Need(
+        skill="bulma-lstm",
+        node="request_qa",
+        after="prove",
+        before="reply",
+        extra_files=(),
+    ),
+    Need(
         skill="bulma-code-review",
         node="critic",
         after="review",

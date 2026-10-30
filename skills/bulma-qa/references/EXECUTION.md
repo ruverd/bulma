@@ -74,6 +74,11 @@ A unit/CI-only walk is not enough when a FE route exists.
 An HTTP still is enough for an endpoint step.
 
 Do not invent credentials; use the repo's documented test auth.
+Prepare missing local fixtures and QA auth states through
+[LOCAL_SETUP.md](LOCAL_SETUP.md) before treating missing data/roles as blockers.
+For human-signoff requests, fill the per-request coverage matrix with observed
+results and published artifacts. Any unmet required case prevents complete PASS.
+Run and record cleanup before the terminal handoff.
 
 `command -v agent-browser` fails on a UI PR → `BLOCKED`. Do not
 reach for Playwright, Cypress, or a host browser MCP.
@@ -128,8 +133,9 @@ agent-browser --session "$SESSION" --session-name "$SESSION" --headed false reco
    Check-your-email samples **or** a login-only `.webm` → re-record
    or BLOCKED, never PASS, even if stills show the app. Concatenate
    clips with `../scripts/concat-clips.sh`.
-6. **BLOCKED** only after the auth helper is missing or fails, or
-   the walk-video gate fails and a re-record is impossible.
+6. **BLOCKED** only after session restore, the documented auth helper and
+   applicable [local auth setup](LOCAL_SETUP.md) cannot establish the required
+   session, or the walk-video gate fails and a re-record is impossible.
 
 Never record before login. Never run `qa:login` in a different `--session`
 than `record start`. They must share the same --session. Never PASS a

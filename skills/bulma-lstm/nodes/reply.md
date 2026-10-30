@@ -37,3 +37,11 @@ Skip-only runs still reply and comment, but never dismiss or re-request. A new
 comment ID needs its own reply even if it repeats an old finding. `done` requires
 all applicable actions confirmed or a report that explicitly names pending API
 failures; processed comment IDs alone do not prove the lifecycle completed.
+
+Human sign-off requests also require
+[request_qa.md](request_qa.md), including skip-only runs. Before a completion
+reply, check fresh QA attachments and per-request coverage. Pending requests
+receive blocker/evidence status only. Link the QA comment and per-criterion
+proof in requesting threads and the summary. Keep actual human approval
+requests open and do not dismiss their CHANGES_REQUESTED review on automated
+QA evidence alone. Evidence-ready means ready for the human to decide.
