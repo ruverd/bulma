@@ -13,6 +13,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
   → prove            # spec_verdict + quality_verdict + tester
   → request_qa?      # human sign-off requested, including evidence-only runs
   → reply            # 👍 + unslopped reply on every comment, resolve fixed threads, dismiss proved change requests; re-request non-approved reviewers after changes
+  → learn            # verified cause → scoped prevention / eligible task draft
   → report
 ```
 
@@ -47,7 +48,8 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | request_qa | BLOCKED / PENDING_TRIAGE / incomplete evidence / provider external / stack refused | report blocker, keep sign-off pending; **escalate** when no independent work remains |
 | prove | either fail + loops left | **patch** |
 | prove | either fail + loops exhausted | **escalate** |
-| reply | always | **report** |
+| reply | always | **learn** |
+| learn | assessed or feedback pending | **report** |
 | report | stacked | `LSTM_RESULT` + pop |
 | report | invoked alone | chat report only |
 
@@ -56,7 +58,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 `nodes/admit.md` · `nodes/resume.md` · `nodes/resolve.md` ·
 `nodes/conflict.md` · `nodes/verify.md` · `nodes/grill.md` ·
 `nodes/patch.md` · `nodes/prove.md` · `nodes/request_qa.md` · `nodes/reply.md` ·
-`nodes/report.md`
+`nodes/learn.md` · `nodes/report.md`
 
 Concurrency: `../bulma-bus/JOBS.md`.
 

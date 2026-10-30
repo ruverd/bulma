@@ -13,6 +13,9 @@ worktree: ""
 worktree_cleanup: ""
 worker_id: ""
 loop_id: ""
+feedback_status: pending
+feedback_paths: ""
+feedback_tasks: ""
 updated_at: ""
 ---
 

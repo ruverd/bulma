@@ -14,6 +14,13 @@ Need = namedtuple("Need", "skill node after before extra_files")
 
 NEEDS = [
     Need(
+        skill="bulma-lstm",
+        node="learn",
+        after="reply",
+        before="report",
+        extra_files=(),
+    ),
+    Need(
         skill="bulma-feature-delivery",
         node="evidence",
         after="tester",

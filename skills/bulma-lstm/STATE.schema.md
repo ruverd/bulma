@@ -5,7 +5,7 @@
 ## status
 
 ```
-init | resolving | rebasing | verifying | grilling | patching | proving | qa_requested | replying | waiting_user | done | escalated
+init | resolving | rebasing | verifying | grilling | patching | proving | qa_requested | replying | learning | waiting_user | done | escalated
 ```
 
 ## Fields
@@ -25,6 +25,9 @@ init | resolving | rebasing | verifying | grilling | patching | proving | qa_req
 | `review_ids` | comma list of review `databaseId` in this run |
 | `processed_comment_ids` | inline comment ids that already have 👍 **and** a thread reply |
 | `processed_review_ids` | review ids whose every in-scope comment is acked, plus 👍 on the review body |
+| `feedback_status` | pending / no_action / recorded; feedback never changes product verdict |
+| `feedback_paths` | assessment and pending paths, including per-cause outcomes |
+| `feedback_tasks` | issue draft paths or confirmed existing/published URLs |
 | `groups` | path to groups.json; every fix comment belongs to exactly one cause group |
 | `completed_groups` | group IDs with resulting tree/evidence; not proof of final acceptance |
 | `dispositions` | `fix` / `skip` / `unclear` counts or path |

@@ -46,6 +46,9 @@ reply. After proven code changes, post a summary, resolve fixed conversations,
 dismiss fully addressed CHANGES_REQUESTED reviews with evidence, and re-request
 original reviewers unless their latest decisive status or the PR is APPROVED.
 Skip-only runs reply and summarize without dismissing or re-requesting.
-See [reply.md](nodes/reply.md).
+See [reply.md](nodes/reply.md). Then [learn.md](nodes/learn.md) records verified
+causes, scoped prevention for coder/reviewer/QA and eligible improvement task
+drafts. LSTM invocation alone does not prove a miss. Issue publication follows
+[FEEDBACK.md](../bulma-bus/FEEDBACK.md), defaulting to local drafts.
 
 Do not spawn `bulma_developer` / `bulma_reviewer` / `bulma_qa`.

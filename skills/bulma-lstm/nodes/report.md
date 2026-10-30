@@ -28,3 +28,9 @@ Do not paste GitHub reply bodies.
 Stacked (`LSTM_REQUEST` inbound): write `LSTM_RESULT` envelope and pop.
 
 Invoked alone: chat only. Never merge. Never `gh pr ready`.
+
+Before closing, run [learn.md](learn.md) if feedback is still unassessed,
+including on escalation. Do not repeat an attempted write that remains pending
+without new evidence. Include prevention saved, task draft path or issue URL,
+no-action reason and pending feedback failures. Keep product and feedback
+outcomes separate.

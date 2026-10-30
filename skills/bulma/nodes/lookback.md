@@ -111,3 +111,13 @@ Stop with one question: which proposals to turn into draft PRs. Only on a yes,
 edit on a new branch (this repo for skill files, the target repo for
 `CLAUDE.md`), run that repo's gates, and open a draft PR based on `main`. Never
 edit without that yes, and never merge. Stop.
+
+## Link verified feedback
+
+Before promoting a proposal, read matching assessments through
+[FEEDBACK.md](../../bulma-bus/FEEDBACK.md). Observation counts and labels alone
+do not establish a confirmed defect or which stage missed it. In particular,
+an earlier `unknown` observation may remain after LSTM verification because
+telemetry is append-only. Use verified assessments for task eligibility. Reuse
+existing pattern tasks and source links. The per-run task threshold in FEEDBACK
+does not replace the aggregate trend thresholds above or authorize skill edits.
