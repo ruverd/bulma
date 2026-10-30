@@ -40,8 +40,8 @@ allows pinned code review, then waits with retained analysis and does **not** po
 6. **Voice.** GitHub text and chat follow **Voice** (just above §9). Teammate
    English on the PR. Chat: `bulma-memory`. Never caveman. Never a form.
 7. **Fixed output template** (§9). Section order never changes; empty sections vanish.
-   Every verdict body includes the executing reviewer's model in the `Model`
-   row. Resolve identity through `bulma-host`; use `unknown` if unavailable.
+   Every verdict body includes the executing reviewer's `Model` and `Reasoning effort`
+   rows. Resolve both through `bulma-host`; use `unknown` per unavailable field.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
    before pass selection and again before publishing. Open change requests,

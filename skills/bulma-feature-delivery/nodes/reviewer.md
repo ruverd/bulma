@@ -65,6 +65,11 @@ write is a chat note and never changes a verdict. A `pass` records nothing.
 ## Output
 
 Review section in STATE: `spec_verdict`, `quality_verdict`, findings.
+Also return `reviewer_model` and `reviewer_effort` for this review pass using
+[bulma-host](../../bulma-host/SKILL.md#review-model-identity). Resolve actual
+executing session values, or `unknown` per unavailable field. The coordinator
+preserves each pair with its role and reviewed SHA in the review result for
+shipper to copy into the PR description. Never use parent or critic settings.
 `status: testing` only when both pass; else `implementing`.
 
 ## Hard rules

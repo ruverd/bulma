@@ -69,7 +69,7 @@ done_report | escalated
 | plan_critic | SPEC.md, TICKETS.md, decisions | plan_critic_verdict, plan_critic section |
 | diagnose | sentry/linear, repo | debug (root cause, evidence, one ticket) |
 | implement | one ticket + spec excerpt | code, tdd evidence, files_touched |
-| review | spec, ticket, diff, runtime receipts | spec_verdict, quality_verdict, review |
+| review | spec, ticket, diff, runtime receipts | spec_verdict, quality_verdict, review, reviewer_model, reviewer_effort |
 | tester | files, scripts | hard gate, floor_guard, floor_allowed + runtime receipt paths |
 | evidence | qa_tool, pr_url, sha | fragment, before/after png paths |
 | blast | diff | blast section |

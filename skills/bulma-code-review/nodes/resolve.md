@@ -12,10 +12,15 @@ ME=$(gh api user --jq .login)
 
 Load `bulma-memory` before the first chat sentence.
 
-Before gates, resolve `reviewer_model` using
+Before gates, resolve `reviewer_model` and `reviewer_effort` using
 [bulma-host](../../bulma-host/SKILL.md) §Review model identity and record it in
 this pass's STATE. Refresh it for each pass, including a resumed CI wait.
-Each worker resolves its own value; never reuse a prior pass's model identity.
+Each worker resolves its own values; never reuse a prior pass's attribution.
+Read actual reasoning effort from runtime metadata or explicit system settings,
+not a requested tier, config default or parent. Use `unknown` when unavailable.
+Retained analysis keeps its originating model/effort pair; if another session
+continues that analysis, record both pairs with their roles instead of replacing
+the original reviewer with the publishing session.
 
 Flags: `--deep` force deep, `--light` force light, `--dry-run` run everything and
 print to chat but post nothing, `--force` review despite non-green CI. `--deep` and

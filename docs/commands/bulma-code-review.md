@@ -4,9 +4,11 @@ Review **engine**. One GitHub artifact per PR: `APPROVE`,
 `REQUEST_CHANGES`, or `DEFER`. Called by [`/bulma-reviewer`](bulma-reviewer.md)
 or run alone.
 
-Every verdict body includes a `Model` row with the executing reviewer's runtime
-model name or id. Workers report their own model, not the orchestrator's or
-critic's. Missing runtime identity is shown as `unknown`, never guessed.
+Every verdict body includes `Model` and `Reasoning effort` rows with the
+executing reviewer's actual runtime settings. Workers report their own pair,
+not the orchestrator's or critic's. Missing fields are `unknown`, never guessed.
+PR creation also records code review model and effort separately from
+implementation attribution in the description's `Agent run` section.
 
 Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
 

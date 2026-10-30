@@ -223,6 +223,7 @@ body = f"""## Approved: o/r#1
 | | |
 |---|---|
 | Model | test-model |
+| Reasoning effort | high |
 | Reviewed head | {head} |
 | Pass | deep |
 | CI | green on {head} |
@@ -323,6 +324,33 @@ PY
 blocked_with 'template row missing: Coverage' || fail "gate: missing row must block"
 [[ "$(status /dev/null python3 "$GATE" --dir "$EV" --payload "$EV/payload.json" --me review-bot --head "$HEAD")" == 1 ]] \
   || fail "gate: missing row must block payloads without approval evidence too"
+
+for event in APPROVE REQUEST_CHANGES COMMENT; do
+  for row in Model 'Reasoning effort'; do
+    for mode in missing empty unknown; do
+      reset_evidence; write_payload "$event" "$CLEAN"
+      python3 - "$EV/payload.json" "$row" "$mode" <<'PY'
+import json, sys
+path, row, mode = sys.argv[1:]
+p = json.load(open(path))
+lines = []
+for line in p['body'].splitlines():
+    if line.startswith(f'| {row} |'):
+        if mode == 'missing':
+            continue
+        line = f'| {row} | ' + ('unknown' if mode == 'unknown' else '') + ' |'
+    lines.append(line)
+p['body'] = '\n'.join(lines)
+json.dump(p, open(path, 'w'))
+PY
+      if [[ "$mode" == unknown ]]; then
+        [[ "$(gate)" == 0 ]] || fail "gate: $event must accept unknown $row"
+      else
+        blocked_with "template row $mode: $row" || fail "gate: $event must reject $mode $row"
+      fi
+    done
+  done
+done
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '{"kept":[],"body":[{"severity":"blocker","title":"caller breaks"}],"dropped":[]}' >"$EV/bound.json"

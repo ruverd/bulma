@@ -32,8 +32,13 @@ After:
 
 ## Agent run
 
-<!-- Always the last section. Model: the session's own identity per bulma-host §Review model identity, else `unknown`. Time: wall clock from the first branch commit (or STATE start) to PR open, rounded to minutes. Tokens: the host-reported total from `session_usage`, else `n/a`. Never estimate a number. On update, refresh these values. -->
+<!-- Required in every PR, including each stacked child. Always the last section. Follow bulma-host PR_ATTRIBUTION.md. Model and reasoning effort: actual executing session values, else `unknown` per field. Multiple contributors: list each distinct model/effort pair and role. Time: wall clock from the first branch commit (or STATE start) to PR open, rounded to minutes. Tokens: the host-reported total from `session_usage`, else `n/a`. Never estimate a number. On update, preserve earlier contributions and refresh this section. -->
 
 - Model:
+- Reasoning effort:
+- Code review model:
+- Code review reasoning effort:
 - Time:
 - Tokens:
+
+<!-- Model/Reasoning effort identify implementation contributors. Code review fields identify the reviewer responsible for the pre-PR verdict, copied from its result, including role/pair entries when multiple reviewers contributed. Never substitute the shipper's or critic's settings. If review ran but a field is unavailable, use `unknown`. If no review ran, write `not run` and the reason; attribution does not bypass a required review gate. -->
