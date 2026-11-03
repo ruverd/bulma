@@ -83,7 +83,7 @@ checkouts or change paths chosen by host isolation or Orca.
 | GitHub / GitLab (PR body, review, thread, issue comment, dismiss) | **English** |
 | Spec, tickets, commits, CI, skill bodies | **English** |
 
-Unslop always. A PT-BR chat pref does not translate forge text.
+Apply Kevin for human-facing communication. A PT-BR chat pref does not translate forge text.
 
 ## Files
 

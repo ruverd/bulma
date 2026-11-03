@@ -134,7 +134,11 @@
           },
           {
             "name": "unslop",
-            "description": "Cut AI tells from any writing. Must always apply."
+            "description": "Legacy alias for callers migrating from Unslop to Kevin."
+          },
+          {
+            "name": "kevin",
+            "description": "Rewrite text to remove AI tells; adapt voice to audience and stakes; calibrate voices and memory."
           }
         ],
         "agents": [

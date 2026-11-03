@@ -31,7 +31,7 @@ The skill categories:
 
 - `graph`: a stage with its own graph of steps, such as `bulma-developer`
 - `engine`: a large job that stages call, such as `bulma-feature-delivery`
-- `lib`: a small shared skill, such as `unslop` or `tdd`
+- `lib`: a small shared skill, such as `kevin` or `tdd`
 
 Read [docs/GRAPH_ENGINEER.md](docs/GRAPH_ENGINEER.md) before you add or change
 a graph.
@@ -79,7 +79,7 @@ plugin manifest.
 
 - Write skill files, commit messages, pull request text, and CI output in
   English. The chat language follows `bulma-memory`.
-- Apply the bundled [unslop](skills/unslop/SKILL.md) skill to anything a person
+- Apply the bundled [Kevin](skills/kevin/SKILL.md) skill to anything a person
   reads.
 - For pages in `docs/`, follow [technical-writing](skills/technical-writing/SKILL.md).
   Each page is one kind: a tutorial, a how-to guide, a reference, or an

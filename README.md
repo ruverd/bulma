@@ -205,3 +205,19 @@ so one clone is enough. The before and after screenshot flow follows
 
 MIT. See [LICENSE](LICENSE). Copied third-party skills keep their original
 licenses.
+
+## Communication voices
+
+Bulma bundles [Kevin](skills/kevin/SKILL.md) for human-facing output. Setup
+installs it alongside the graphs; no Rust binary or model API is required.
+The default starter is `tony-stark`, with optional dry humor for ordinary
+conversation. Reviews use `professional-reviewer`; serious or uncertain contexts
+disable humor. Existing language preferences and technical output contracts stay
+in force. Legacy `unslop` calls forward to Kevin.
+
+Supply a project `.kevin/config.json` for custom voices and routing. With the
+optional [Kevin CLI](https://github.com/ruverd/kevin), run `kevin voices`,
+`kevin voice default minimalist`, or
+`kevin rule set reviews --task review --voice professional-reviewer`.
+Memory is explicit, scoped and private; do not commit real writing samples or
+`.kevin/memory.json`. Installed plugin copies update when the plugin is updated.

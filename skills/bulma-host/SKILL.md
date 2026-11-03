@@ -16,7 +16,7 @@ Do not copy harness APIs into GRAPH.md.
 
 In this repo, skills live under `skills/<name>/`.
 After install they are siblings (`bulma-qa` next to `bulma-bus`
-and `unslop`).
+and `kevin`).
 Resolve a skill **by name** via the host skill loader, or by the
 relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 `~/.claude`, or `~/.codex`.

@@ -11,4 +11,4 @@
 | Unrelated bug | note; do not pad this PR |
 | Comment with no 👍 or no reply | reply is not done; go back |
 | `CHANGES_REQUESTED` still on a processed review | dismiss only when its complete feedback is proved fixed; otherwise retain it and report outstanding concerns ([GITHUB.md](GITHUB.md)) |
-| GitHub reply posted without unslop | rewrite and POST again; never leave the first draft |
+| GitHub reply posted without kevin | rewrite and POST again; never leave the first draft |

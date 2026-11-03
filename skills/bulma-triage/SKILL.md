@@ -18,7 +18,7 @@ exposes it ([bulma-host](../bulma-host/SKILL.md)).
 bus PROTOCOL.md · `bulma-memory` ·
 [DISK.md](../bulma-bus/DISK.md) (`.bulma-*` is **global**, never git root)
 
-Chat: `bulma-memory`. Unslop always. PR link required. Init `.bulma-triage/STATE.md`. Walk GRAPH.
+Chat: `bulma-memory`. Apply Kevin for human-facing communication. PR link required. Init `.bulma-triage/STATE.md`. Walk GRAPH.
 Classify **each** finding. `NEW_BUG` → tracker issue (LINEAR.md).
 `PR_BUG` → `TRIAGE_RESULT` + pop to QA. Do **not** switch to
 developer. Do **not** spawn `bulma_developer`.

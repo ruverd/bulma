@@ -24,7 +24,7 @@ delivery; optional interview skills are not part of the default context.
 | `to-issues` | `tickets` | Vertical slices into local `TICKETS.md`. Do **not** create tracker issues here. [BLOCKERS.md](BLOCKERS.md) is the only tracker-create path. |
 | `tdd` + this graph's [TDD.md](TDD.md) | `implement` | Iron law wins. Do not skip RED because bundled `tdd` says the path is expensive. |
 | `diagnose` | `diagnose` | Root cause. No product fix in this node. |
-| `unslop` | all chat | Always. English. [VOICE.md](VOICE.md) |
+| `kevin` | all chat | Always. English. [VOICE.md](VOICE.md) |
 | `how` | grill, diagnose | Only a named subsystem gap; one pass, no swarm. |
 | `blast-radius` | `blast` | Before quality/ship |
 | `architect` | grill | Only an unresolved module boundary or contract. |

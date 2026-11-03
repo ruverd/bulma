@@ -5,7 +5,7 @@ LGTM. Graph engineer on the **author** side of a review: use it when a
 reviewer left comments on your pull request.
 
 Ingest a PR / review / comment URL. Patch should-fix on the **same
-branch**. Rebase conflicts. 👍 + unslopped reply on every comment,
+branch**. Rebase conflicts. 👍 + Kevin-composed reply on every comment,
 resolve fixed threads, dismiss fully addressed change requests with proof, and
 request re-review after code changes unless the reviewer or PR is approved.
 On Codex, invoke `$bulma-lstm` or select it through `/skills`.
@@ -41,7 +41,7 @@ URL | resume | LSTM_REQUEST
   → group verified comments by root cause → patch groups (TDD)
   → prove (spec + quality + tester)
   → bulma-qa when human sign-off or visual proof was requested
-  → 👍 + unslopped reply on every comment
+  → 👍 + Kevin-composed reply on every comment
   → COMMENT summary → resolve fixed threads → dismiss proved change requests
   → re-request after changes if not approved
 ```
@@ -55,14 +55,14 @@ URL | resume | LSTM_REQUEST
 4. Complicated should-fix → grill first. Else `bulma-fd-coder` (TDD).
 5. **prove**: fd reviewer (`spec_verdict` = this comment,
    `quality_verdict` = TDD/DS) + tester. Fail → patch, do not dismiss.
-6. 👍 + unslopped reply on **every** comment (fix and skip). Then
+6. 👍 + Kevin-composed reply on **every** comment (fix and skip). Then
    post a summary, resolve fixed threads and dismiss fully addressed
    `CHANGES_REQUESTED` with proof. Re-request only after code changes when the
    reviewer and PR are not approved. Pending requests are not repeated.
 
 The graph engineer does not type the patch. The coder worker does.
 
-Uses bundled `receiving-code-review` and `unslop` (`skills/receiving-code-review/`, `skills/unslop/`).
+Uses bundled `receiving-code-review` and `kevin` (`skills/receiving-code-review/`, `skills/kevin/`).
 
 ## Never
 
@@ -71,7 +71,7 @@ Uses bundled `receiving-code-review` and `unslop` (`skills/receiving-code-review
 - Spawn `/bulma-developer` or `/bulma-reviewer`.
 - Skip rebase when the branch is conflicting.
 - Leave a comment without 👍 + reply.
-- POST a GitHub reply that skipped `unslop`.
+- POST a GitHub reply that skipped `kevin`.
 - Dismiss an approval or unresolved feedback.
 - Re-request an approved reviewer or send requests without code changes.
 - Reply on a should-fix run before **prove** passed.

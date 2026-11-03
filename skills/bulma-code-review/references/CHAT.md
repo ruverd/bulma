@@ -1,6 +1,6 @@
 # 10. Chat summary
 
-Lead with two to four sentences in English. Unslop. Say the
+Lead with two to four sentences in English. Kevin. Say the
 verdict and the one thing that drove it. Then the table. Do not paste the
 GitHub body into chat.
 

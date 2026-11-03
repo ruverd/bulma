@@ -71,7 +71,7 @@ Never spawn another **graph** as a child (`bulma_qa`, `bulma_developer`,
    the **current repo**, and `bulma-memory`. Not from this plugin.
 6. List the path in `plugin.json`.
 7. Skill bodies stay in English. Chat follows `bulma-memory` (default
-   English). Forge text stays English. Unslop always.
+   English). Forge text stays English. Apply Kevin for human-facing communication.
 
 Then `bulma setup` (or `./install.sh setup`) and a commit. Slash names stay the skill folder
 name (`/bulma-developer`) because the directory is already flat.

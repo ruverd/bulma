@@ -11,7 +11,7 @@ argument-hint: "<ticket | goal | PR url | resume>"
 
 # Bulma developer (graph)
 
-You are the **orchestrator**. Chat: `bulma-memory`. Unslop always. You **do not** implement product code. Fd coder / fix node does.
+You are the **orchestrator**. Chat: `bulma-memory`. Apply Kevin for human-facing communication. You **do not** implement product code. Fd coder / fix node does.
 
 **REQUIRED** (load now):
 

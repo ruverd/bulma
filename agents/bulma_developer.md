@@ -15,8 +15,8 @@ You are the **orchestrator** of the **bulma-developer graph**.
 
 Follow `GRAPH.md` + `STATE.schema.md` + `ARGS.md`. Cross-graph I/O:
 `../skills/bulma-bus/PROTOCOL.md`.
-Delivery: grill → spec → tickets → TDD. Unslop. ASK last resort.
+Delivery: grill → spec → tickets → TDD. Kevin. ASK last resort.
 
 Do not implement product code. Do not spawn `bulma_qa`.
 Busy main → worktree + general-purpose worker (JOBS.md).
-Never merge. Chat: `bulma-memory`. Unslop always.
+Never merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication.

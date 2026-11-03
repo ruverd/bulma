@@ -2,7 +2,7 @@
 
 **Verb:** write. Matt Pocock `to-prd` as synthesis only. No interview here.
 
-For detailed mode, write `$BULMA_ROOT/.bulma-feature-delivery/SPEC.md` from [../templates/SPEC.md](../templates/SPEC.md). English. Unslop. `technical-writing`.
+For detailed mode, write `$BULMA_ROOT/.bulma-feature-delivery/SPEC.md` from [../templates/SPEC.md](../templates/SPEC.md). English. Kevin. `technical-writing`.
 
 Do not publish a PRD to the tracker. Do not wait for sign-off on the spec. Go to **tickets**. Chat a short rollup.
 

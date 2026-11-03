@@ -1,6 +1,6 @@
 # GitHub (LSTM)
 
-One home for fetch / 👍 / reply / unslop / resolve / re-request.
+One home for fetch / 👍 / reply / kevin / resolve / re-request.
 
 ## Fetch
 
@@ -30,9 +30,9 @@ Never put 👍 in the reply text. Chat is not a substitute.
 The reply node is not done while any in-scope comment lacks 👍 or a
 reply.
 
-## Unslop then POST
+## Kevin then POST
 
-Load bundled `unslop`. Rewrite the body. Then POST. Never POST the
+Load bundled `kevin`. Rewrite the body. Then POST. Never POST the
 first draft. English. Same rule for skip reasons, COMMENT reviews,
 and re-review requests.
 

@@ -6,7 +6,7 @@ Commands: [GITHUB.md](../references/GITHUB.md). Enter only after prove passes,
 or verify finishes a skip-only run. Never dismiss a failed or unresolved fix.
 
 1. For every in-scope comment, react with 👍 and reply with its disposition,
-   final SHA and evidence. Rewrite through bundled `unslop` before POST. English.
+   final SHA and evidence. Rewrite through bundled `kevin` before POST. English.
    React to the parent review once. Preserve per-comment answers for grouped fixes.
 2. Publish one COMMENT summary per final SHA and analyzed comment set, including
    fixed/skipped items, test evidence and remaining concerns. A body-only COMMENT
