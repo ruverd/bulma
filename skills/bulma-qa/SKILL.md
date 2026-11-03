@@ -18,7 +18,7 @@ Orchestrator. You do **not** make the final bug call.
 `bulma-bus` PROTOCOL.md · `bulma-memory` ·
 [DISK.md](../bulma-bus/DISK.md) (`.bulma-*` is **global**, never git root)
 
-Chat: `bulma-memory`. Unslop always. PR link required (args or envelope).
+Chat: `bulma-memory`. Apply Kevin for human-facing communication. PR link required (args or envelope).
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 
 Init `.bulma-qa/STATE.md`. Walk GRAPH:

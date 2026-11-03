@@ -33,7 +33,7 @@ qa_lease_minutes is dead, and taking it over is correct (bulma-bus/JOBS.md).
 If CI is still pending, do nothing else and end the turn.
 If a bulma-qa marker comment exists for the current head SHA and
 includes a video URL, cancel_wake and stop.
-Do not merge. Chat: `bulma-memory`. Unslop always, one short S/D/P block.
+Do not merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication, one short S/D/P block.
 ```
 
 Interval **5m**. Min 60s. CI that takes longer than a tool timeout

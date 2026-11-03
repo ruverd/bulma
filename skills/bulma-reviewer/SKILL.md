@@ -11,7 +11,7 @@ argument-hint: "<PR url | owner/repo#N | branch>"
 
 # Bulma Reviewer (graph)
 
-Orchestrator. Never merge. Chat: `bulma-memory`. Unslop always.
+Orchestrator. Never merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication.
 
 **REQUIRED:** [GRAPH.md](GRAPH.md) · [STATE.schema.md](STATE.schema.md) ·
 bus PROTOCOL.md · skill `bulma-code-review` · `bulma-memory` ·

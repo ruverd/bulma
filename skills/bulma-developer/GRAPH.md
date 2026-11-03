@@ -100,7 +100,7 @@ review_bot_min_score: 5
 open_pr: true
 reuse_fd_graph: true
 chat_language: en  # default; bulma-memory overrides. This file is English.
-voice: unslop
+voice: kevin
 decide_by_default: true
 ask_last_resort_only: true
 ```

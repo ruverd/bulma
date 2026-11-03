@@ -101,7 +101,7 @@ subagents_on_implement: always
 never_merge: true
 stay_draft: true
 chat_language: en  # user-facing messages; this file is English
-voice: unslop
+voice: kevin
 decide_by_default: true
 ask_last_resort_only: true
 architect_checkpoint: last_resort_only

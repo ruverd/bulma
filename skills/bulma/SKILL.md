@@ -22,7 +22,7 @@ only picks among options the node already has.
 [bulma-host](../bulma-host/SKILL.md) · [DISK.md](../bulma-bus/DISK.md)
 (`.bulma-*` is **global**, never the git root) · `bulma-memory`
 
-Chat: `bulma-memory`. Unslop always. Scripts live in `scripts/` next to this
+Chat: `bulma-memory`. Apply Kevin for human-facing communication. Scripts live in `scripts/` next to this
 file; the host tells you where the skill directory is. Run them with
 `python3` and `bash`.
 

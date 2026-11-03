@@ -89,7 +89,7 @@ and gate.py. If Caller is bulma-reviewer, continue at diagnose → report.
 If required CI failed or is unknown, cancel_wake and DEFER
 (reason=ci_red or ci_unknown) with the issue comment in SKILL §9.
 If the PR is CLOSED or MERGED, cancel_wake and stop.
-Do not post while pending. Do not merge. Chat: `bulma-memory`. Unslop always.
+Do not post while pending. Do not merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication.
 ```
 
 Interval **5m**. Min 60s.

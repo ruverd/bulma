@@ -12,7 +12,7 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
   → patch            # bulma-fd-coder + TDD, same branch
   → prove            # spec_verdict + quality_verdict + tester
   → request_qa?      # human sign-off requested, including evidence-only runs
-  → reply            # 👍 + unslopped reply on every comment, resolve fixed threads, dismiss proved change requests; re-request non-approved reviewers after changes
+  → reply            # 👍 + Kevin-composed reply on every comment, resolve fixed threads, dismiss proved change requests; re-request non-approved reviewers after changes
   → learn            # verified cause → scoped prevention / eligible task draft
   → report
 ```
@@ -76,7 +76,7 @@ always_rebase_conflicts: true
 tdd: required_for_behavior_change
 prove_fix_loops: 2
 chat_language: en
-voice: unslop
+voice: kevin
 decide_by_default: true
 ask_last_resort_only: true
 ```

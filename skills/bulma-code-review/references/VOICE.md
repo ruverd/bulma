@@ -1,5 +1,8 @@
 # Voice
 
+Load [Kevin](../../kevin/SKILL.md) with `professional-reviewer` for review
+prose. Preserve technical severity and uncertainty. Findings have no humor.
+
 Applies to the GitHub artifact and to chat with the user. Does not apply to the
 marker HTML, the tables, or the bash.
 
@@ -14,13 +17,12 @@ Keep:
 - One idea per sentence, or one short sentence plus one that explains it.
 - Active voice. "This calls `send` with null", not "null is passed to send".
 - When it happens, and what to change. The reader should know what to type.
-- Chat: `bulma-memory`. English on the PR. Always unslop.
+- Chat: `bulma-memory`. English on the PR. Apply Kevin for human-facing communication.
 
 Drop:
 
 - Chatbot filler ("happy to review", "great work", "I hope this helps").
-- Hedging ("it appears that", "this could potentially", "you may want to consider").
-- Em dashes. Use a period or a comma.
+- Empty hedging. Preserve qualifications that describe actual uncertainty.
 - Synonym cycling. Pick "bug" or "break", not both in one paragraph.
 - Restating template labels as the comment. `Trigger:` and `Fix:` are for your
   notes in §5 phase 10. On the PR, write sentences.

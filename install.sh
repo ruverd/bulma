@@ -646,10 +646,10 @@ cmd_status() {
     echo "jev      missing (optional; /bulma needs TYPESAFE_API_KEY)"
   fi
   for dest in \
-    "$HOME/.agents/skills/unslop" \
-    "$HOME/.grok/skills/unslop" \
-    "$HOME/.claude/skills/unslop" \
-    "$HOME/.cursor/skills/unslop"
+    "$HOME/.agents/skills/kevin" \
+    "$HOME/.grok/skills/kevin" \
+    "$HOME/.claude/skills/kevin" \
+    "$HOME/.cursor/skills/kevin"
   do
     if [[ -L "$dest" ]]; then
       if is_ours "$dest"; then

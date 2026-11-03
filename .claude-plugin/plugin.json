@@ -48,6 +48,7 @@
     "./skills/to-issues",
     "./skills/to-prd",
     "./skills/typescript-best-practices",
+    "./skills/kevin",
     "./skills/unslop"
   ],
   "agents": [

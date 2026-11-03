@@ -63,7 +63,7 @@ Do NOT read all of SPEC/TICKETS if the ticket text is already in the prompt
 
 ## User-facing compression
 
-Unslop. [VOICE.md](VOICE.md). Preferred format (spoken in English):
+Kevin. [VOICE.md](VOICE.md). Preferred format (spoken in English):
 
 ```text
 S: phase + branch + mcp_gate

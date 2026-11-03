@@ -10,7 +10,7 @@ description: >
 
 # Bulma feature delivery
 
-Orchestrator. Chat: `bulma-memory`. Unslop. **No product code on the main thread.**
+Orchestrator. Chat: `bulma-memory`. Kevin. **No product code on the main thread.**
 
 Load now:
 

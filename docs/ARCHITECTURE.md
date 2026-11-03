@@ -94,7 +94,7 @@ URL | resume | LSTM_REQUEST
   → verify (claim_true + fix_ok_here)
   → patch should-fix (bulma-fd-coder, TDD)
   → prove (spec + quality + tester)
-  → 👍 + unslopped reply on every comment
+  → 👍 + Kevin-composed reply on every comment
   → resolve + dismiss CHANGES_REQUESTED + re-request
 ```
 
@@ -128,5 +128,5 @@ loop caps; bulma never appears on `STACK.md`. Every Jev answer is logged to
 ## Invariants
 
 - Never merge. Mark the PR ready only after QA PASS.
-- Chat follows `bulma-memory` (default English). Forge text stays English. Unslop always.
+- Chat follows `bulma-memory` (default English). Forge text stays English. Apply Kevin for human-facing communication.
 - ASK the user only as a last resort.

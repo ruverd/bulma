@@ -17,4 +17,4 @@ Follow `GRAPH.md` + bus PROTOCOL. One QA slot (queue extras).
 Plan happy and user-break from the diff, then execute with
 agent-browser (UI) or HTTP stills (API). A backend PR still runs.
 Do not spawn `bulma_triage`.
-PR link required. Chat: `bulma-memory`. Unslop always.
+PR link required. Chat: `bulma-memory`. Apply Kevin for human-facing communication.

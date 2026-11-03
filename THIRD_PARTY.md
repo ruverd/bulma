@@ -8,7 +8,7 @@ files remain MIT
 | Origin | License | Copied skills |
 |---|---|---|
 | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT © Matt Pocock | `grill-with-docs`, `diagnose`, `to-prd`, `to-issues` |
-| [pstack](https://github.com/poteto/pstack) (Lauren Tan) | MIT © Lauren Tan | `unslop`, `how`, `tdd`, `blast-radius`, `architect`, `figure-it-out`, `interrogate`, `typescript-best-practices`, `no-comments`, `technical-writing`, `principle-fix-root-causes`, `principle-prove-it-works`, `principle-sequence-verifiable-units` |
+| [pstack](https://github.com/poteto/pstack) (Lauren Tan) | MIT © Lauren Tan | `how`, `tdd`, `blast-radius`, `architect`, `figure-it-out`, `interrogate`, `typescript-best-practices`, `no-comments`, `technical-writing`, `principle-fix-root-causes`, `principle-prove-it-works`, `principle-sequence-verifiable-units` |
 | [superpowers](https://github.com/obra/superpowers) (Jesse Vincent) | MIT © Jesse Vincent | `receiving-code-review` |
 | Cursor team kit | as shipped in the original skill | `thermo-nuclear-code-quality-review` |
 
@@ -21,3 +21,7 @@ wins over any skip in bundled `tdd`.
 Task playbook contracts and the project verification recipe adapt ideas from
 [pstack 0.15.30](https://github.com/cursor/plugins/tree/4ec7ffa173eaa70d3d9467a627baf0954645a353/pstack),
 MIT © Lauren Tan. Bulma retains its own graph edges, host adapters and proof helpers.
+
+Communication uses [Kevin](https://github.com/ruverd/kevin), MIT © 2026 Kevin
+contributors, pinned at `69cc3fb`. See `skills/kevin/SOURCE.md` and its license.
+`unslop` remains a compatibility alias to Kevin; its previous policy is replaced.

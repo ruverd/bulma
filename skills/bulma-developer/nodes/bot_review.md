@@ -61,7 +61,7 @@ If no bot review exists on this SHA, do nothing else and end the turn.
 If a bot review exists, follow bot_review (threads / score / skip).
 If the PR is CLOSED or MERGED, cancel_wake and stop.
 Do not request QA until bot_review skip or pass.
-Do not merge. Chat: `bulma-memory`. Unslop always, one short S/D/P block.
+Do not merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication, one short S/D/P block.
 ```
 
 Interval **5m**. Min 60s.

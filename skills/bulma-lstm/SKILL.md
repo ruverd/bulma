@@ -19,7 +19,7 @@ Never merge. Same PR. Same branch. Draft stays draft. No new PR.
 [STATE.schema.md](STATE.schema.md) ·
 [bulma-host](../bulma-host/SKILL.md) ·
 `receiving-code-review` ·
-`unslop` · `bulma-memory` ·
+`kevin` · `bulma-memory` ·
 [GITHUB.md](references/GITHUB.md) ·
 bus [PROTOCOL.md](../bulma-bus/PROTOCOL.md) ·
 [DISK.md](../bulma-bus/DISK.md) ·
@@ -37,9 +37,9 @@ switch to `bulma-qa` for visual behavioral evidence, even without a code fix
 it never grants human approval. Grill only when the fix is complicated.
 ASK last resort: [DECISION_POLICY.md](../bulma-feature-delivery/DECISION_POLICY.md).
 
-Chat: `bulma-memory`. Unslop always. Every GitHub reply
+Chat: `bulma-memory`. Apply Kevin for human-facing communication. Every GitHub reply
 (thread, skip reason, COMMENT review, re-review request) is English,
-rewritten with bundled `unslop` before POST. Never POST the first draft.
+rewritten with bundled `kevin` before POST. Never POST the first draft.
 
 Reply is not optional. Every analyzed comment gets 👍 and a thread
 reply. After proven code changes, post a summary, resolve fixed conversations,

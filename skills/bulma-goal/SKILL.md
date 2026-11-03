@@ -18,7 +18,7 @@ skill keeps the session working until QA has **commented with evidence**.
 [DISK.md](../bulma-bus/DISK.md) (`.bulma-*` is **global**, never git root) ·
 `bulma-memory`
 
-Chat: `bulma-memory`. Unslop always.
+Chat: `bulma-memory`. Apply Kevin for human-facing communication.
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 
 ## Commands

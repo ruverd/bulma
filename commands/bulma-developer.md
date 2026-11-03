@@ -12,4 +12,4 @@ Follow **`../skills/bulma-developer/SKILL.md`** in full.
 Use arguments from the user request.
 
 Parse ARGS first. Delivery → `/bulma-feature-delivery`. Then gates. Then `bulma_qa`.
-ASK last resort. Chat: `bulma-memory`. Unslop always. Never merge. Ready only after QA PASS.
+ASK last resort. Chat: `bulma-memory`. Apply Kevin for human-facing communication. Never merge. Ready only after QA PASS.
