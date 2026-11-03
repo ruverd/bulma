@@ -3,6 +3,9 @@
 Use this protocol when evaluating a workflow change. It is not a delivery gate.
 Keep experiment state outside the checkout under `$BULMA_ROOT/experiments/`.
 Use [PERFORMANCE.md](PERFORMANCE.md) for observed usage and execution evidence.
+Use [offline process improvement](IMPROVEMENT.md) to collect explicit outcome and
+process records or replay repository snapshots. Its local runner does not supply
+an OS/network sandbox; independent agent experiments require host isolation.
 
 ## Compare policies
 

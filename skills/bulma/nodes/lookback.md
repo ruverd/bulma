@@ -15,6 +15,16 @@ shrink, and proposes the next change.
 | `lookback --since N` | last N days vs the N before |
 | `lookback --since YYYY-MM-DD [--until YYYY-MM-DD]` | explicit window, e.g. since a skill change merged |
 | `lookback --classify` | first label the unlabeled misses in both windows with Jev, then report |
+| `lookback --process DIRECTORY [--repo PATH]` | report explicitly recorded process assessments and delivery outcomes offline |
+
+Process mode uses [offline process improvement](../../bulma-bus/IMPROVEMENT.md),
+not human-review observations or Jev classification. It also works when no review
+observations exist. Print its JSON as-is, then distinguish recurring verified
+process failures, unknown evidence and delivery/replay outcomes. A candidate is
+only a review lead; do not edit skills, persist memory or publish from this report.
+The existing proposal approval and [experiment protocol](../../bulma-bus/EXPERIMENTS.md)
+still apply. `--since`/`--until` apply only to review mode; process mode reports the
+explicit directory's complete cohort.
 
 Rows come from `bulma-lstm` and `bulma-reviewer`
 ([INSIGHTS.md](../../bulma-bus/INSIGHTS.md)). Only human comments count, and a

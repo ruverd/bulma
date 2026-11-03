@@ -92,6 +92,10 @@ are sums of observed work and waits, not elapsed delivery time when workers
 overlap. Keep the final acceptance outcome in STATE; these totals alone do not
 establish cost per accepted delivery or first-pass success.
 
+For an opt-in outcome join and recurring operational failures, use
+[offline process improvement](IMPROVEMENT.md). It consumes explicit runtime sample
+references and acceptance evidence; ordinary node measurements remain unchanged.
+
 Compare matched tasks with the same model, repository snapshot and risk: reviewer,
 LSTM, small feature and elevated-risk feature. Record first-pass success, retries,
 false positives and defects found by later human review alongside time and tokens.

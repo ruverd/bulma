@@ -85,10 +85,13 @@ def run(args):
                                        start_new_session=True)
             try:
                 result = process.wait(timeout=args.timeout)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
+            except (subprocess.TimeoutExpired, KeyboardInterrupt) as exc:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
                 process.wait()
-                result = 124
+                result = 130 if isinstance(exc, KeyboardInterrupt) else 124
         except OSError as exc:
             log.write(str(exc).encode())
             result = 127

@@ -8,6 +8,10 @@ Notable changes per release. Format follows
 
 ### Added
 
+- Opt-in process assessments, accepted-outcome reporting and matched comparisons,
+  plus repository snapshot replay with durable evidence and quota/timeout stops.
+  Model-only judgments never promote recurring-failure candidates.
+
 - Stacked tasks in `bulma-developer` (`mode: stack`). A parent issue with
   sub-issues, several tracker ids, or an explicit stacked request fans out to
   one worker per child. Each worker runs `bulma-feature-delivery` end-to-end in
