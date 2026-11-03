@@ -57,6 +57,7 @@ check legacy-name-fixtures env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_lega
 
 check trail-adapter env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_trail_adapter.py"
 check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_runtime.py"
+check process-feedback env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_process_feedback.py"
 check task-playbooks env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_playbooks.py"
 check floor-guard env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_floor_guard.py"
 check routing env PYTHONPATH="$LIB" python3 "$LIB/check_routing.py" "$ROOT"

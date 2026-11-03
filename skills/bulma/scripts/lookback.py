@@ -311,7 +311,16 @@ def main():
     ap.add_argument("--replay", default=None, help="with --classify: Jev response file for every item (tests)")
     ap.add_argument("--power", default=None, help="power for insight.classify this run (shadow|cautious|balanced|bold)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--process", metavar="DIRECTORY", help="report explicit process/outcome records offline")
+    ap.add_argument("--repo", default=".", help="repository for --process records")
     args = ap.parse_args()
+
+    if args.process:
+        if args.classify or args.file or args.replay or args.power:
+            ap.error("--process is separate from review classification")
+        script = HERE.parents[1] / "bulma-bus" / "scripts" / "improvement.py"
+        return subprocess.call([sys.executable, str(script), "report", "--repo", args.repo,
+                                "--directory", args.process])
 
     path = Path(args.file) if args.file else bulma_home() / "insights" / "observations.jsonl"
     rows = load(path)
