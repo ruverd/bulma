@@ -21,13 +21,17 @@ Init `.bulma-reviewer/STATE.md`. Walk GRAPH (**admit** first).
 `code_review` is the engine: spec-first, patch bind, high-risk critic.
 Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
 context before pass selection and again before publication, pins the reviewed
-head, and verifies CI execution. A sensitive-path list is named in the
-review body and does not defer. An unresolved thread whose author approved
-this head is not an open concern. Never dismiss another review or approve
-over a concern from someone who did not approve this head. Every review
-POST runs behind the engine's `scripts/gate.py`; an APPROVE it rejects is
-never sent. The engine dismisses its own approval when the head moves or a
-later pass DEFERs, and posts a COMMENT instead of a second bot approval.
+head, and verifies CI execution. A sensitive-path list stays in the private
+job report and does not defer. An unresolved thread whose author approved
+this head is not an open concern. Another reviewer's open change request
+still gets a code review and a COMMENT that their review is pending. Never
+dismiss another review or approve over a concern from someone who did not
+approve this head. Every review POST runs behind the engine's `scripts/gate.py`;
+an APPROVE it rejects is never sent. The engine dismisses its own approval
+only when a new head gets REQUEST_CHANGES for a code defect, and posts a
+COMMENT instead of a second bot approval. Access and tooling errors stay in
+the job report. They are not Deferred comments. CI that cannot be read is a
+normal verdict whose CI cell is `not verified (tooling)`.
 Review preserves the user's checkout. Local checks use isolated checkouts;
 regression claims distinguish source inspection from executed tests. Changes
 that depend on another deployment include counterpart and rollout checks via

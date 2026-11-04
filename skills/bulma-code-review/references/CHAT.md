@@ -13,7 +13,9 @@ GitHub body into chat.
 | Reasoning effort | <reviewer_effort> |
 | Head | <sha7> |
 | Prior | none | deep@<sha7> APPROVED | ... |
-| CI | success \| failure \| pending \| unknown |
+| CI | success \| failure \| pending \| unknown \| not verified (tooling) |
+| Sensitive paths | none, or the list from `signoff.json`. This row stays in chat. It is not a PR row |
+| Tooling | none, or the `ci-tooling.json` errors. This row stays in chat. It is not PR text |
 | Axes | tests, correctness, security, standards (skipped a11y no UI, deps no lockfile) |
 | Risk | high or low |
 | Critic | skip (low risk), ran, or failed |

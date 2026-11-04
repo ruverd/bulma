@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print high/low risk, or JSON paths requiring human sign-off.
+"""Print high/low risk, or JSON sensitive paths for the private job report.
 
 Path tokens and added-line keywords live here, not in the skill prose.
 """
@@ -225,7 +225,7 @@ def main() -> int:
     parser.add_argument("--files-from")
     parser.add_argument("--patch")
     parser.add_argument("--human-signoff", action="store_true",
-                        help="print JSON paths that require human sign-off")
+                        help="print JSON sensitive paths for the private job report")
     parser.add_argument("--changed-files", type=int, default=0)
     parser.add_argument("--churn", type=int, default=0)
     parser.add_argument("--author", default="", help="PR author login (sign-off mode)")

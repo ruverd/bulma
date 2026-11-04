@@ -41,7 +41,9 @@ Good: "If the user retries after a failure, `attempts` still has the old number
 and the cap never fires. Reset it before the new run. I would not merge this
 until that path is fixed."
 
-A DEFER is also a sentence: "CI is still red on lint and typecheck, so I did
-not read the diff."
+A pre-diff DEFER (draft, conflict, or CI that failed) is also a sentence:
+"CI is still red on lint and typecheck, so I did not read the diff." An open
+change request is not that case. The diff was reviewed. Never write
+`I did not inspect the diff`.
 
 A wait_ci chat line: "Code review is complete on this SHA. Required CI is still pending. Checking again in 5 minutes."

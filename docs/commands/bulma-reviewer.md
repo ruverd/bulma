@@ -9,8 +9,10 @@ Never merges. Not the fd worker `bulma-fd-reviewer`.
 Engine preflight reads review discussions and AI QA, rechecks the live head
 before publication, proves CI ran on that commit, and checks caller contracts
 outside the diff. Open concerns or our own Critical/High block approval.
-A thread whose author approved this head does not. Sensitive paths are named
-in the review and do not defer it. Another review is never dismissed.
+A thread whose author approved this head does not. Sensitive paths stay in
+the job report and do not defer the review. Another reviewer's open change
+request is still reviewed. Another review is never dismissed. Our own approval
+is dismissed only when a new head gets a request for changes on the code.
 On Codex, invoke `$bulma-reviewer` or select it through `/skills`.
 
 Review preserves existing worktrees and staged changes. Local checks run in an
