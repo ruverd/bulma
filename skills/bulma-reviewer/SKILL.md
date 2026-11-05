@@ -2,9 +2,9 @@
 name: bulma-reviewer
 category: graph
 description: >
-  Graph: review a PR/branch via /bulma-code-review, classify CI/test
+  Graph: review a PR/branch via bulma-code-review, classify CI/test
   failures, optionally bus a REVIEW_RESULT. Use when /reviewer,
-  /bulma-reviewer, or a REVIEW_REQUEST envelope
+  /bulma-reviewer, $bulma-reviewer, or a REVIEW_REQUEST envelope
   arrives.
 argument-hint: "<PR url | owner/repo#N | branch>"
 ---
@@ -40,8 +40,16 @@ Every verdict body includes `Model` and `Reasoning effort` rows identifying
 the executing reviewer's actual settings, or `unknown` per unavailable field.
 Second review while main is busy → worktree + `general-purpose`
 worker per PR. `--force` if CI red. Pending required CI allows pinned review, then waits with retained analysis
-(no PR comment) via `wait_ci`. Draft / conflict / CI-red DEFER is
-expected.
+(no PR comment) via `wait_ci`. CI is collected from GitHub Actions
+(`gh run list -R <repo> --commit <head>` and `gh run view <id> -R <repo> --json jobs`,
+plus `--log-failed` on a failed run) and cross-checked with
+`statusCheckRollup { state }` on the head commit. Never use `gh pr checks`
+or the check-runs / check-suites REST endpoints. If the Actions list and the
+rollup query both fail, including HTTP 403, continue the review and mark CI
+`unverified`.
+Do not defer solely because CI could not be read. Draft / conflict / CI-red DEFER is
+expected, and the draft gate is unchanged.
+Cursor and Claude invoke `/bulma-reviewer`. Codex invokes `$bulma-reviewer`.
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 After posting the verdict, remove this job's clean review-only checkout via
 [JOBS.md review cleanup](../bulma-bus/JOBS.md#review-cleanup). Pending CI or

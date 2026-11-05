@@ -52,114 +52,88 @@ class SnapshotTest(unittest.TestCase):
         self.assertFalse(m.valid(self.root, self.context))
 
     def response(self, *args):
+        text = ' '.join(str(arg) for arg in args)
+        if args[:2] == ('run', 'list'):
+            return (
+                b'[{"databaseId":7,"name":"CI","status":"completed","conclusion":"success",'
+                b'"workflowName":"CI"}]'
+            )
+        if args[:2] == ('run', 'view'):
+            return b'{"jobs":[{"name":"build-and-test","status":"completed","conclusion":"success"}]}'
+        if args[0:2] == ('api', 'graphql') and 'statusCheckRollup' in text:
+            oid = 'a' * 40
+            return (
+                '{"data":{"repository":{"pullRequest":{"commits":{"nodes":[{"commit":'
+                '{"oid":"%s","statusCheckRollup":{"state":"SUCCESS"}}}]}}}}}' % oid
+            ).encode()
         if args[0:2] == ('api', 'graphql'):
             return b'[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]}}}}}]'
         if 'application/vnd.github.diff' in args:
             return b'diff'
-        if '/files?' in args[1]:
+        if len(args) > 1 and '/files?' in args[1]:
             return b'[[{"filename":"new","previous_filename":"old"}]]'
         return b'[[]]'
 
     def test_collect_and_race(self):
-        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=self.response):
+        calls = []
+
+        def record(*args):
+            calls.append(args)
+            return self.response(*args)
+
+        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=record):
             result = m.collect('o/r', 1, self.root)
         self.assertEqual(result, self.snapshot)
         self.assertEqual((self.root / 'PR_FILES.txt').read_text(), 'new\nold\n')
+        actions = json.loads((self.root / 'actions.json').read_text())
+        self.assertIsNone(actions['error'])
+        self.assertEqual(actions['runs'][0]['jobs'][0]['name'], 'build-and-test')
+        rollup = json.loads((self.root / 'rollup.json').read_text())
+        self.assertEqual(rollup['state'], 'SUCCESS')
+        self.assertFalse(any('check-runs' in str(arg) or 'check-suites' in str(arg) for call in calls for arg in call))
+        self.assertTrue(any(call[:2] == ('run', 'list') for call in calls))
         changed = dict(self.pr, head={'sha': 'c' * 40})
         with patch.object(m, 'pr', side_effect=[self.pr, changed]), patch.object(m, 'gh', side_effect=self.response):
             with self.assertRaises(ValueError):
                 m.collect('o/r', 1, self.root)
         self.assertFalse((self.root / 'snapshot.json').exists())
 
-    def test_check_runs_forbidden_uses_statuses(self):
-        def gh(*args):
-            if len(args) > 1 and 'check-runs' in args[1]:
-                exc = subprocess.CalledProcessError(1, args)
-                exc.output = b''
-                exc.stderr = b'gh: HTTP 403: Resource not accessible by integration\n'
-                raise exc
-            if len(args) > 1 and '/statuses?' in args[1]:
-                return b'[[{"context":"build-and-test","state":"success","created_at":"t","description":"ok"}]]'
+    def test_ci_read_failure_still_snapshots(self):
+        def flaky(*args):
+            text = ' '.join(str(arg) for arg in args)
+            if (args[:2] == ('run', 'list') or '/statuses?' in text
+                    or (args[:2] == ('api', 'graphql') and 'statusCheckRollup' in text)):
+                raise subprocess.CalledProcessError(1, 'gh', stderr=b'HTTP 403 Forbidden')
             return self.response(*args)
 
-        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=gh):
-            m.collect('o/r', 1, self.root)
-        tooling = json.loads((self.root / 'ci-tooling.json').read_text())
-        self.assertEqual(tooling['check_runs'], 'forbidden')
-        self.assertEqual(tooling['fallback'], 'status')
-        self.assertTrue(tooling['verified'])
+        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=flaky):
+            result = m.collect('o/r', 1, self.root)
+        self.assertEqual(result['head'], 'a' * 40)
+        actions = json.loads((self.root / 'actions.json').read_text())
+        rollup = json.loads((self.root / 'rollup.json').read_text())
+        self.assertEqual(actions['error'], '403')
+        self.assertEqual(rollup['error'], '403')
+        self.assertEqual(json.loads((self.root / 'statuses.json').read_text()), [[]])
         self.assertTrue((self.root / 'snapshot.json').exists())
 
-    def test_check_runs_forbidden_uses_actions(self):
-        def gh(*args):
-            if len(args) > 1 and 'check-runs' in args[1]:
-                exc = subprocess.CalledProcessError(1, args)
-                exc.output = b''
-                exc.stderr = b'gh: HTTP 403: Resource not accessible by integration\n'
-                raise exc
-            if len(args) > 1 and args[1].endswith('/status'):
-                exc = subprocess.CalledProcessError(1, args)
-                exc.output = b''
-                exc.stderr = b'gh: HTTP 403: Resource not accessible by integration\n'
-                raise exc
-            if len(args) > 1 and 'actions/runs' in args[1]:
-                run = {'id': 9, 'name': 'build-and-test', 'head_sha': 'a' * 40,
-                       'status': 'completed', 'conclusion': 'success', 'html_url': 'https://example.test/run'}
-                return json.dumps([{'workflow_runs': [run]}]).encode()
+    def test_failed_run_reads_log(self):
+        def failed(*args):
+            if args[:2] == ('run', 'list'):
+                return (
+                    b'[{"databaseId":9,"name":"CI","status":"completed","conclusion":"failure",'
+                    b'"workflowName":"CI"}]'
+                )
+            if args[:2] == ('run', 'view') and '--log-failed' in args:
+                return b'boom\n'
+            if args[:2] == ('run', 'view'):
+                return b'{"jobs":[{"name":"test","status":"completed","conclusion":"failure"}]}'
             return self.response(*args)
 
-        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=gh):
+        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=failed):
             m.collect('o/r', 1, self.root)
-        tooling = json.loads((self.root / 'ci-tooling.json').read_text())
-        self.assertEqual(tooling['fallback'], 'actions')
-        self.assertTrue(tooling['verified'])
-        checks = json.loads((self.root / 'checks.json').read_text())
-        self.assertEqual(checks[0]['check_runs'][0]['name'], 'build-and-test')
-
-    def test_check_runs_forbidden_uses_pr_checks(self):
-        def gh(*args):
-            if len(args) > 1 and ('check-runs' in args[1] or args[1].endswith('/status') or 'actions/runs' in args[1]):
-                exc = subprocess.CalledProcessError(1, args)
-                exc.output = b''
-                exc.stderr = b'gh: HTTP 403: Resource not accessible by integration\n'
-                raise exc
-            return self.response(*args)
-
-        def gh_result(*args):
-            if args[:2] == ('pr', 'checks'):
-                body = b'[{"name":"build-and-test","state":"SUCCESS","bucket":"pass","link":"https://example.test/check"}]'
-                return 0, body, b''
-            return 1, b'', b'unexpected'
-
-        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=gh), \
-                patch.object(m, 'gh_result', side_effect=gh_result):
-            m.collect('o/r', 1, self.root)
-        tooling = json.loads((self.root / 'ci-tooling.json').read_text())
-        self.assertEqual(tooling['fallback'], 'gh pr checks')
-        self.assertTrue(tooling['verified'])
-        checks = json.loads((self.root / 'checks.json').read_text())
-        self.assertEqual(checks[0]['check_runs'][0]['conclusion'], 'success')
-
-    def test_ci_unreadable_still_snapshots(self):
-        def gh(*args):
-            if len(args) > 1 and ('check-runs' in args[1] or '/statuses?' in args[1] or args[1].endswith('/status') or 'actions/runs' in args[1]):
-                exc = subprocess.CalledProcessError(1, args)
-                exc.output = b''
-                exc.stderr = b'gh: HTTP 403: Resource not accessible by integration\n'
-                raise exc
-            return self.response(*args)
-
-        def gh_result(*args):
-            return 1, b'', b'gh: HTTP 403: Resource not accessible by integration\n'
-
-        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=gh), \
-                patch.object(m, 'gh_result', side_effect=gh_result):
-            m.collect('o/r', 1, self.root)
-        tooling = json.loads((self.root / 'ci-tooling.json').read_text())
-        self.assertFalse(tooling['verified'])
-        self.assertIn('HTTP 403 commits/{sha}/check-runs', tooling['errors'])
-        self.assertTrue((self.root / 'snapshot.json').exists())
-        self.assertEqual((self.root / 'PR_FILES.txt').read_text(), 'new\nold\n')
+        actions = json.loads((self.root / 'actions.json').read_text())
+        self.assertEqual(actions['runs'][0]['log_failed_tail'], 'boom')
+        self.assertEqual(actions['runs'][0]['jobs'][0]['conclusion'], 'failure')
 
     def test_graphql_error_invalidates_old_snapshot(self):
         with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', return_value=b'[{"errors":["denied"]}]'):

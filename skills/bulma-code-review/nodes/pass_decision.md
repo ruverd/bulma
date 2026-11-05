@@ -1,7 +1,7 @@
 # 2. State → pass decision
 
 ```bash
-gh pr view "$PR" --repo "$REPO" --json number,title,body,state,isDraft,mergeStateStatus,headRefOid,baseRefName,baseRefOid,headRefName,reviewDecision,latestReviews,statusCheckRollup,additions,deletions,changedFiles
+gh pr view "$PR" --repo "$REPO" --json number,title,body,state,isDraft,mergeStateStatus,headRefOid,baseRefName,baseRefOid,headRefName,reviewDecision,latestReviews,additions,deletions,changedFiles
 ```
 
 Run [PREFLIGHT.md](../references/PREFLIGHT.md), then derive our prior artifacts
@@ -22,7 +22,8 @@ from the review list and takes `first=` from the oldest `pass=deep` marker.
 
 `reason=` carries the DEFER reason (`ci_red`, `ci_unknown`, `draft`,
 `conflict`) on every DEFER, and the COMMENT reason (`bot_quorum`,
-`review_pending`, `coverage`, `critic_failed`, `head_changed`, ...) on a COMMENT review.
+`ci_unverified`, `review_pending`, `coverage`, `critic_failed`, `head_changed`, ...)
+on a COMMENT review.
 
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
 below that leads to APPROVE must check for a `pass=deep|light` marker first.
@@ -43,7 +44,8 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 |---|---|
 | none | **deep** |
 | `sha == headRefOid`, state APPROVED or CHANGES_REQUESTED | **skip** — post nothing, report in chat |
-| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*`, CI now green or `out_of_scope`, `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
+| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*`, or COMMENTED `reason=ci_unverified`, CI now green or `out_of_scope`, `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
+| `sha == headRefOid`, COMMENTED `reason=ci_unverified`, CI still unverified | **skip** — the read failure is already on the PR |
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
 | `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`, not `review_context`, not `review_context_unknown`) | **skip** — report the same reason in chat, post nothing |

@@ -33,7 +33,7 @@ bulma-code-review: APPROVED | CHANGES_REQUESTED | DEFERRED | SKIPPED
 <paths from signoff.json, or none>
 
 ### Tooling
-<CI and access errors from ci-tooling.json, or none>
+<CI and access errors from actions.json / rollup.json, or none>
 ```
 
 Sensitive paths and tooling stay in this job report. Do not copy them into the

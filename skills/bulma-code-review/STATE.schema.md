@@ -26,7 +26,7 @@ init | waiting_ci | reviewing | published | deferred | done
 | `ci_evidence` | run/check IDs, links, SHA and execution results; local tests recorded separately |
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
 | `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; preserve paired role attribution across contributing sessions |
-| `ci` | pending \| green \| red \| unknown |
+| `ci` | pending \| green \| red \| unknown \| unverified |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
 | `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum, review pending, CI not verified, coverage, critic_failed, head_changed) |
 | `defer_reason` | set whenever `verdict=DEFER` (CI red, CI unknown, draft, conflict only) |

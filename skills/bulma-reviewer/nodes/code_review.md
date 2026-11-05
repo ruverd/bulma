@@ -23,6 +23,8 @@ posts a review around it. A gate block, a COMMENT, or a dismissal is an
 engine outcome to report, not something to retry. Do not dismiss our approval
 because a pass was blocked.
 Draft / conflict / CI-red DEFER is expected — keep going to diagnose.
+A CI-read failure is not a defer: the engine reviews and marks CI unverified.
+The draft gate stays a DEFER.
 
 After the engine publishes, fetch the PR's reviews, inline comments, and issue
 comments (`gh api repos/<repo>/pulls/<n>/reviews|comments`,

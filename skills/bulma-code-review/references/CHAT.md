@@ -15,7 +15,7 @@ GitHub body into chat.
 | Prior | none | deep@<sha7> APPROVED | ... |
 | CI | success \| failure \| pending \| unknown \| not verified (tooling) |
 | Sensitive paths | none, or the list from `signoff.json`. This row stays in chat. It is not a PR row |
-| Tooling | none, or the `ci-tooling.json` errors. This row stays in chat. It is not PR text |
+| Tooling | none, or the `actions.json` / `rollup.json` read errors. This row stays in chat. It is not PR text |
 | Axes | tests, correctness, security, standards (skipped a11y no UI, deps no lockfile) |
 | Risk | high or low |
 | Critic | skip (low risk), ran, or failed |
@@ -24,5 +24,5 @@ GitHub body into chat.
 | Findings | N blockers · N majors · N nits · N dropped by self-verify · N dropped by bind |
 | Carried | N re-verified — N still reproduce, N resolved |
 | Coverage | 12/12 |
-| Posted | APPROVED \| CHANGES_REQUESTED \| COMMENTED — bot_quorum \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |
+| Posted | APPROVED \| CHANGES_REQUESTED \| COMMENTED — bot_quorum \| COMMENTED — ci_unverified \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |
 ```

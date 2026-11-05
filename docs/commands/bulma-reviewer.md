@@ -14,6 +14,7 @@ the job report and do not defer the review. Another reviewer's open change
 request is still reviewed. Another review is never dismissed. Our own approval
 is dismissed only when a new head gets a request for changes on the code.
 On Codex, invoke `$bulma-reviewer` or select it through `/skills`.
+Cursor and Claude invoke `/bulma-reviewer`.
 
 Review preserves existing worktrees and staged changes. Local checks run in an
 isolated checkout after inspecting changed scripts. Regression evidence names
@@ -51,7 +52,12 @@ args or REVIEW_REQUEST
 ```
 
 Draft, conflict, and CI-red **DEFER** are expected. That is a gate,
-not a failed run.
+not a failed run. The draft gate is unchanged. CI is read with
+`gh run list -R <repo> --commit <head>` and `gh run view <id> -R <repo> --json jobs`
+(`--log-failed` when a failed run needs its log), then cross-checked with
+GraphQL `statusCheckRollup { state }` on the head commit. A 403 from the
+Checks API is not a deferral: the review continues and the report marks CI
+`unverified`.
 
 ## What the main thread does
 
