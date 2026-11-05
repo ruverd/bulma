@@ -13,7 +13,7 @@ GitHub body into chat.
 | Reasoning effort | <reviewer_effort> |
 | Head | <sha7> |
 | Prior | none | deep@<sha7> APPROVED | ... |
-| CI | success \| failure \| pending \| unknown |
+| CI | success \| failure \| pending \| unknown \| unverified |
 | Axes | tests, correctness, security, standards (skipped a11y no UI, deps no lockfile) |
 | Risk | high or low |
 | Critic | skip (low risk), ran, or failed |
@@ -22,5 +22,5 @@ GitHub body into chat.
 | Findings | N blockers · N majors · N nits · N dropped by self-verify · N dropped by bind |
 | Carried | N re-verified — N still reproduce, N resolved |
 | Coverage | 12/12 |
-| Posted | APPROVED \| CHANGES_REQUESTED \| COMMENTED — bot_quorum \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |
+| Posted | APPROVED \| CHANGES_REQUESTED \| COMMENTED — bot_quorum \| COMMENTED — ci_unverified \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |
 ```

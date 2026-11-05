@@ -19,7 +19,8 @@ python3 scripts/snapshot.py collect --repo "$REPO" --pr "$PR" --dir "$REVIEW_DIR
 The collector fetches independent paginated endpoints concurrently, verifies the
 head and base stayed fixed, and writes `snapshot.json` last. Failure means unknown
 context; never use an older snapshot after a failed collection. Reuse the batch
-throughout this pass. It includes full files, patch, checks, statuses and threads.
+throughout this pass. It includes full files, patch, Actions runs, the status
+rollup, commit statuses and threads.
 Keep STATE's `review_dir` set to this per-PR directory. Run the collector again
 immediately before publication; its success does not replace semantic preflight.
 
@@ -60,30 +61,57 @@ from review state alone.
 
 ## Prove CI ran on the reviewed head
 
-`statusCheckRollup` is discovery, not proof that build/tests ran. Use the
-full `HEAD_SHA` and the required-check definition in [LOOP.md](../LOOP.md):
+`statusCheckRollup.state` is a cross-check, not proof that build/tests ran.
+Use the full `HEAD_SHA` and the required-check definition in [LOOP.md](../LOOP.md).
+`snapshot.py` writes `actions.json` and `rollup.json` for this head. The same
+facts come from:
 
 ```bash
-# checks.json and statuses.json are already in the collected snapshot.
-gh run list --repo "$REPO" --commit "$HEAD_SHA" --limit 100 \
-  --json databaseId,headSha,workflowName,status,conclusion,url
-# Inspect relevant workflow runs, including every build/test job:
-gh run view "$RUN_ID" --repo "$REPO" --json headSha,jobs,url
+gh run list -R "$REPO" --commit "$HEAD_SHA" --limit 100 \
+  --json databaseId,name,status,conclusion,workflowName
+gh run view "$RUN_ID" -R "$REPO" --json jobs
+gh run view "$RUN_ID" -R "$REPO" --log-failed
+gh api graphql -f owner="$OWNER" -f name="$NAME" -F number="$PR" -f query='
+  query($owner:String!, $name:String!, $number:Int!) {
+    repository(owner:$owner, name:$name) {
+      pullRequest(number:$number) {
+        commits(last:1) { nodes { commit { oid statusCheckRollup { state } } } }
+      }
+    }
+  }'
 ```
 
-Record check/run IDs, links, conclusions and SHA in `ci_evidence`. Reconcile
-the latest attempt per check/context. Inspect branch/path/event filters in the
-workflow at this head; a `feature/*` base may not trigger CI at all. Follow
-pagination if the run list is truncated. For a synthetic PR merge SHA, prove
-the run belongs to this exact PR head; otherwise CI is unknown.
+`--log-failed` is for a failed run when the review needs the failing step.
+Never use `gh pr checks` or the check-runs / check-suites REST endpoints.
+A fine-grained token has no Checks permission; those calls return 403 and
+must not be treated as "CI unknown".
+
+Record run ids, job names, links, conclusions and SHA in `ci_evidence`.
+Reconcile the latest attempt per workflow and job. Inspect branch/path/event
+filters in the workflow at this head; a `feature/*` base may not trigger CI
+at all. Follow up if `gh run list` is truncated at the limit. For a synthetic
+PR merge SHA, prove the run belongs to this exact PR head; otherwise CI is
+unknown.
 
 `ci_overall=success` requires actual build/test execution for this head and
-success for every required check. Empty checks, only bot checks, skipped or
-neutral build/test jobs, missing expected jobs, stale runs, or unverified
-SHAs mean `unknown`. Pending jobs mean `pending`; failed jobs mean `failure`.
-Do not infer success from an aggregate job that ran while its tests skipped.
-Review-bot *statuses* are excluded from CI; their *comments* remain review
-evidence above.
+success for every required check, and the rollup must not be `FAILURE`,
+`ERROR`, `PENDING` or `EXPECTED`. Empty runs, only bot jobs, skipped or
+neutral build/test jobs, missing expected jobs, stale runs, or a rollup for
+a different SHA mean `unknown`. Pending jobs, or a rollup of `PENDING` /
+`EXPECTED` while Actions are not already red, mean `pending`. Failed jobs,
+or a rollup of `FAILURE` / `ERROR`, mean `failure`. Do not infer success
+from an aggregate job that ran while its tests skipped, or from rollup
+`SUCCESS` alone. Review-bot *statuses* are excluded from CI; their
+*comments* remain review evidence above.
+
+`ci_overall=unverified` means Actions and the rollup could not be read
+(HTTP 403 or any other read failure on both). Continue the review. Do not
+defer solely because of that read failure. The CI row says `unverified`.
+Never APPROVE. A clean diff is a COMMENT with `reason=ci_unverified`.
+If Actions could be read, use them even when the rollup query failed. If
+Actions could not be read and the rollup state is `FAILURE` or `PENDING`,
+that state still counts (`failure` or `pending`). Rollup `SUCCESS` without
+Actions jobs is not success.
 
 ## CI out of scope for the base
 
@@ -130,6 +158,8 @@ tests on the exact head in an isolated checkout under
 command, exit code, SHA and scope as local test evidence. Local tests do not
 relabel CI as green or bypass required CI.
 `--force` permits code inspection with unknown CI, never approval.
+`unverified` already permits inspection and still never approves. The draft
+gate is unchanged.
 
 ## Sensitive changes
 
@@ -230,9 +260,10 @@ refreshed evidence above. It blocks APPROVE on: another reviewer's latest
 decisive review being CHANGES_REQUESTED, a change request dismissed by someone
 other than its reviewer and not re-approved by them, an unresolved thread
 whose author did not approve this head, a
-status or check whose description starts with `FAIL` (AI QA; needs human
+status whose description starts with `FAIL` (AI QA; needs human
 approval, while `BLOCKED` does not gate), no successful
-build/test check on the head (or a failed/pending one), a missing sign-off
+build/test job on the head (or a failed/pending one), unreadable Actions
+and rollup (`CI unverified`), a missing sign-off
 file, a missing template row, a marker that does not match the head, a
 blocker/major in the ledger, `risk=high` without `critic=ran`, and a light
 approval after my own change request. A nonempty sign-off list does not block.

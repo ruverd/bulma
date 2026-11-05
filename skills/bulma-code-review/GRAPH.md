@@ -10,6 +10,8 @@ start (PR url / number / branch)
   → defer             # CI red / unknown / draft / conflict — issue comment
 ```
 
+`unverified` (CI could not be read) reviews and publishes. It does not defer.
+
 ## Edges
 
 | From | Condition | To |
@@ -20,12 +22,14 @@ start (PR url / number / branch)
 | resolve | room blocked or unknown | **defer** |
 | resolve | `ci_overall` pending | **review** |
 | resolve | `ci_overall` failure or unknown | **defer** |
+| resolve | `ci_overall` unverified | **review** (publish with CI unverified; never defer solely for a CI-read failure) |
 | resolve | `ci_overall` success | **review** |
 | resolve | `ci_overall` out_of_scope | **review** (publishes like success) |
 | wait_ci | still pending | **stop** (loop wakes in 5m) |
 | wait_ci | success and retained analysis valid | **publish** (verdict and fresh gates) |
 | wait_ci | head/base/context changed | **review** |
 | wait_ci | failure or unknown | **defer** |
+| wait_ci | unverified | **review** (publish with CI unverified; do not defer solely for the read failure) |
 | wait_ci | CLOSED or MERGED | delete loop, **stop** |
 | review | always | **critic** |
 | critic | CI pending | **wait_ci** (retain analysis) |
@@ -37,6 +41,7 @@ start (PR url / number / branch)
 | defer | posted | delete loop, **stop** |
 
 `--force` skips failure/unknown inspection gates and goes to **review**.
+It does not change the draft gate. `unverified` already reviews.
 Pending CI always allows review but never publication.
 `--dry-run` never creates a loop and never posts.
 Room evidence is loaded before pass selection. All approval gates run again

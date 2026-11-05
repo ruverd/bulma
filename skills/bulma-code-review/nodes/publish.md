@@ -68,7 +68,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Reasoning effort | <reviewer_effort> |
 | Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review |
-| CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; or CI did not run |
+| CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or unverified |
 | Review context | clear, or linked open concerns |
 | Human sign-off | not required, or needs human sign-off: <paths> |
 | Coverage | 12 of 12 changed files |
@@ -133,7 +133,7 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
 `## ⏸️ Deferred: <repo>#<pr>`, `## 💬 Reviewed, no blockers: <repo>#<pr>` (bot
-quorum). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
+quorum, or CI `unverified` with a clean diff). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
 `Human sign-off` and `Coverage` are required on every review body, compact or
 not; `gate.py` rejects a body without them or with empty attribution. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit

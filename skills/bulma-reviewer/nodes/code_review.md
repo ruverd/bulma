@@ -19,6 +19,8 @@ The engine's `gate.py` decides whether an APPROVE posts; this node never
 posts a review around it. A gate DEFER, a bot-quorum COMMENT, or a dismissed
 stale approval is an engine outcome to report, not something to retry.
 Draft / conflict / CI-red DEFER is expected — keep going to diagnose.
+A CI-read failure is not a defer: the engine reviews and marks CI unverified.
+The draft gate stays a DEFER.
 
 After the engine publishes, fetch the PR's reviews, inline comments, and issue
 comments (`gh api repos/<repo>/pulls/<n>/reviews|comments`,

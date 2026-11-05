@@ -25,7 +25,7 @@ Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
    which does not post). Two or more PRs → one fresh worker per PR.
    Orchestrator does **not** read diffs itself.
 2. Exactly one artifact per PR. Never a review **and** an issue comment.
-3. Never APPROVE while required CI is failed, pending, or unknown.
+3. Never APPROVE while required CI is failed, pending, unknown, or unverified.
 4. No finding without a concrete trigger. Drop in silence.
 5. Spec checklist (`AC.md`) is written before product-file Reads.
    Tests are read before correctness. Findings are bound to the patch
@@ -49,6 +49,9 @@ Pending required CI allows code review first, then retains completed analysis
 locally during `wait_ci`. No PR artifact is posted while pending. Live gates
 run again before publication; changed inputs invalidate the retained analysis.
 Draft / conflict / CI-red: DEFER with `pass=none` (no code was read).
+The draft gate is unchanged. CI that cannot be read (Actions and
+`statusCheckRollup.state` both fail, including HTTP 403) is `unverified`:
+the review continues and the artifact says so. It does not defer on its own.
 
 ## Pass
 

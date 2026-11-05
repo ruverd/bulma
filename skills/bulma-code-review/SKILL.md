@@ -13,6 +13,7 @@ Sequential phases per PR. Depth adapts to review history.
 **Multi-PR:** one subagent per PR (see §0).
 **CI fork:** [GRAPH.md](GRAPH.md) · [LOOP.md](LOOP.md). Pending required CI
 allows pinned code review, then waits with retained analysis and does **not** post. Red CI still DEFERS.
+CI that cannot be read is `unverified`: review continues, and the artifact says so. It does not defer on its own. Draft DEFER is unchanged.
 
 ## Invariants — never break
 
@@ -24,7 +25,7 @@ allows pinned code review, then waits with retained analysis and does **not** po
    call) or one issue comment. Never both. Never two of either **on the same PR**.
    Dismissing my own stale approval and resolving my own fixed threads are
    state changes, not artifacts.
-3. **Never APPROVE** while any required check is failed, pending or unknown.
+3. **Never APPROVE** while any required check is failed, pending, unknown or unverified.
    `out_of_scope` is not unknown: the repo's own workflows never build or test
    PRs into this base ([PREFLIGHT.md](references/PREFLIGHT.md) §CI out of scope).
 4. **Never invent a finding.** A finding with no concrete trigger is dropped in
@@ -83,7 +84,8 @@ allows pinned code review, then waits with retained analysis and does **not** po
     Follow [EVIDENCE.md](references/EVIDENCE.md) for test and rollout proof.
 17. **The gate script decides, not memory.** Every review POST runs as
     `scripts/gate.py ... && gh api .../reviews` ([nodes/publish.md](nodes/publish.md)).
-    Exit 1 → DEFER with its reasons. Exit 3 → the same body as a `COMMENT`
+    Exit 1 → DEFER with its reasons, unless every BLOCKED line is CI unverified:
+    then post a COMMENT with `reason=ci_unverified` instead of DEFER. Exit 3 → the same body as a `COMMENT`
     review: another bot already approved this head, and two bot approvals must
     not satisfy a two-approval rule. Never post an APPROVE the gate did not pass.
 18. **My approval never outlives its evidence.** When the head moves past my

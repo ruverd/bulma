@@ -1,8 +1,8 @@
 # wait_ci — pending CI loop
 
 Pending required checks never produce a GitHub artifact. Review code first, then wait.
-`schedule_wake` ([bulma-host](../bulma-host/SKILL.md)). Do not block the turn on
-`gh pr checks --watch`.
+`schedule_wake` ([bulma-host](../bulma-host/SKILL.md)). Do not block the turn
+watching CI. Re-read Actions runs and `statusCheckRollup.state` on the next wake.
 
 ## Required checks
 
@@ -88,6 +88,8 @@ If green, cancel_wake, then resume verdict and publication with fresh preflight
 and gate.py. If Caller is bulma-reviewer, continue at diagnose → report.
 If required CI failed or is unknown, cancel_wake and DEFER
 (reason=ci_red or ci_unknown) with the issue comment in SKILL §9.
+If CI cannot be read, cancel_wake and publish with CI unverified. Do not
+DEFER solely because the read failed.
 If the PR is CLOSED or MERGED, cancel_wake and stop.
 Do not post while pending. Do not merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication.
 ```
@@ -105,6 +107,7 @@ is a new SHA; wait or review that SHA, never the stale one).
 | pending, analysis invalid | review current inputs, retain analysis, keep loop |
 | success | delete loop, reuse valid analysis or **review**, then publish gates |
 | failure / unknown | delete loop, **defer** |
+| unverified | delete loop, **review** / publish with CI unverified (do not defer solely for the read failure) |
 | CLOSED / MERGED | delete loop, stop |
 
 ## Delete

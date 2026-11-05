@@ -206,9 +206,10 @@ reset_evidence() {
   echo '[[]]' >"$EV/comments.json"
   echo '[[]]' >"$EV/timeline.json"
   echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]}}}}}]' >"$EV/threads.json"
-  cat >"$EV/checks.json" <<EOF
-[{"total_count":1,"check_runs":[{"id":1,"name":"build-and-test","head_sha":"$HEAD","status":"completed","conclusion":"success"}]}]
+  cat >"$EV/actions.json" <<EOF
+{"head":"$HEAD","error":null,"runs":[{"databaseId":1,"name":"CI","status":"completed","conclusion":"success","workflowName":"CI","jobs":[{"name":"build-and-test","status":"completed","conclusion":"success"}]}]}
 EOF
+  echo "{\"head\":\"$HEAD\",\"state\":\"SUCCESS\",\"error\":null}" >"$EV/rollup.json"
   echo '[[]]' >"$EV/statuses.json"
   echo '[]' >"$EV/signoff.json"
   echo '{"kept":[],"body":[],"dropped":[]}' >"$EV/bound.json"
@@ -294,20 +295,54 @@ echo '[[{"context":"AI QA","state":"success","description":"BLOCKED: env down","
 [[ "$(gate)" == 0 ]] || fail "gate: AI QA BLOCKED must not block ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
-cat >"$EV/checks.json" <<EOF
-[{"check_runs":[{"id":1,"name":"build-and-test","head_sha":"$HEAD","status":"completed","conclusion":"skipped"},
-                {"id":2,"name":"CodeRabbit","head_sha":"$HEAD","status":"completed","conclusion":"success"}]}]
-EOF
+python3 - "$EV/actions.json" "$HEAD" <<'PY'
+import json, sys
+path, head = sys.argv[1:]
+json.dump({"head": head, "error": None, "runs": [
+    {"databaseId": 1, "name": "CI", "status": "completed", "conclusion": "success", "workflowName": "CI",
+     "jobs": [{"name": "build-and-test", "status": "completed", "conclusion": "skipped"},
+              {"name": "CodeRabbit", "status": "completed", "conclusion": "success"}]}
+]}, open(path, "w"))
+PY
 blocked_with 'no successful build/test check' || fail "gate: skipped CI must block"
 echo '{"scope":"out_of_scope","base":"feature/x"}' >"$EV/ci-scope.json"
 [[ "$(gate)" == 0 ]] || fail "gate: CI out of scope for the base must not block ($(cat "$TMP/gate.out"))"
-cat >"$EV/checks.json" <<EOF
-[{"check_runs":[{"id":1,"name":"build-and-test","head_sha":"$HEAD","status":"completed","conclusion":"failure"}]}]
-EOF
+python3 - "$EV/actions.json" "$HEAD" <<'PY'
+import json, sys
+path, head = sys.argv[1:]
+json.dump({"head": head, "error": None, "runs": [
+    {"databaseId": 1, "name": "CI", "status": "completed", "conclusion": "failure", "workflowName": "CI",
+     "jobs": [{"name": "build-and-test", "status": "completed", "conclusion": "failure"}]}
+]}, open(path, "w"))
+PY
 blocked_with 'build/test check failure' || fail "gate: a failed check blocks even out of scope"
 echo '{"scope":"unknown"}' >"$EV/ci-scope.json"
-echo '[{"check_runs":[]}]' >"$EV/checks.json"
+python3 - "$EV/actions.json" "$HEAD" <<'PY'
+import json, sys
+path, head = sys.argv[1:]
+json.dump({"head": head, "error": None, "runs": []}, open(path, "w"))
+PY
 blocked_with 'no successful build/test check' || fail "gate: unknown scope must block"
+python3 - "$EV/actions.json" "$EV/rollup.json" "$HEAD" <<'PY'
+import json, sys
+actions, rollup, head = sys.argv[1:]
+json.dump({"head": head, "error": "403", "runs": []}, open(actions, "w"))
+json.dump({"head": head, "state": None, "error": "403"}, open(rollup, "w"))
+PY
+blocked_with 'CI unverified' || fail "gate: unreadable CI must block approval"
+echo "{\"head\":\"$HEAD\",\"state\":\"SUCCESS\",\"error\":null}" >"$EV/rollup.json"
+blocked_with 'CI unverified' || fail "gate: rollup success must not hide an Actions read failure"
+echo "{\"head\":\"$HEAD\",\"state\":\"FAILURE\",\"error\":null}" >"$EV/rollup.json"
+blocked_with 'status check rollup FAILURE' || fail "gate: rollup failure must count when Actions cannot be read"
+python3 - "$EV/actions.json" "$HEAD" <<'PY'
+import json, sys
+path, head = sys.argv[1:]
+json.dump({"head": head, "error": None, "runs": [
+    {"databaseId": 1, "name": "CI", "status": "completed", "conclusion": "success", "workflowName": "CI",
+     "jobs": [{"name": "build-and-test", "status": "completed", "conclusion": "success"}]}
+]}, open(path, "w"))
+PY
+blocked_with 'status check rollup FAILURE' || fail "gate: rollup failure must block a green Actions run"
 rm -f "$EV/ci-scope.json"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
@@ -383,7 +418,7 @@ EOF
 [[ "$(gate)" == 0 ]] || fail "gate: a human approval must not trip bot quorum"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
-rm "$EV/checks.json"
+rm "$EV/actions.json"
 blocked_with 'evidence missing' || fail "gate: missing evidence must block"
 ok gate
 
@@ -442,8 +477,14 @@ skill = (root / 'SKILL.md').read_text()
 assert "Other reviewers' state is ignored" not in skill
 preflight = (root / 'references/PREFLIGHT.md').read_text()
 collector = (root / 'scripts/snapshot.py').read_text()
-for required in ('reviewThreads', 'pageInfo', '--paginate'):
+for required in ('reviewThreads', 'pageInfo', '--paginate', 'statusCheckRollup', '--log-failed', 'databaseId,name,status,conclusion,workflowName'):
     assert required in collector, required
+assert 'check-runs' not in collector and 'check-suites' not in collector
+fetch = (root / 'nodes/fetch.md').read_text()
+assert 'gh pr checks "$PR"' not in fetch and 'gh run view' in fetch
+gates = (root / 'nodes/gates.md').read_text()
+assert '| `isDraft` | DEFER, `reason=draft` |' in gates
+assert 'ci_overall` = unverified' in gates and 'not a deferral' in gates
 for required in ('in_reply_to_id', 'review_dismissed',
                  'CI did not run', 'needs human sign-off', 'reviewed_sha == headRefOid',
                  'Critical/High', 'PR_FILES.txt'):

@@ -10,7 +10,7 @@ Statuses: `PASS` · `PR FAILURE` · `TEST FAILURE` · `INFRASTRUCTURE FAILURE`
 Review: <status>
 PR: <url>
 SHA: <sha>
-CI: green | red | pending | unknown
+CI: green | red | pending | unknown | unverified
 Mergeable: MERGEABLE | CONFLICTING | DIRTY | BLOCKED | UNKNOWN
 bulma-code-review: APPROVED | CHANGES_REQUESTED | DEFERRED | SKIPPED
 

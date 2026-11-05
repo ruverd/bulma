@@ -1,7 +1,11 @@
 # 4. Fetch — patches first, file bodies later
 
+Failing and pending build/test names come from `actions.json` in the
+snapshot (`gh run list` / `gh run view`), not from `gh pr checks`.
+When a run failed and the review needs the failing step:
+
 ```bash
-gh pr checks "$PR" --repo "$REPO"        # only for the failing/pending check names
+gh run view "$RUN_ID" -R "$REPO" --log-failed
 ```
 
 Do not Read product files until Phase 1 has written `AC.md`.

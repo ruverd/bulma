@@ -15,6 +15,11 @@ THREADS = '''query($owner:String!, $name:String!, $number:Int!, $endCursor:Strin
  nodes { databaseId url author { login } body } } }
  } } } }'''
 ARTIFACTS = ('AC.md', 'bound.json', 'coverage.json', 'analysis.json')
+FAILED_RUN = {'failure', 'timed_out', 'cancelled', 'startup_failure', 'action_required', 'stale'}
+ROLLUP = '''query($owner:String!, $name:String!, $number:Int!) {
+ repository(owner:$owner, name:$name) { pullRequest(number:$number) {
+ commits(last:1) { nodes { commit { oid statusCheckRollup { state } } } }
+ } } }'''
 
 
 def sha(data):
@@ -23,6 +28,80 @@ def sha(data):
 
 def gh(*args):
     return subprocess.check_output(['gh', *args])
+
+
+def denial(exc):
+    err = exc.stderr or b''
+    text = err.decode('utf-8', 'replace') if isinstance(err, bytes) else str(err)
+    blob = f'{exc.returncode} {text}'
+    if '403' in blob or 'forbidden' in blob.lower():
+        return '403'
+    return f'exit {exc.returncode}'
+
+
+def try_json(*args):
+    try:
+        return json.loads(gh(*args)), None
+    except subprocess.CalledProcessError as exc:
+        return None, denial(exc)
+    except ValueError:
+        return None, 'unreadable'
+
+
+def graphql_denied(payload):
+    messages = []
+    for item in payload.get('errors') or []:
+        messages.append(item if isinstance(item, str) else str(item.get('message') or item))
+    blob = ' '.join(messages)
+    return '403' if '403' in blob or 'forbidden' in blob.lower() else 'unreadable'
+
+
+def collect_actions(repo, head):
+    payload, err = try_json(
+        'run', 'list', '-R', repo, '--commit', head, '--limit', '100',
+        '--json', 'databaseId,name,status,conclusion,workflowName')
+    if err or not isinstance(payload, list):
+        return {'head': head, 'runs': [], 'error': err or 'unreadable'}
+    runs = []
+    for run in payload:
+        if not isinstance(run, dict) or not isinstance(run.get('databaseId'), int):
+            return {'head': head, 'runs': [], 'error': 'unreadable'}
+        item = {key: run.get(key) for key in ('databaseId', 'name', 'status', 'conclusion', 'workflowName')}
+        rid = str(run['databaseId'])
+        viewed, jerr = try_json('run', 'view', rid, '-R', repo, '--json', 'jobs')
+        jobs = viewed.get('jobs') if isinstance(viewed, dict) else viewed
+        if jerr or not isinstance(jobs, list):
+            item['jobs'] = None
+            item['jobs_error'] = jerr or 'unreadable'
+        else:
+            item['jobs'] = jobs
+        if str(run.get('conclusion') or '').lower() in FAILED_RUN:
+            try:
+                log = gh('run', 'view', rid, '-R', repo, '--log-failed')
+                item['log_failed_tail'] = '\n'.join(log.decode('utf-8', 'replace').splitlines()[-200:])
+            except subprocess.CalledProcessError as exc:
+                item['log_failed_error'] = denial(exc)
+        runs.append(item)
+    return {'head': head, 'runs': runs, 'error': None}
+
+
+def collect_rollup(repo, number, head):
+    owner, name = repo.split('/')
+    payload, err = try_json(
+        'api', 'graphql', '-f', f'owner={owner}', '-f', f'name={name}',
+        '-F', f'number={number}', '-f', 'query=' + ROLLUP)
+    if err or not isinstance(payload, dict):
+        return {'head': head, 'state': None, 'error': err or 'unreadable'}
+    if payload.get('errors'):
+        return {'head': head, 'state': None, 'error': graphql_denied(payload)}
+    try:
+        commit = payload['data']['repository']['pullRequest']['commits']['nodes'][0]['commit']
+    except (KeyError, IndexError, TypeError):
+        return {'head': head, 'state': None, 'error': 'unreadable'}
+    if commit.get('oid') != head:
+        return {'head': head, 'state': None, 'error': 'head mismatch'}
+    rollup = commit.get('statusCheckRollup') or {}
+    return {'head': head, 'state': rollup.get('state'), 'error': None}
 
 
 def pr(repo, number):
@@ -46,7 +125,6 @@ def collect(repo, number, directory):
         'comments.json': f'{prefix}/issues/{number}/comments?per_page=100',
         'inline.json': f'{prefix}/pulls/{number}/comments?per_page=100',
         'timeline.json': f'{prefix}/issues/{number}/timeline?per_page=100',
-        'checks.json': f'{prefix}/commits/{head}/check-runs?per_page=100',
         'statuses.json': f'{prefix}/commits/{head}/statuses?per_page=100',
         'files.json': f'{prefix}/pulls/{number}/files?per_page=100',
     }
@@ -57,6 +135,8 @@ def collect(repo, number, directory):
     commands['PR_PATCH.diff'] = ('api', f'{prefix}/pulls/{number}', '-H', 'Accept: application/vnd.github.diff')
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         values = dict(zip(commands, pool.map(lambda argv: gh(*argv), commands.values())))
+    actions = collect_actions(repo, head)
+    rollup = collect_rollup(repo, number, head)
     for name, content in values.items():
         if name.endswith('.json'):
             value = json.loads(content)
@@ -81,6 +161,8 @@ def collect(repo, number, directory):
     # Commit a complete batch only. The marker is written last.
     for name, content in values.items():
         (directory / name).write_bytes(content)
+    (directory / 'actions.json').write_text(json.dumps(actions))
+    (directory / 'rollup.json').write_text(json.dumps(rollup))
     (directory / 'PR_FILES.txt').write_text('\n'.join(sorted(paths)) + '\n')
     (directory / 'pr.json').write_text(json.dumps(after))
     snapshot = {'repo': repo, 'pr': number, **revision(after)}
