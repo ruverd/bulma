@@ -175,7 +175,7 @@ def needs_deep(reviews: list[dict[str, Any]], comments: list[dict[str, Any]], me
     pending = False
     for _, state, body in sorted(mine, key=lambda m: m[0]):
         mark = marker(body or "")
-        if state == "CHANGES_REQUESTED" or (state == "DEFER" and mark.get("reason") in DEEP_REASONS):
+        if state == "CHANGES_REQUESTED" or (state in ("DEFER", "COMMENTED") and mark.get("reason") in DEEP_REASONS):
             pending = True
         elif mark.get("pass") == "deep" and state != "DISMISSED":
             pending = False
