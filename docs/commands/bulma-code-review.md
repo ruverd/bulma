@@ -41,8 +41,8 @@ Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
    Review new commits before approving. Missing/skipped tests are not green.
 9. Inspect callers and neighboring tests one hop outside the diff; compare API
    mocks with provider/client response shapes. Own Critical/High blocks approval.
-10. Workflows, Terraform, auth, billing/seats and secrets are listed as
-    needing human sign-off. That list does not defer or block approval,
+10. Workflows, Terraform, auth, billing/seats and secrets are listed in the
+    Sensitive paths row. That list does not defer or block approval,
     including on light and promoted passes.
 
 Pending required CI allows code review first, then retains completed analysis

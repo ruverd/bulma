@@ -19,7 +19,7 @@ Write both under `$BULMA_ROOT/.bulma-code-review/`:
 gh pr diff "$PR" --repo "$REPO"
 ```
 
-Save the full PR path list as `PR_FILES.txt` for the human-signoff gate in
+Save the full PR path list as `PR_FILES.txt` for the sensitive-path list in
 [PREFLIGHT.md](../references/PREFLIGHT.md). Use paginated
 `gh api "repos/$REPO/pulls/$PR/files?per_page=100" --paginate`, including
 `previous_filename` for renames. Incomplete file evidence blocks approval.

@@ -46,8 +46,8 @@ allows pinned code review, then waits with retained analysis and does **not** po
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
    before pass selection and again before publishing. Open change requests,
    unresolved threads, unanswered questions and AI QA `FAIL` block approval.
-   A thread whose author approved this head does not. QA `FAIL` needs human
-   approval. QA `BLOCKED` (could not run) never gates.
+   A thread whose author approved this head does not. QA `FAIL` blocks
+   APPROVE. QA `BLOCKED` (could not run) never gates.
    Never dismiss another reviewer's review; ask its reviewer to re-review.
    Missing evidence fails closed. `--force` cannot bypass these approval gates.
 10. **My own open findings never expire silently.** A prior finding of mine is
@@ -72,7 +72,7 @@ allows pinned code review, then waits with retained analysis and does **not** po
 14. **Own Critical/High means no approval.** Reconcile body, inline comments,
     carried findings and critic output with the verdict before POST.
 15. **Sensitive paths are named, not deferred.** Workflows, Terraform, auth,
-    billing/seats and secrets go in the Human sign-off row when
+    billing/seats and secrets go in the Sensitive paths row when
     `classify-risk.py --human-signoff` lists them. That list does not DEFER
     and does not block APPROVE. Use the full PR file list, including renames,
     even during light review.
@@ -164,6 +164,6 @@ with those files:
 - the `classify-risk.py --human-signoff` JSON for the full PR file list and patch
 - `scripts/gate.py` and `scripts/bind-findings.py`
 
-The caller runs the gate before its own APPROVE. A nonempty sign-off list means
-the caller cannot approve either. A caller that cannot run the gate does not
+The caller runs the gate before its own APPROVE. A nonempty sensitive-path
+list is named, not a block. A caller that cannot run the gate does not
 approve; it posts its findings as a `COMMENT` or DEFERs.

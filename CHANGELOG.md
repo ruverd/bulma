@@ -6,6 +6,13 @@ Notable changes per release. Format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `bulma-code-review` never hands the merge to a person. Reviews no longer say
+  "needs a human" or ask for owner sign-off; they state what was not verified.
+  The `Human sign-off` row is now `Sensitive paths`, `Human focus` is now
+  `Review focus`, and AI QA `FAIL` gate reasons read `AI QA failed`.
+
 ### Added
 
 - Opt-in process assessments, accepted-outcome reporting and matched comparisons,

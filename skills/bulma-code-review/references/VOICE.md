@@ -27,6 +27,13 @@ Drop:
 - Restating template labels as the comment. `Trigger:` and `Fix:` are for your
   notes in §5 phase 10. On the PR, write sentences.
 
+Never hand the merge to a person. Do not write "needs a human", "needs human
+review", "human sign-off", "owner sign-off", "a human should verify" or a
+section like "Needs a human before merge". Do not tag people to approve. Name
+what this review did not verify and why it matters, as facts: "Not verified:
+`terraform plan` for dev; I read no remote state. Expect 1 service and 1 IAM
+member destroy." Merge decisions belong to the repo's own rules, not the review.
+
 Do not invent warmth. No praise. No questions that hand the work back
 ("could you look into this?"). A real open question belongs under Open, and
 only when a yes would be a blocker.

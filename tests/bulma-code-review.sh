@@ -228,7 +228,7 @@ body = f"""## Approved: o/r#1
 | Pass | deep |
 | CI | green on {head} |
 | Review context | clear |
-| Human sign-off | not required |
+| Sensitive paths | none |
 | Coverage | 3 of 3 changed files |
 
 <!-- bulma-review: v=1 {marker} sha={head} preflight=1 -->
@@ -287,7 +287,7 @@ blocked_with 'unresolved thread: u1' || fail "gate: approval on an older SHA mus
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"failure","description":"FAIL: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
-blocked_with 'needs human approval: status AI QA says FAIL' || fail "gate: AI QA FAIL must block"
+blocked_with 'AI QA failed: status AI QA says FAIL' || fail "gate: AI QA FAIL must block"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"success","description":"BLOCKED: env down","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
@@ -445,7 +445,7 @@ collector = (root / 'scripts/snapshot.py').read_text()
 for required in ('reviewThreads', 'pageInfo', '--paginate'):
     assert required in collector, required
 for required in ('in_reply_to_id', 'review_dismissed',
-                 'CI did not run', 'needs human sign-off', 'reviewed_sha == headRefOid',
+                 'CI did not run', 'Sensitive paths', 'reviewed_sha == headRefOid',
                  'Critical/High', 'PR_FILES.txt'):
     assert required in preflight, required
 for node in ('pass_decision', 'gates', 'verdict', 'publish'):
@@ -548,7 +548,8 @@ assert 'REVIEW.md' in review and '## Gotchas' in review
 assert 'Reuse (major)' in review and 'duplicates an existing one' in verdict
 assert 'root changelog' in review and 'root changelog' in verdict
 assert 'disputes the finding' in fetch
-assert 'Human focus' in publish and 'Nothing to fix.' in publish
+assert 'Review focus' in publish and 'Human' not in publish
+assert 'Never hand the merge to a person' in (root / 'references/VOICE.md').read_text() and 'Nothing to fix.' in publish
 assert 'unlikely conditions' in review
 PY
 ok convergence-contract

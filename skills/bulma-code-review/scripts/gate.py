@@ -21,14 +21,14 @@ from typing import Any
 MARKER = re.compile(r"<!--\s*bulma-review:(.*?)-->", re.S)
 PAIR = re.compile(r"(\w+)=(\S+)")
 ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|\s*$", re.M)
-REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review context", "Human sign-off", "Coverage")
+REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review context", "Sensitive paths", "Coverage")
 BUILD_TEST = re.compile(
     r"\b(build|builds|test|tests|unit|integration|e2e|jest|vitest|playwright|cypress|pytest)\b", re.I
 )
 FAILED = {"failure", "timed_out", "cancelled", "action_required", "startup_failure", "stale", "error"}
 DECISIVE = {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
 DEEP_REASONS = {"coverage", "uncertainty", "critic_failed"}
-# AI QA verdict prefix. FAIL needs human approval; BLOCKED (QA could not run) does not gate.
+# AI QA verdict prefix. FAIL blocks APPROVE; BLOCKED (QA could not run) does not gate.
 QA_FAIL = re.compile(r"^FAIL(ED)?\b", re.I)
 
 
@@ -148,7 +148,7 @@ def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, 
     for name, run in runs.items():
         title = ((run.get("output") or {}).get("title") or "").strip()
         if QA_FAIL.match(title):
-            reasons.append(f"needs human approval: check {name} says {title}")
+            reasons.append(f"AI QA failed: check {name} says {title}")
         if not BUILD_TEST.search(name):
             continue
         if run.get("status") != "completed":
@@ -160,7 +160,7 @@ def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, 
     for context, status in latest_by(statuses, "context", "created_at").items():
         description = (status.get("description") or "").strip()
         if QA_FAIL.match(description):
-            reasons.append(f"needs human approval: status {context} says {description}")
+            reasons.append(f"AI QA failed: status {context} says {description}")
         if BUILD_TEST.search(context):
             if status.get("state") == "success":
                 green = True
@@ -207,7 +207,7 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     reasons += ci(data["checks"], data["statuses"], args.head, data["ci_scope"].get("scope") == "out_of_scope")
     signoff = load(Path(args.signoff)) if args.signoff else None
     if not isinstance(signoff, list):
-        reasons.append("human sign-off evidence missing (--signoff)")
+        reasons.append("sensitive-path evidence missing (--signoff)")
     if not rows.get("Review context", "").lower().startswith("clear"):
         reasons.append("Review context row is not clear")
     if mark.get("blockers") != "0" or mark.get("majors") != "0" or mark.get("open") != "-":
@@ -245,7 +245,7 @@ def main() -> int:
     parser.add_argument("--payload", required=True, help="review payload JSON about to be POSTed")
     parser.add_argument("--me", required=True)
     parser.add_argument("--head", required=True, help="live headRefOid")
-    parser.add_argument("--signoff", help="classify-risk.py --human-signoff output")
+    parser.add_argument("--signoff", help="classify-risk.py --human-signoff output (sensitive paths)")
     parser.add_argument("--ledger", help="bind-findings.py output for this pass")
     parser.add_argument("--bot-login", action="append", default=[], help="reviewer login that is a bot")
     args = parser.parse_args()

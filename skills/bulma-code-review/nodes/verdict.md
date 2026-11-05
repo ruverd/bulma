@@ -57,7 +57,7 @@ requires zero surviving findings, new **and** carried.
 | head moved and delta not reviewed | re-review delta; if unable, **DEFER** `reason=head_changed` |
 | clean, full coverage, room clear, CI proven on reviewed live head, or `out_of_scope` for the base | **APPROVE** |
 
-A nonempty human sign-off list is named in the Human sign-off row. It does not
+A nonempty sensitive-path list is named in the Sensitive paths row. It does not
 DEFER and it does not block APPROVE. An unresolved thread whose author approved
 this head is a clear room, not `review_context`. A prior DEFER with
 `reason=human_signoff` is withdrawn policy: do not skip on it.

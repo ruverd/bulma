@@ -33,8 +33,7 @@ Never treat the first 50/100 threads, or the first comment alone, as complete.
   question in reviews, inline comments, or PR comments blocks APPROVE.
   Include AI QA `FAIL` findings and questions. A question is not just a `?`
   regex. An AI QA `BLOCKED` verdict (QA could not run: env, auth, app) is not
-  a concern and does not gate review; a QA `FAIL` blocks APPROVE until a human
-  approves the PR.
+  a concern and does not gate review; a QA `FAIL` blocks APPROVE.
 - An unresolved thread does not block when its root author has a latest
   decisive review of `APPROVED` on this head. That approval is their decision
   on their own note. An approval on an older SHA does not clear it. A thread
@@ -154,9 +153,8 @@ with `secrets.`, `AWS_`, `pull_request_target`, `permissions:`, or a `uses:`
 not pinned to a commit SHA. A bot author adds `author:<login>`. Snapshots and
 images are excluded. Also flag equivalent sensitive behavior found in
 generically named files, such as a script the production deploy runs with
-production keys in its environment. Nonempty means `human_signoff=required`: **"needs human sign-off"**
-with paths and responsible owners from repo rules. Put that list in the Human
-sign-off row. It does not DEFER and it does not block APPROVE. Report code
+production keys in its environment. Nonempty means `human_signoff=required`: list the paths in the
+**Sensitive paths** row. Name the paths, never who must approve them. It does not DEFER and it does not block APPROVE. Report code
 findings as usual. High risk alone is a separate critic decision and is not
 proof that this list was built.
 
@@ -171,7 +169,7 @@ Never just update the recorded SHA. If pushes prevent a stable review, DEFER
 with `reason=head_changed`. A base change requires a fresh full PR diff too.
 
 APPROVE requires `reviewed_sha == headRefOid`, clear room evidence, CI proven
-on that SHA, complete coverage, no human gate and zero blockers/majors.
+on that SHA, complete coverage, no AI QA `FAIL` and zero blockers/majors.
 Any **Critical/High** in our body, inline comments, carried findings or critic
 output is a blocker/major, never an approving caveat. Reconcile the final
 payload with the ledger before POST. Keep a proven out-of-hunk defect in the
@@ -230,12 +228,12 @@ refreshed evidence above. It blocks APPROVE on: another reviewer's latest
 decisive review being CHANGES_REQUESTED, a change request dismissed by someone
 other than its reviewer and not re-approved by them, an unresolved thread
 whose author did not approve this head, a
-status or check whose description starts with `FAIL` (AI QA; needs human
-approval, while `BLOCKED` does not gate), no successful
-build/test check on the head (or a failed/pending one), a missing sign-off
+status or check whose description starts with `FAIL` (AI QA `FAIL`;
+`BLOCKED` does not gate), no successful
+build/test check on the head (or a failed/pending one), a missing sensitive-path
 file, a missing template row, a marker that does not match the head, a
 blocker/major in the ledger, `risk=high` without `critic=ran`, and a light
-approval after my own change request. A nonempty sign-off list does not block.
+approval after my own change request. A nonempty sensitive-path list does not block.
 Any missing evidence file blocks.
 Commands are in [nodes/publish.md](../nodes/publish.md).
 

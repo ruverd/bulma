@@ -32,7 +32,7 @@ python3 scripts/gate.py --dir "$REVIEW_DIR" --payload "$PAYLOAD" --me "$ME" \
 |---|---|
 | 0 | posted; post-verify below |
 | 1 | nothing posted. Each `BLOCKED` line is a reason: DEFER with them under Open, dismiss my standing approval, record STATE `gate=blocked` |
-| 3 | nothing posted. Only bot approvals stand on this head. Rewrite the payload as `event: COMMENT`, header `## 💬 Reviewed, no blockers: <repo>#<pr>`, first line "Another bot already approved this head, so this needs a human approval, not a second bot one.", marker `reason=bot_quorum`; re-run the gate and POST |
+| 3 | nothing posted. Only bot approvals stand on this head. Rewrite the payload as `event: COMMENT`, header `## 💬 Reviewed, no blockers: <repo>#<pr>`, first line "Another bot already approved this head, so I am not adding a second bot approval.", marker `reason=bot_quorum`; re-run the gate and POST |
 
 REQUEST_CHANGES and COMMENT payloads pass through the gate too; it checks
 their template rows, marker and `commit_id`.
@@ -70,11 +70,11 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Pass | deep, 1st review |
 | CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; or CI did not run |
 | Review context | clear, or linked open concerns |
-| Human sign-off | not required, or needs human sign-off: <paths> |
+| Sensitive paths | none, or <paths> |
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors |
 | Acceptance | 1 done · 1 missing |
-| Human focus | `src/x.ts:30-60` seat cap rules; the rest is mechanical |
+| Review focus | `src/x.ts:30-60` seat cap rules; the rest is mechanical |
 
 ### 🛑 Blockers
 1. `src/x.ts:42`. **Retry keeps the old count.** If the user retries after a failure, `attempts` still has the old number and the cap never fires. Reset it before the new run.
@@ -121,7 +121,7 @@ The line under the header starts with the count: "1 blocker and 2 majors.",
 on what the findings have in common. A reader who stops after that line knows
 whether there is work to do.
 
-`Human focus` names the one to three hunks where a person's judgement adds
+`Review focus` names the one to three hunks where judgement adds
 the most: product intent, a pattern others will copy, a risky rule, taste in
 UI. Everything else the checks above already covered. Write "spot check" when
 nothing stands out, and never use it to repeat a finding. On round 3 or later
@@ -134,7 +134,7 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
 `## ⏸️ Deferred: <repo>#<pr>`, `## 💬 Reviewed, no blockers: <repo>#<pr>` (bot
 quorum). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
-`Human sign-off` and `Coverage` are required on every review body, compact or
+`Sensitive paths` and `Coverage` are required on every review body, compact or
 not; `gate.py` rejects a body without them or with empty attribution. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
 Acceptance when `AC.md` is `none`. Inline findings still appear in the body
