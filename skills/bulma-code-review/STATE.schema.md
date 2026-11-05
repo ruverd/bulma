@@ -22,15 +22,15 @@ init | waiting_ci | reviewing | published | deferred | done
 | `reviewed_sha` | full SHA whose diff, callers and contracts were actually reviewed; never advance without reviewing the delta |
 | `base_sha` | base SHA used for this pass; a base change invalidates the full PR diff |
 | `review_context` | clear \| blocked \| unknown; evidence and concern URLs live in preflight files |
-| `human_signoff` | required \| not_required; sensitive paths from the full PR file list |
+| `human_signoff` | `not_required`, or `required` plus the sensitive paths. Private job report and STATE only. Never a PR row |
 | `ci_evidence` | run/check IDs, links, SHA and execution results; local tests recorded separately |
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
 | `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; preserve paired role attribution across contributing sessions |
 | `ci` | pending \| green \| red \| unknown \| unverified |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
-| `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum) |
+| `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum, review pending, or CI not verified) |
 | `defer_reason` | set whenever `verdict=DEFER` (CI red, draft, conflict, coverage, uncertainty, critic_failed, gate) |
-| `gate` | last `gate.py` result: pass \| blocked \| bot_quorum, with its reasons |
+| `gate` | last `gate.py` result: pass \| blocked \| bot_quorum \| review_pending \| ci_unverified, with its reasons |
 | `dismissed_approvals` | ids of my own stale approvals dismissed this pass |
 | `reviewed_shas` | SHAs already reviewed, so a light pass knows the carry-forward |
 | `caller` | the graph that asked, when invoked over the bus |

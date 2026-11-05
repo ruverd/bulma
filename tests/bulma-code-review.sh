@@ -229,7 +229,6 @@ body = f"""## Approved: o/r#1
 | Pass | deep |
 | CI | green on {head} |
 | Review context | clear |
-| Human sign-off | not required |
 | Coverage | 3 of 3 changed files |
 
 <!-- bulma-review: v=1 {marker} sha={head} preflight=1 -->
@@ -240,7 +239,7 @@ PY
 
 gate() {
   status "$TMP/gate.out" python3 "$GATE" --dir "$EV" --payload "$EV/payload.json" --me review-bot \
-    --head "$HEAD" --signoff "$EV/signoff.json" --ledger "$EV/bound.json" "$@"
+    --head "$HEAD" --ledger "$EV/bound.json" "$@"
 }
 
 blocked_with() {
@@ -256,7 +255,16 @@ reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
 [[{"id":5,"user":{"login":"alice","type":"User"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
 EOF
-blocked_with 'open change request from alice' || fail "gate: open change request must block"
+{ [[ "$(gate)" == 4 ]] && grep -q 'OPEN_REVIEW' "$TMP/gate.out" && grep -q 'open change request from alice' "$TMP/gate.out"; } \
+  || fail "gate: open change request must comment, not defer ($(cat "$TMP/gate.out"))"
+grep -q 'needs human' "$TMP/gate.out" && fail "gate: open change request must not ask for a person"
+python3 - "$EV/payload.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+p["body"] = p["body"].replace("| Review context | clear |", "| Review context | alice's review is pending |")
+json.dump(p, open(sys.argv[1], "w"))
+PY
+[[ "$(gate)" == 4 ]] || fail "gate: pending row plus open change request must still comment ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
@@ -288,7 +296,8 @@ blocked_with 'unresolved thread: u1' || fail "gate: approval on an older SHA mus
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"failure","description":"FAIL: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
-blocked_with 'needs human approval: status AI QA says FAIL' || fail "gate: AI QA FAIL must block"
+[[ "$(gate)" == 0 ]] || fail "gate: AI QA FAIL status must not block ($(cat "$TMP/gate.out"))"
+grep -q 'needs human' "$TMP/gate.out" && fail "gate: AI QA status must not ask for a person"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"success","description":"BLOCKED: env down","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
@@ -329,9 +338,13 @@ actions, rollup, head = sys.argv[1:]
 json.dump({"head": head, "error": "403", "runs": []}, open(actions, "w"))
 json.dump({"head": head, "state": None, "error": "403"}, open(rollup, "w"))
 PY
-blocked_with 'CI unverified' || fail "gate: unreadable CI must block approval"
+tooling_comment() {
+  [[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'CI not verified (tooling)' "$TMP/gate.out" \
+    && ! grep -q '^BLOCKED' "$TMP/gate.out"
+}
+tooling_comment || fail "gate: unreadable CI must comment, not approve or defer ($(cat "$TMP/gate.out"))"
 echo "{\"head\":\"$HEAD\",\"state\":\"SUCCESS\",\"error\":null}" >"$EV/rollup.json"
-blocked_with 'CI unverified' || fail "gate: rollup success must not hide an Actions read failure"
+tooling_comment || fail "gate: rollup success must not hide an Actions read failure ($(cat "$TMP/gate.out"))"
 echo "{\"head\":\"$HEAD\",\"state\":\"FAILURE\",\"error\":null}" >"$EV/rollup.json"
 blocked_with 'status check rollup FAILURE' || fail "gate: rollup failure must count when Actions cannot be read"
 python3 - "$EV/actions.json" "$HEAD" <<'PY'
@@ -346,8 +359,8 @@ blocked_with 'status check rollup FAILURE' || fail "gate: rollup failure must bl
 rm -f "$EV/ci-scope.json"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
-echo '["infra/stack.yaml"]' >"$EV/signoff.json"
-[[ "$(gate)" == 0 ]] || fail "gate: sign-off list must not block ($(cat "$TMP/gate.out"))"
+rm -f "$EV/signoff.json"
+[[ "$(gate)" == 0 ]] || fail "gate: missing sensitive-path file must not block ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 python3 - "$EV/payload.json" <<'PY'
@@ -419,7 +432,8 @@ EOF
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 rm "$EV/actions.json"
-blocked_with 'evidence missing' || fail "gate: missing evidence must block"
+{ [[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'evidence missing' "$TMP/gate.out"; } \
+  || fail "gate: missing evidence must not defer ($(cat "$TMP/gate.out"))"
 ok gate
 
 # --- skill contract ---
@@ -486,9 +500,14 @@ gates = (root / 'nodes/gates.md').read_text()
 assert '| `isDraft` | DEFER, `reason=draft` |' in gates
 assert 'ci_overall` = unverified' in gates and 'not a deferral' in gates
 for required in ('in_reply_to_id', 'review_dismissed',
-                 'CI did not run', 'needs human sign-off', 'reviewed_sha == headRefOid',
-                 'Critical/High', 'PR_FILES.txt'):
+                 'CI did not run', 'not verified (tooling)', 'reviewed_sha == headRefOid',
+                 'Critical/High', 'PR_FILES.txt', 'I did not inspect the diff',
+                 'private job report', 'actions.json'):
     assert required in preflight, required
+assert 'needs human sign-off' not in preflight
+assert 'needs human approval' not in preflight
+assert 'Human sign-off' not in (root / 'scripts/gate.py').read_text()
+assert 'needs human' not in (root / 'scripts/gate.py').read_text()
 for node in ('pass_decision', 'gates', 'verdict', 'publish'):
     assert 'PREFLIGHT.md' in (root / f'nodes/{node}.md').read_text(), node
 publish = (root / 'nodes/publish.md').read_text()

@@ -23,11 +23,12 @@ ignore review bots).
 | `state` is CLOSED or MERGED | print state, post nothing, stop |
 | `isDraft` | DEFER, `reason=draft` |
 | `mergeStateStatus` in `DIRTY`, `CONFLICTING` | DEFER, `reason=conflict` |
-| `review_context` = blocked or unknown | DEFER, `reason=review_context` or `review_context_unknown`, link concerns |
+| another reviewer's change request is open | **review** the diff. COMMENT if it is clean (`reason=review_pending`); REQUEST_CHANGES if it has a blocker or major. Never write `I did not inspect the diff` |
+| `review_context` unknown because a read failed | **review** the diff. Do not post a Deferred comment. The failure goes in the private job report |
 | `ci_overall` = failure | DEFER, `reason=ci_red`, list ≤8 failing checks with log links |
 | `ci_overall` = pending | **review** pinned head now; after critic retain analysis and **wait_ci**. No PR artifact while pending. |
 | `ci_overall` = unknown | DEFER, `reason=ci_unknown` |
-| `ci_overall` = unverified | **review** the pinned head. A CI-read failure, including HTTP 403, is not a deferral. Publish the code verdict with CI `unverified`. Never APPROVE. A clean review is a COMMENT, `reason=ci_unverified`. |
+| `ci_overall` = unverified | **review** the pinned head. A CI-read failure, including HTTP 403, is not a deferral. CI cell `not verified (tooling)`. Never APPROVE. No Deferred comment |
 | `ci_overall` = out_of_scope | **review**, then publish like `success` ([PREFLIGHT.md](../references/PREFLIGHT.md) §CI out of scope) |
 
 Every gate DEFER carries `pass=none` in its marker — **no code was reviewed**. That

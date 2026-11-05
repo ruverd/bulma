@@ -10,7 +10,7 @@ Statuses: `PASS` · `PR FAILURE` · `TEST FAILURE` · `INFRASTRUCTURE FAILURE`
 Review: <status>
 PR: <url>
 SHA: <sha>
-CI: green | red | pending | unknown | unverified
+CI: green | red | pending | unknown | not verified
 Mergeable: MERGEABLE | CONFLICTING | DIRTY | BLOCKED | UNKNOWN
 bulma-code-review: APPROVED | CHANGES_REQUESTED | DEFERRED | SKIPPED
 
@@ -27,10 +27,17 @@ bulma-code-review: APPROVED | CHANGES_REQUESTED | DEFERRED | SKIPPED
 <PR, check, test, commit, file, tracker id>
 
 ### Action
-<fixed / retry / tracker / human>
+<fixed / retry / tracker>
+
+### Sensitive paths
+<paths from signoff.json, or none>
+
+### Tooling
+<CI and access errors from actions.json / rollup.json, or none>
 ```
 
-Do not report only symptoms.
+Sensitive paths and tooling stay in this job report. Do not copy them into the
+GitHub review. Do not report only symptoms.
 
 Chat example:
 

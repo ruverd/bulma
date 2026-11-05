@@ -19,8 +19,7 @@ command, so an APPROVE the gate rejects is never sent:
 PAYLOAD=$(mktemp /tmp/bulma-review-XXXX.json)   # session scratchpad if one is set
 # {"commit_id","event":"APPROVE|REQUEST_CHANGES|COMMENT","body":"...","comments":[{"path","line","side":"RIGHT","body"}]}
 python3 scripts/gate.py --dir "$REVIEW_DIR" --payload "$PAYLOAD" --me "$ME" \
-  --head "$HEAD_SHA" --signoff "$REVIEW_DIR/signoff.json" \
-  --ledger "$REVIEW_DIR/bound.json" $BOT_LOGINS \
+  --head "$HEAD_SHA" --ledger "$REVIEW_DIR/bound.json" $BOT_LOGINS \
   && gh api "repos/$REPO/pulls/$PR/reviews" -X POST --input "$PAYLOAD"
 ```
 
@@ -31,8 +30,10 @@ python3 scripts/gate.py --dir "$REVIEW_DIR" --payload "$PAYLOAD" --me "$ME" \
 | Gate exit | Next |
 |---|---|
 | 0 | posted; post-verify below |
-| 1 | nothing posted. Each `BLOCKED` line is a reason: DEFER with them under Open, dismiss my standing approval, record STATE `gate=blocked` |
-| 3 | nothing posted. Only bot approvals stand on this head. Rewrite the payload as `event: COMMENT`, header `## 💬 Reviewed, no blockers: <repo>#<pr>`, first line "Another bot already approved this head, so this needs a human approval, not a second bot one.", marker `reason=bot_quorum`; re-run the gate and POST |
+| 1 | nothing posted yet. Each `BLOCKED` line is a real approval block. Do not dismiss my standing approval. A code defect still posts REQUEST_CHANGES. A draft, conflict, or red CI DEFERS. An access or tooling line is not a Deferred comment: put it in the private job report. Record STATE `gate=blocked` |
+| 3 | nothing posted yet. Only bot approvals stand on this head. Rewrite the payload as `event: COMMENT`, header `## 💬 Reviewed, no blockers: <repo>#<pr>`, first line "Another bot already approved this head, so this review is a comment, not a second bot approval.", marker `reason=bot_quorum`; re-run the gate and POST |
+| 4 | nothing posted yet. Another reviewer's change request is open. Rewrite as `event: COMMENT` with the same code review. Say their review is pending and link it. Do not say the diff was not inspected. Do not dismiss my approval. Marker `reason=review_pending`. Re-run the gate and POST |
+| 5 | nothing posted yet. CI or evidence could not be read. Rewrite a clean review as `event: COMMENT`. When the gate prints `CI not verified (tooling)`, the CI cell is exactly that. Put every other gate line in the private job report, not on the PR. Do not dismiss my approval. Marker `reason=ci_unverified`. Re-run the gate and POST |
 
 REQUEST_CHANGES and COMMENT payloads pass through the gate too; it checks
 their template rows, marker and `commit_id`.
@@ -68,9 +69,8 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Reasoning effort | <reviewer_effort> |
 | Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review |
-| CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or unverified |
+| CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or not verified (tooling) |
 | Review context | clear, or linked open concerns |
-| Human sign-off | not required, or needs human sign-off: <paths> |
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors |
 | Acceptance | 1 done · 1 missing |
@@ -133,9 +133,9 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
 `## ⏸️ Deferred: <repo>#<pr>`, `## 💬 Reviewed, no blockers: <repo>#<pr>` (bot
-quorum, or CI `unverified` with a clean diff). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
-`Human sign-off` and `Coverage` are required on every review body, compact or
-not; `gate.py` rejects a body without them or with empty attribution. Findings in the bind `body` bucket
+quorum, open change request, or CI that could not be read). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
+and `Coverage` are required on every review body, compact or
+not; `gate.py` rejects a body without them or with empty attribution. There is no Human sign-off row. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
 Acceptance when `AC.md` is `none`. Inline findings still appear in the body
 list so the summary stands alone. Do not print `axis` labels on the PR; the
@@ -172,15 +172,16 @@ BODY=$(mktemp /tmp/bulma-defer-XXXX.md)
 gh api "repos/$REPO/issues/$PR/comments" -F body=@"$BODY"
 ```
 
-Same template. Before posting, dismiss my standing approval on this PR
-([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval); the
-DEFER comment alone does not withdraw it. The marker carries the reason
+Same template. A DEFER does not dismiss my standing approval
+([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval). The marker carries the reason
 (`reason=coverage`, `reason=critic_failed`, ...) so the next pass knows a flip
-to APPROVE needs a deep pass. The line under the header is a sentence, not a status code:
-"CI is still red on lint and typecheck, so I did not read the diff."
-Under `### ❓ Open`, name the reason: failing checks with log links (max 8),
-the draft or conflict, the files you could not cover, or the open question.
-Never call `gh pr review` on a DEFER.
+to APPROVE needs a deep pass. The line under the header is a sentence, not a status code.
+Use "CI is still red on lint and typecheck, so I did not read the diff." only
+for a real pre-diff gate: draft, conflict, or CI that actually failed. Never
+write `I did not inspect the diff` for an open change request or a tooling
+error. Those are not DEFERS. Under `### ❓ Open`, name the reason: failing
+checks with log links (max 8), the draft or conflict, the files you could not
+cover, or the open question. Never call `gh pr review` on a DEFER.
 
 ### Post-verify
 
@@ -191,7 +192,7 @@ gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid
 
 `REVIEW_ID` comes from the POST response, never from the last review in a list.
 Compare `commit_id` and the live head with `reviewed_sha`. A concurrent push
-makes this review stale; dismiss it, report it and require review of the new head.
+makes this review stale. Report it in the private job report and review the new head. Do not dismiss the approval unless that review posts REQUEST_CHANGES for a code defect.
 
 Read back the saved body and verify both attribution rows match this pass.
 For DEFER, read back the saved issue comment body and apply the same check.

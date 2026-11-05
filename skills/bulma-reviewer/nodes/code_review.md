@@ -8,16 +8,20 @@ a second critic here.
 Pending required CI is **wait_ci**, not this node.
 The engine's [preflight](../../bulma-code-review/references/PREFLIGHT.md) runs
 before review and publication. Read human and AI QA concerns before posting.
-AI QA `BLOCKED` (could not run) never blocks review; QA `FAIL` blocks APPROVE
-and needs human approval;
-the observation collection below is telemetry, not a replacement for that gate.
+AI QA `BLOCKED` (could not run) never blocks review. A status whose text
+starts with `FAIL` does not by itself block APPROVE. An open change request
+is reviewed and posted as a COMMENT when the diff is clean. A gate DEFER is
+only for a real pre-diff gate (draft, conflict, CI red) or a code reason.
+Access and tooling errors are job-report notes, not Deferred comments.
+The observation collection below is telemetry, not a replacement for that gate.
 Apply the engine's [evidence rules](../../bulma-code-review/references/EVIDENCE.md)
 within that same pass: preserve the checkout, verify regression assertions and
 check paired deployment compatibility when applicable. Do not run a second
 review or publish a separate checklist.
 The engine's `gate.py` decides whether an APPROVE posts; this node never
-posts a review around it. A gate DEFER, a bot-quorum COMMENT, or a dismissed
-stale approval is an engine outcome to report, not something to retry.
+posts a review around it. A gate block, a COMMENT, or a dismissal is an
+engine outcome to report, not something to retry. Do not dismiss our approval
+because a pass was blocked.
 Draft / conflict / CI-red DEFER is expected — keep going to diagnose.
 A CI-read failure is not a defer: the engine reviews and marks CI unverified.
 The draft gate stays a DEFER.

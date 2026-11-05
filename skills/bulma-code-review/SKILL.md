@@ -45,12 +45,14 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
    rows. Resolve both through `bulma-host`; use `unknown` per unavailable field.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
-   before pass selection and again before publishing. Open change requests,
-   unresolved threads, unanswered questions and AI QA `FAIL` block approval.
-   A thread whose author approved this head does not. QA `FAIL` needs human
-   approval. QA `BLOCKED` (could not run) never gates.
-   Never dismiss another reviewer's review; ask its reviewer to re-review.
-   Missing evidence fails closed. `--force` cannot bypass these approval gates.
+   before pass selection and again before publishing. An open change request
+   does not skip the diff: review the code and post a COMMENT when it is
+   clean, noting that their review is pending. Unresolved threads and
+   unanswered questions still block approval. A thread whose author approved
+   this head does not. QA `BLOCKED` (could not run) never gates. A status
+   whose text starts with `FAIL` does not by itself block approval.
+   Never dismiss another reviewer's review. Never post a Deferred comment
+   for an access or tooling error. `--force` cannot bypass these approval gates.
 10. **My own open findings never expire silently.** A prior finding of mine is
     dropped only after it is re-verified against the head SHA (§4.2).
 11. **Patch bind.** After Phase 10, every finding goes through
@@ -72,11 +74,11 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
     of scope. Recheck before promotion and retry too.
 14. **Own Critical/High means no approval.** Reconcile body, inline comments,
     carried findings and critic output with the verdict before POST.
-15. **Sensitive paths are named, not deferred.** Workflows, Terraform, auth,
-    billing/seats and secrets go in the Human sign-off row when
-    `classify-risk.py --human-signoff` lists them. That list does not DEFER
-    and does not block APPROVE. Use the full PR file list, including renames,
-    even during light review.
+15. **Sensitive paths stay off the PR.** Workflows, Terraform, auth,
+    billing/seats and secrets are listed by `classify-risk.py --human-signoff`.
+    That list goes in STATE and the private job report only. It does not DEFER,
+    does not block APPROVE, and is not a review row. Use the full PR file list,
+    including renames, even during light review.
 16. **Preserve the checkout.** Review through pinned source reads. Never edit,
     stage, switch, stash, reset, clean, rebase or move existing branches in the
     user's checkout. Fetch commits and run checks in an isolated review
@@ -84,14 +86,18 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
     Follow [EVIDENCE.md](references/EVIDENCE.md) for test and rollout proof.
 17. **The gate script decides, not memory.** Every review POST runs as
     `scripts/gate.py ... && gh api .../reviews` ([nodes/publish.md](nodes/publish.md)).
-    Exit 1 → DEFER with its reasons, unless every BLOCKED line is CI unverified:
-    then post a COMMENT with `reason=ci_unverified` instead of DEFER. Exit 3 → the same body as a `COMMENT`
-    review: another bot already approved this head, and two bot approvals must
-    not satisfy a two-approval rule. Never post an APPROVE the gate did not pass.
-18. **My approval never outlives its evidence.** When the head moves past my
-    approval, or I DEFER, request changes or see a new concern on a PR I
-    approved, dismiss my own approval first ([PREFLIGHT.md](references/PREFLIGHT.md)
-    §Retire my stale approval). Branch protection may not do it.
+    Exit 1 → do not APPROVE. Exit 3 → the same body as a `COMMENT` review:
+    another bot already approved this head, and two bot approvals must not
+    satisfy a two-approval rule. Exit 4 → COMMENT noting the other reviewer's
+    change request is pending. Exit 5 → COMMENT with CI `not verified (tooling)`
+    when that is the reason (Actions and rollup unreadable); other read errors
+    stay in the private job report. Exits 4 and 5 are not Deferred comments.
+    Never post an APPROVE the gate did not pass.
+18. **Dismiss my approval only for a code defect on a new head.** A blocked
+    pass, a DEFER, a COMMENT, or an open change request does not dismiss it.
+    Dismiss only when this pass posts REQUEST_CHANGES for a blocker or major
+    and that approval's commit is not the live head
+    ([PREFLIGHT.md](references/PREFLIGHT.md) §Retire my stale approval).
 19. **A flip needs a full look.** APPROVE after my own REQUEST_CHANGES, or
     after my DEFER for `coverage`, `uncertainty` or `critic_failed`, needs a
     **deep** pass on the full PR diff. A delta-only light pass or an empty
@@ -163,9 +169,11 @@ instead of running the whole skill still owns the approval gates. Hand over,
 with those files:
 
 - [references/PREFLIGHT.md](references/PREFLIGHT.md), including §Sensitive changes
-- the `classify-risk.py --human-signoff` JSON for the full PR file list and patch
+- the `classify-risk.py --human-signoff` JSON for the full PR file list and patch,
+  kept in the private job report and STATE, not in the GitHub review
 - `scripts/gate.py` and `scripts/bind-findings.py`
 
-The caller runs the gate before its own APPROVE. A nonempty sign-off list means
-the caller cannot approve either. A caller that cannot run the gate does not
-approve; it posts its findings as a `COMMENT` or DEFERs.
+The caller runs the gate before its own APPROVE. A nonempty sensitive-path list
+does not block the caller. A caller that cannot run the gate does not approve;
+it posts its findings as a `COMMENT` or DEFERs for a code reason. It does not
+post a Deferred comment for an access or tooling error.

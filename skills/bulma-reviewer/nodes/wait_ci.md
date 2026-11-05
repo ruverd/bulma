@@ -13,3 +13,4 @@ Required CI is pending. Same process as
 
 Loop wake with green → **code_review**.
 Loop wake with red → **code_review** (the skill DEFERS).
+Loop wake when CI could not be read → **code_review**. The skill reviews the diff and posts a verdict with CI `not verified (tooling)`. It does not post a Deferred comment.

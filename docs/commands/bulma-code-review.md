@@ -34,16 +34,17 @@ Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
    The GitHub body includes Acceptance coverage.
 6. Nits never block. Max 5, collapsed. Most stay silent.
 7. Read reviews, unresolved threads and comments, including AI QA, before
-   pass selection and publication. Open concerns block approval, except a
-   thread whose author approved this head. Never dismiss another review; ask
-   its reviewer to re-review.
+   pass selection and publication. An open change request still gets a code
+   review and a comment that their review is pending. A thread whose author
+   approved this head does not block. Never dismiss another review.
 8. Approve only the exact reviewed head with CI execution proved on that SHA.
    Review new commits before approving. Missing/skipped tests are not green.
+   If CI cannot be read, review the diff and note `not verified (tooling)`.
 9. Inspect callers and neighboring tests one hop outside the diff; compare API
    mocks with provider/client response shapes. Own Critical/High blocks approval.
-10. Workflows, Terraform, auth, billing/seats and secrets are listed as
-    needing human sign-off. That list does not defer or block approval,
-    including on light and promoted passes.
+10. Workflows, Terraform, auth, billing/seats and secrets are listed in the
+    private job report. That list does not defer or block approval, and it is
+    not written on the PR, including on light and promoted passes.
 
 Pending required CI allows code review first, then retains completed analysis
 locally during `wait_ci`. No PR artifact is posted while pending. Live gates
@@ -68,6 +69,8 @@ the review continues and the artifact says so. It does not defer on its own.
 |---|---|
 | ≥1 blocker or major | `REQUEST_CHANGES` |
 | clean, full coverage, CI green | `APPROVE` |
+| clean, another reviewer's change request still open | `COMMENT` |
+| CI could not be read | code verdict, CI `not verified (tooling)` |
 | gate / incomplete coverage / blocker-level uncertainty | `DEFER` |
 
 ## Never

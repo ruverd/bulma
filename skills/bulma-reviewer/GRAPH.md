@@ -22,7 +22,7 @@ start (args or REVIEW_REQUEST)
 | wait_ci | still pending | **stop** (loop wakes in 5m) |
 | wait_ci | green | **code_review** |
 | wait_ci | red / unknown | **code_review** (skill DEFERS) |
-| wait_ci | unverified | **code_review** (review continues; CI unverified, no defer) |
+| wait_ci | unverified | **code_review** (reviews and posts; CI cell `not verified (tooling)`, no defer) |
 | code_review | analysis retained, CI pending | **wait_ci** |
 | code_review | published or deferred | **diagnose** |
 | diagnose | always | **report** |

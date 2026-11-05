@@ -47,8 +47,9 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 | `sha == headRefOid`, COMMENTED `reason=ci_unverified`, CI still unverified | **skip** — the read failure is already on the PR |
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
-| `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`) | **skip** — report the same reason in chat, post nothing |
-| `sha == headRefOid`, DEFERRED with `reason=uncertainty` | **skip** — needs a human answer or a new commit |
+| `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`, not `review_context`, not `review_context_unknown`) | **skip** — report the same reason in chat, post nothing |
+| `sha == headRefOid`, DEFERRED with `reason=uncertainty` | **skip** — the open question or a new commit has to come first |
+| `sha == headRefOid`, DEFERRED `reason=review_context` or `review_context_unknown` | **deep** — that defer skipped the diff. Review it |
 | `sha == headRefOid`, COMMENTED `reason=bot_quorum`, approvals on the head unchanged | **skip** |
 | `sha != headRefOid`, prior marker `pass=none` | **deep** on the full diff — no prior pass to be incremental against |
 | any `sha`, my latest decisive artifact is REQUEST_CHANGES, or a DEFER with `reason=coverage\|uncertainty\|critic_failed`, with no deep pass of mine after it | **deep** on the full PR diff, carry-forward still applies |
@@ -63,17 +64,18 @@ verdict that was already APPROVE. Whatever the earlier deep pass missed is
 never looked at again unless the flip back to APPROVE reruns Phases 5–6 on the
 full diff. `gate.py` enforces this from the markers.
 
-If my approval stands on an older SHA, dismiss it now, before review
-([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval). It no
-longer describes the head.
+If my approval stands on an older SHA, leave it in place through this pass.
+Dismiss it only after REQUEST_CHANGES for a code defect on the new head
+([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval).
 
 Skip output is chat-only: state the reason and the SHA. Do not touch the PR.
-If fresh room evidence blocks a previous approval, do not silently skip: DEFER
-with the concern URLs. Reevaluate `review_context`, `review_context_unknown`,
-and `head_changed` deferrals on every run. A prior `reason=human_signoff` is
-withdrawn: do not skip on it. An unresolved thread from a reviewer who approved
-this head is not blocked room. Promotion always re-runs the full preflight,
-including the sensitive-path list and CI evidence.
+If another reviewer has an open change request, do not skip and do not DEFER.
+Review the code and post COMMENT or REQUEST_CHANGES. Reevaluate
+`review_context`, `review_context_unknown`, and `head_changed` deferrals on
+every run. A prior `reason=human_signoff` is withdrawn: do not skip on it.
+An unresolved thread from a reviewer who approved this head is not blocked
+room. Promotion always re-runs the full preflight, including the sensitive-path
+list and CI evidence. The sensitive-path list stays in the private job report.
 
 ## Rebase only
 

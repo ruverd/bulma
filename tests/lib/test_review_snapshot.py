@@ -101,7 +101,8 @@ class SnapshotTest(unittest.TestCase):
     def test_ci_read_failure_still_snapshots(self):
         def flaky(*args):
             text = ' '.join(str(arg) for arg in args)
-            if args[:2] == ('run', 'list') or (args[:2] == ('api', 'graphql') and 'statusCheckRollup' in text):
+            if (args[:2] == ('run', 'list') or '/statuses?' in text
+                    or (args[:2] == ('api', 'graphql') and 'statusCheckRollup' in text)):
                 raise subprocess.CalledProcessError(1, 'gh', stderr=b'HTTP 403 Forbidden')
             return self.response(*args)
 
@@ -112,6 +113,7 @@ class SnapshotTest(unittest.TestCase):
         rollup = json.loads((self.root / 'rollup.json').read_text())
         self.assertEqual(actions['error'], '403')
         self.assertEqual(rollup['error'], '403')
+        self.assertEqual(json.loads((self.root / 'statuses.json').read_text()), [[]])
         self.assertTrue((self.root / 'snapshot.json').exists())
 
     def test_failed_run_reads_log(self):

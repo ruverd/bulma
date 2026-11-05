@@ -16,9 +16,9 @@ An empty branch-protection required-check list does not waive build/tests.
 Inspect workflow branch/path filters and skipped job/step conditions; only
 executed checks supply evidence. Optional unrelated jobs do not gate approval.
 
-Ignore review-bot check statuses for this CI loop. Their review comments and
-AI QA `FAIL` findings still gate approval through [PREFLIGHT.md](references/PREFLIGHT.md);
-QA `BLOCKED` does not.
+Ignore review-bot check statuses for this CI loop. Their review comments stay
+review evidence through [PREFLIGHT.md](references/PREFLIGHT.md). A status whose
+text starts with `FAIL` does not by itself defer the review. QA `BLOCKED` does not.
 Required-check success must include actual build/test execution on the reviewed
 head. Empty, skipped, neutral, stale or unverifiable jobs are `unknown`, never
 green. Check workflow filters against `baseRefName`, especially `feature/*`:
@@ -86,10 +86,11 @@ pass and critic, then retain the replacement analysis even if CI is pending.
 If CI is still pending, keep the wake and end the turn without posting.
 If green, cancel_wake, then resume verdict and publication with fresh preflight
 and gate.py. If Caller is bulma-reviewer, continue at diagnose → report.
-If required CI failed or is unknown, cancel_wake and DEFER
-(reason=ci_red or ci_unknown) with the issue comment in SKILL §9.
-If CI cannot be read, cancel_wake and publish with CI unverified. Do not
-DEFER solely because the read failed.
+If required CI failed, cancel_wake and DEFER (reason=ci_red).
+If CI was read and is unknown, cancel_wake and DEFER (reason=ci_unknown).
+If CI could not be read (`ci_overall` unverified), do not DEFER.
+Publish the code verdict with CI `not verified (tooling)` and record the
+error in the private job report.
 If the PR is CLOSED or MERGED, cancel_wake and stop.
 Do not post while pending. Do not merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication.
 ```
@@ -106,8 +107,8 @@ is a new SHA; wait or review that SHA, never the stale one).
 | pending, analysis valid | stop (keep the loop) |
 | pending, analysis invalid | review current inputs, retain analysis, keep loop |
 | success | delete loop, reuse valid analysis or **review**, then publish gates |
-| failure / unknown | delete loop, **defer** |
-| unverified | delete loop, **review** / publish with CI unverified (do not defer solely for the read failure) |
+| failure, or unknown after a successful CI read | delete loop, **defer** |
+| unverified (Actions and rollup unreadable) | delete loop, publish the code verdict, no Deferred comment |
 | CLOSED / MERGED | delete loop, stop |
 
 ## Delete

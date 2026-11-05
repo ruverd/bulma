@@ -125,7 +125,6 @@ def collect(repo, number, directory):
         'comments.json': f'{prefix}/issues/{number}/comments?per_page=100',
         'inline.json': f'{prefix}/pulls/{number}/comments?per_page=100',
         'timeline.json': f'{prefix}/issues/{number}/timeline?per_page=100',
-        'statuses.json': f'{prefix}/commits/{head}/statuses?per_page=100',
         'files.json': f'{prefix}/pulls/{number}/files?per_page=100',
     }
     commands = {name: ('api', route, '--paginate', '--slurp') for name, route in routes.items()}
@@ -135,6 +134,9 @@ def collect(repo, number, directory):
     commands['PR_PATCH.diff'] = ('api', f'{prefix}/pulls/{number}', '-H', 'Accept: application/vnd.github.diff')
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         values = dict(zip(commands, pool.map(lambda argv: gh(*argv), commands.values())))
+    statuses, _ = try_json('api', f'{prefix}/commits/{head}/statuses?per_page=100', '--paginate', '--slurp')
+    # A token without commit-status read must not abort the snapshot; Actions and rollup carry CI.
+    values['statuses.json'] = json.dumps(statuses if isinstance(statuses, list) and statuses else [[]]).encode()
     actions = collect_actions(repo, head)
     rollup = collect_rollup(repo, number, head)
     for name, content in values.items():
