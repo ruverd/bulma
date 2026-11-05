@@ -66,7 +66,7 @@ allows pinned code review, then waits with retained analysis and does **not** po
     the critic before verdict. The critic walks contracts, integration/state,
     and security/data-loss on one spawn, without voting findings off. When
     the script prints `low`, skip the spawn. High risk with no completed
-    critic is **DEFER** `reason=critic_failed`, marker `critic=failed`.
+    critic is a **COMMENT** `reason=critic_failed`, marker `critic=failed`.
 13. **Approve the reviewed head only.** Pin the full reviewed SHA, re-review
     any new commits, and verify CI execution on that SHA. Skipped or missing
     build/test jobs are not green, unless `ci-scope.py` proves the base is out
@@ -98,7 +98,7 @@ allows pinned code review, then waits with retained analysis and does **not** po
     and that approval's commit is not the live head
     ([PREFLIGHT.md](references/PREFLIGHT.md) §Retire my stale approval).
 19. **A flip needs a full look.** APPROVE after my own REQUEST_CHANGES, or
-    after my DEFER for `coverage`, `uncertainty` or `critic_failed`, needs a
+    after my DEFER or COMMENT for `coverage`, `uncertainty` or `critic_failed`, needs a
     **deep** pass on the full PR diff. A delta-only light pass or an empty
     commit cannot clear it.
 20. **Converge, do not loop.** One finding per defect class, with its other

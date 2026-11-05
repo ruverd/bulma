@@ -28,8 +28,8 @@ init | waiting_ci | reviewing | published | deferred | done
 | `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; preserve paired role attribution across contributing sessions |
 | `ci` | pending \| green \| red \| unknown |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
-| `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum, review pending, or CI not verified) |
-| `defer_reason` | set whenever `verdict=DEFER` (CI red, draft, conflict, coverage, uncertainty, critic_failed, gate) |
+| `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER \| COMMENT (bot quorum, review pending, CI not verified, coverage, critic_failed, head_changed) |
+| `defer_reason` | set whenever `verdict=DEFER` (CI red, CI unknown, draft, conflict only) |
 | `gate` | last `gate.py` result: pass \| blocked \| bot_quorum \| review_pending \| ci_unverified, with its reasons |
 | `dismissed_approvals` | ids of my own stale approvals dismissed this pass |
 | `reviewed_shas` | SHAs already reviewed, so a light pass knows the carry-forward |

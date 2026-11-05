@@ -74,7 +74,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors |
 | Acceptance | 1 done · 1 missing |
-| Human focus | `src/x.ts:30-60` seat cap rules; the rest is mechanical |
+| Review focus | `src/x.ts:30-60` seat cap rules; the rest is mechanical |
 
 ### 🛑 Blockers
 1. `src/x.ts:42`. **Retry keeps the old count.** If the user retries after a failure, `attempts` still has the old number and the cap never fires. Reset it before the new run.
@@ -83,8 +83,8 @@ Markdown table delimiters or line breaks in the value before rendering it.
 1. `src/y.ts:10`. Empty list has no test. Add one that asserts the empty state.
 2. `src/a.ts:42`. Seat cap is not checked again before the write. Validate there. _(still open from 9b2f1ac)_
 
-### ❓ Open
-- I cannot tell if api-v2 returns 409 on a duplicate submit. If it does not, this path double-writes.
+### 🔎 Not verified
+- api-v2's response to a duplicate submit was not readable from here. I assumed a 409; without it this path double-writes.
 
 <details><summary>Nits (skip these if you want)</summary>
 
@@ -121,7 +121,7 @@ The line under the header starts with the count: "1 blocker and 2 majors.",
 on what the findings have in common. A reader who stops after that line knows
 whether there is work to do.
 
-`Human focus` names the one to three hunks where a person's judgement adds
+`Review focus` names the one to three hunks where judgement adds
 the most: product intent, a pattern others will copy, a risky rule, taste in
 UI. Everything else the checks above already covered. Write "spot check" when
 nothing stands out, and never use it to repeat a finding. On round 3 or later
@@ -174,14 +174,15 @@ gh api "repos/$REPO/issues/$PR/comments" -F body=@"$BODY"
 
 Same template. A DEFER does not dismiss my standing approval
 ([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval). The marker carries the reason
-(`reason=coverage`, `reason=critic_failed`, ...) so the next pass knows a flip
-to APPROVE needs a deep pass. The line under the header is a sentence, not a status code.
+(`reason=ci_red`, `reason=draft`, ...). A DEFER is only for CI red or unknown,
+draft or conflict. Coverage, critic failure, a moved head and uncertainties
+are COMMENT reviews, never a Deferred comment. The line under the header is a sentence, not a status code.
 Use "CI is still red on lint and typecheck, so I did not read the diff." only
 for a real pre-diff gate: draft, conflict, or CI that actually failed. Never
 write `I did not inspect the diff` for an open change request or a tooling
 error. Those are not DEFERS. Under `### ❓ Open`, name the reason: failing
 checks with log links (max 8), the draft or conflict, the files you could not
-cover, or the open question. Never call `gh pr review` on a DEFER.
+Never call `gh pr review` on a DEFER.
 
 ### Post-verify
 

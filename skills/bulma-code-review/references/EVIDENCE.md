@@ -21,7 +21,7 @@ not run deploys or destructive operations as review checks.
 Record command, working directory, full source SHA, exit code and output path.
 Separate source inspection, local execution and CI evidence. If a command
 cannot run, record the reason and continue source review. Apply existing
-coverage and blocker-uncertainty gates; missing local execution alone is not
+coverage rule (COMMENT, never DEFER) and list uncertainties under Not verified; missing local execution alone is not
 a fabricated defect and never turns unknown CI green.
 
 ## Tests that distinguish the defect
@@ -78,5 +78,5 @@ registration, check their overlap for a concrete conflict. Missing deploy prose
 alone is not a blocker. A reachable contract break is an `axis: contract`
 finding with the failing version combination and causal changed hunk. An
 unavailable counterpart that leaves a blocker-level question follows the
-existing uncertainty gate. Record checked revisions, order and remaining gaps
+Not verified rule; it never DEFERs. Record checked revisions, order and remaining gaps
 in Coverage; never claim one PR's checks validate its counterpart.

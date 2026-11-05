@@ -6,6 +6,16 @@ Notable changes per release. Format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `bulma-code-review` DEFERs only on CI red or unknown, draft, or conflict.
+  An open change request from another reviewer, unreadable CI, incomplete
+  coverage, a failed critic or a moved head now post a COMMENT review after
+  reading the diff. Facts outside the repo go under `Not verified` and never
+  change the verdict. APPROVE is allowed when only nits remain. Reviews never
+  say "needs a human" or ask for owner sign-off. `Human focus` is now
+  `Review focus`.
+
 ### Added
 
 - Opt-in process assessments, accepted-outcome reporting and matched comparisons,

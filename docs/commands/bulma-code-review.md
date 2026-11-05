@@ -65,10 +65,12 @@ Draft / conflict / CI-red: DEFER with `pass=none` (no code was read).
 | Findings | Verdict |
 |---|---|
 | ≥1 blocker or major | `REQUEST_CHANGES` |
-| clean, full coverage, CI green | `APPROVE` |
+| clean or nits only, full coverage, CI green | `APPROVE` |
 | clean, another reviewer's change request still open | `COMMENT` |
 | CI could not be read | code verdict, CI `not verified (tooling)` |
-| gate / incomplete coverage / blocker-level uncertainty | `DEFER` |
+| CI red/unknown, draft, conflict | `DEFER` |
+| incomplete coverage, critic failed, head moved | `COMMENT` |
+| facts outside the repo | Not verified section; no verdict effect |
 
 ## Never
 
