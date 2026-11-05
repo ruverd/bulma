@@ -214,8 +214,8 @@ Set `reviewed_sha` only after the code, caller contracts and tests at that
 commit were inspected. If the live head differs, fetch both commits and
 review `git diff <reviewed_sha>..<headRefOid>` plus carried findings, then
 repeat the final check. A missing old commit requires a fresh deep review.
-Never just update the recorded SHA. If pushes prevent a stable review, DEFER
-with `reason=head_changed`. A base change requires a fresh full PR diff too.
+Never just update the recorded SHA. If pushes prevent a stable review, post a
+COMMENT on the reviewed SHA with `reason=head_changed`. A base change requires a fresh full PR diff too.
 
 APPROVE requires `reviewed_sha == headRefOid`, clear room evidence, CI proven
 on that SHA, complete coverage and zero blockers/majors. A sensitive-path list

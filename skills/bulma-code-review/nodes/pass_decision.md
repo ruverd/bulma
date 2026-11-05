@@ -20,9 +20,10 @@ for room evidence. Take our artifact with the latest timestamp. Parse its marker
 §Convergence below. A marker without them counts its REQUEST_CHANGES reviews
 from the review list and takes `first=` from the oldest `pass=deep` marker.
 
-`reason=` carries the DEFER reason (`coverage`, `uncertainty`, `critic_failed`,
-`ci_red`, ...) on every DEFER, `bot_quorum` on a bot-quorum COMMENT, and
-`ci_unverified` on a COMMENT posted because CI could not be read.
+`reason=` carries the DEFER reason (`ci_red`, `ci_unknown`, `draft`,
+`conflict`) on every DEFER, and the COMMENT reason (`bot_quorum`,
+`ci_unverified`, `review_pending`, `coverage`, `critic_failed`, `head_changed`, ...)
+on a COMMENT review.
 
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
 below that leads to APPROVE must check for a `pass=deep|light` marker first.
@@ -48,11 +49,11 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
 | `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`, not `review_context`, not `review_context_unknown`) | **skip** — report the same reason in chat, post nothing |
-| `sha == headRefOid`, DEFERRED with `reason=uncertainty` | **skip** — the open question or a new commit has to come first |
+| `sha == headRefOid`, DEFERRED with `reason=uncertainty`, `coverage`, `critic_failed` or `head_changed` (withdrawn) | **deep** — re-review and post a code verdict |
 | `sha == headRefOid`, DEFERRED `reason=review_context` or `review_context_unknown` | **deep** — that defer skipped the diff. Review it |
 | `sha == headRefOid`, COMMENTED `reason=bot_quorum`, approvals on the head unchanged | **skip** |
 | `sha != headRefOid`, prior marker `pass=none` | **deep** on the full diff — no prior pass to be incremental against |
-| any `sha`, my latest decisive artifact is REQUEST_CHANGES, or a DEFER with `reason=coverage\|uncertainty\|critic_failed`, with no deep pass of mine after it | **deep** on the full PR diff, carry-forward still applies |
+| any `sha`, my latest decisive artifact is REQUEST_CHANGES, or a DEFER/COMMENT with `reason=coverage\|uncertainty\|critic_failed`, with no deep pass of mine after it | **deep** on the full PR diff, carry-forward still applies |
 | `sha != headRefOid`, prior marker `pass=deep\|light`, same content (§Rebase only) | **rebase** — re-verify the ledger, no new diff review |
 | `sha != headRefOid`, prior marker `pass=deep\|light` | **light** on `sha..headRefOid` |
 

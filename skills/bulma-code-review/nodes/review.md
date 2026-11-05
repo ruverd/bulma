@@ -93,7 +93,7 @@ that no CI workflow turns on, a spy with no assertion on its calls.
 For each changed exported symbol, find importers, callers and tests one hop
 outside the diff, even when tests in the diff pass. For changed API consumers,
 read the provider/serializer or shared client wrapper too. Use existing caps;
-if a required hop cannot be checked, declare incomplete coverage and DEFER.
+if a required hop cannot be checked, declare incomplete coverage (COMMENT, not DEFER).
 For config or workflow changes without exports, search for scripts/tests that
 assert the changed keys, action names or paths. A checkout-action replacement
 can break a security guard test outside the workflow diff.
@@ -148,7 +148,7 @@ actual wire shape. For `{ success, data }`, identify exactly where the envelope
 is unwrapped. A mock returning a bare array cannot prove a consumer handles the
 real envelope. Read neighboring contract tests even if this diff has tests.
 Record the paths and shapes checked in Coverage. An unavailable external
-contract that could crash the feature is a blocker-level uncertainty.
+contract that could crash the feature goes under Not verified, with the shape you assumed.
 
 A write that spans two stores, or an external provider and a local table: say
 what state is left when the second step fails, and what a retry or an
@@ -278,9 +278,11 @@ Cut rules, biased toward refutation:
 - only facts that genuinely cannot be checked from this repo, its linked
   counterparts or CI (an unavailable provider response, production data) go
   to `uncertainties`
-- an uncertainty causes DEFER `reason=uncertainty` if, were it true, it would
-  be a blocker, or a major on the `correctness`, `contract` or `security`
-  axis. Uncertainty about a nit disappears
+- an uncertainty never DEFERs and never blocks. If, were it true, it would be
+  a blocker or a `correctness`/`contract`/`security` major, state it under
+  Not verified as a fact (what was not read, what to expect). If the diff can
+  guard against it, that missing guard is the finding instead. Uncertainty
+  about a nit disappears
 - a claim about pre-existing code the diff neither changed nor broke sets
   `pre_existing: true`; that is the only way a blocker or major leaves the
   ledger without a placement

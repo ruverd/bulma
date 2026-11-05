@@ -34,7 +34,8 @@ A preference with no `path:line` in the diff is dropped, like any other nit.
 ## 7. Coverage — required before APPROVE
 
 One row per changed file with what was verified. Silence is not evidence. A file
-left unverified because of a cap is declared and forces **DEFER**, never APPROVE.
+left unverified because of a cap is declared and forces a **COMMENT**
+`reason=coverage` that names the files, never APPROVE and never DEFER.
 
 ## 8. Verdict
 
@@ -47,7 +48,13 @@ Apply [pass_decision.md](pass_decision.md) §Convergence first when this would
 be my third or later REQUEST_CHANGES on the PR.
 
 Carried findings that still reproduce (§4.2) count exactly like new ones. APPROVE
-requires zero surviving findings, new **and** carried.
+requires zero surviving blockers and majors, new **and** carried. Nits ride
+along with an APPROVE; they never turn it into a COMMENT or a DEFER.
+
+**DEFER is only for CI and PR state:** CI red, CI readable but unknown, draft,
+conflict. Everything else is a code verdict: REQUEST_CHANGES for a blocker or
+major, APPROVE when only nits remain and the approval gates pass, otherwise a
+COMMENT review with the reason in the marker.
 
 | Findings | Verdict |
 |---|---|
@@ -55,18 +62,18 @@ requires zero surviving findings, new **and** carried.
 | ≥1 major (new or carried), 0 blocker | **REQUEST_CHANGES** |
 | clean, another reviewer's change request is open | **COMMENT** `reason=review_pending`. Their review is pending. The diff was reviewed |
 | clean, room unknown because a read failed | **COMMENT**. The read error stays in the private job report. Do not DEFER |
-| head moved and delta not reviewed | re-review delta; if unable, **DEFER** `reason=head_changed` |
-| clean, full coverage, room clear, CI proven on reviewed live head, or `out_of_scope` for the base | **APPROVE** |
+| head moved and delta not reviewed | re-review delta; if unable, **COMMENT** on the reviewed SHA, `reason=head_changed` |
+| clean or nits only, full coverage, room clear, CI proven on reviewed live head, or `out_of_scope` for the base | **APPROVE** |
 | any findings, CI pending | retain completed analysis, **wait_ci**, no publication yet |
 | clean, full coverage, CI red (`--force` run) | **DEFER** `reason=ci_red`, marker keeps `pass=deep\|light` |
 | clean, full coverage, CI readable but unknown (`--force` run) | **DEFER** `reason=ci_unknown`, marker keeps `pass=deep\|light` |
 | clean or not, CI unverified | code verdict, CI cell `not verified (tooling)`, marker keeps `pass=deep\|light`. No Deferred comment, never APPROVE |
-| clean, coverage incomplete | **DEFER** `reason=coverage` |
-| blocker-level, or correctness/contract/security major-level, uncertainty | **DEFER** `reason=uncertainty` |
-| risk high, critic did not complete | **DEFER** `reason=critic_failed`, marker `critic=failed` |
-| prior own REQUEST_CHANGES, or DEFER `coverage\|uncertainty\|critic_failed`, and this pass was not deep on the full diff | run the deep pass; never APPROVE from a light pass |
+| clean, coverage incomplete | **COMMENT** `reason=coverage`, uncovered files under Not verified |
+| an uncertainty (fact outside the repo and CI) | no verdict effect. List it under Not verified; the verdict comes from the findings |
+| risk high, critic did not complete, no blocker/major | **COMMENT** `reason=critic_failed`, marker `critic=failed` |
+| prior own REQUEST_CHANGES, or my DEFER/COMMENT `coverage\|uncertainty\|critic_failed`, and this pass was not deep on the full diff | run the deep pass; never APPROVE from a light pass |
 | empty delta after my own APPROVE, all approval gates above pass | **APPROVE**, body says no code changes |
-| `gate.py` exits 1 | do not APPROVE. REQUEST_CHANGES if the ledger has a blocker or major; otherwise DEFER only for a real gate (draft, conflict, CI red, coverage, uncertainty). Do not dismiss my approval |
+| `gate.py` exits 1 | do not APPROVE. REQUEST_CHANGES if the ledger has a blocker or major; DEFER only for CI red/unknown, draft or conflict; otherwise COMMENT. Do not dismiss my approval |
 | `gate.py` exits 3 (only bot approvals on this head) | **COMMENT** review, same body, `reason=bot_quorum` |
 | `gate.py` exits 4 (open change request) | **COMMENT**, `reason=review_pending` |
 | `gate.py` exits 5 (CI or evidence unreadable) | **COMMENT**, CI cell `not verified (tooling)` when that line is present. Other lines stay in the private job report |
@@ -74,8 +81,9 @@ requires zero surviving findings, new **and** carried.
 A sensitive-path list stays in STATE and the private job report. It does not
 DEFER and it does not block APPROVE. An unresolved thread whose author approved
 this head is a clear room, not `review_context`. A prior DEFER with
-`reason=human_signoff`, `review_context`, or `review_context_unknown` is
-withdrawn policy: do not skip on it. Never write `I did not inspect the diff`
+`reason=human_signoff`, `review_context`, `review_context_unknown`,
+`coverage`, `uncertainty`, `critic_failed` or `head_changed` is withdrawn
+policy: do not skip on it. Never write `I did not inspect the diff`
 when the diff was reviewed.
 
 Dismiss my standing approval only when this pass posts REQUEST_CHANGES for a

@@ -423,6 +423,13 @@ cat >"$EV/comments.json" <<'EOF'
 EOF
 blocked_with 'needs pass=deep' || fail "gate: light approve after coverage defer must block"
 
+reset_evidence; write_payload APPROVE "pass=light blockers=0 majors=0 reason=- open=- risk=low critic=skip"
+cat >"$EV/reviews.json" <<'EOF'
+[[{"id":8,"user":{"login":"review-bot"},"state":"COMMENTED","submitted_at":"2026-10-19T09:00:00Z",
+   "body":"<!-- bulma-review: v=1 pass=light sha=old blockers=0 majors=0 reason=coverage open=- preflight=1 -->"}]]
+EOF
+blocked_with 'needs pass=deep' || fail "gate: light approve after coverage comment must block"
+
 reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
 [[{"id":9,"user":{"login":"peer-bot","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
@@ -608,7 +615,10 @@ assert 'REVIEW.md' in review and '## Gotchas' in review
 assert 'Reuse (major)' in review and 'duplicates an existing one' in verdict
 assert 'root changelog' in review and 'root changelog' in verdict
 assert 'disputes the finding' in fetch
-assert 'Human focus' in publish and 'Nothing to fix.' in publish
+assert 'Review focus' in publish and 'Human focus' not in publish and 'Nothing to fix.' in publish
+assert 'Not verified' in publish and 'Never hand the merge to a person' in (root / 'references/VOICE.md').read_text()
+assert 'DEFER `reason=uncertainty`' not in verdict and 'DEFER `reason=coverage`' not in verdict
+assert '**DEFER is only for CI and PR state:**' in verdict and 'Nits ride' in verdict
 assert 'unlikely conditions' in review
 PY
 ok convergence-contract
