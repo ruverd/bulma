@@ -33,6 +33,14 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- Code review no longer posts a Deferred comment when CI checks cannot be read,
+  when another reviewer's change request is open, or to ask for a sign-off.
+  Those passes review the diff. A clean open change request becomes a comment
+  that the other review is pending. Unreadable CI is a normal verdict whose CI
+  cell says it was not verified. The sensitive-path list stays in the job
+  report. The bot dismisses its own approval only when a new head gets a
+  request for changes on a code defect.
+
 - Repeated fixes sharing a premise require a discriminating observation before
   another attempt. Pause preserves owned work and task proof; status surfaces
   actionable user decisions. Large runs pilot one unit before scaling, and

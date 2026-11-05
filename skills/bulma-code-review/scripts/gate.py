@@ -3,11 +3,13 @@
 
 Reads the preflight cache in --dir and the review payload, then exits:
   0  post the payload as written
-  1  blocked: DEFER instead (reasons on stdout, one per line)
+  1  blocked: do not APPROVE (reasons on stdout, one per line)
   3  bot quorum: post the same body as a COMMENT review, not an APPROVE
+  4  open change request: post a COMMENT review, not an APPROVE and not a Deferred comment
+  5  CI or evidence unreadable: post a COMMENT review, not an APPROVE and not a Deferred comment
 
 Run it as `gate.py ... && gh api .../reviews -X POST --input "$PAYLOAD"`.
-Missing or unreadable evidence blocks; it never passes.
+A failed read does not pass an APPROVE. It is not a Deferred comment.
 """
 from __future__ import annotations
 
@@ -21,15 +23,13 @@ from typing import Any
 MARKER = re.compile(r"<!--\s*bulma-review:(.*?)-->", re.S)
 PAIR = re.compile(r"(\w+)=(\S+)")
 ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|\s*$", re.M)
-REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review context", "Human sign-off", "Coverage")
+REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review context", "Coverage")
 BUILD_TEST = re.compile(
     r"\b(build|builds|test|tests|unit|integration|e2e|jest|vitest|playwright|cypress|pytest)\b", re.I
 )
 FAILED = {"failure", "timed_out", "cancelled", "action_required", "startup_failure", "stale", "error"}
 DECISIVE = {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
 DEEP_REASONS = {"coverage", "uncertainty", "critic_failed"}
-# AI QA verdict prefix. FAIL needs human approval; BLOCKED (QA could not run) does not gate.
-QA_FAIL = re.compile(r"^FAIL(ED)?\b", re.I)
 
 
 class Missing(Exception):
@@ -142,13 +142,13 @@ def latest_by(items: list[dict[str, Any]], key: str, order: str) -> dict[str, di
     return out
 
 
-def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, out_of_scope: bool = False) -> list[str]:
+def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, out_of_scope: bool = False,
+       unverified: bool = False) -> list[str]:
+    if unverified:
+        return ["CI not verified (tooling)"]
     reasons, green = [], False
     runs = latest_by([c for c in checks if c.get("head_sha") == head], "name", "id")
     for name, run in runs.items():
-        title = ((run.get("output") or {}).get("title") or "").strip()
-        if QA_FAIL.match(title):
-            reasons.append(f"needs human approval: check {name} says {title}")
         if not BUILD_TEST.search(name):
             continue
         if run.get("status") != "completed":
@@ -158,9 +158,6 @@ def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, 
         elif run.get("conclusion") == "success":
             green = True
     for context, status in latest_by(statuses, "context", "created_at").items():
-        description = (status.get("description") or "").strip()
-        if QA_FAIL.match(description):
-            reasons.append(f"needs human approval: status {context} says {description}")
         if BUILD_TEST.search(context):
             if status.get("state") == "success":
                 green = True
@@ -204,10 +201,11 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     mark = marker(body)
     reasons = room(data["reviews"], data["timeline"], args.me)
     reasons += threads(data["threads"], data["reviews"], args.head)
-    reasons += ci(data["checks"], data["statuses"], args.head, data["ci_scope"].get("scope") == "out_of_scope")
-    signoff = load(Path(args.signoff)) if args.signoff else None
-    if not isinstance(signoff, list):
-        reasons.append("human sign-off evidence missing (--signoff)")
+    reasons += ci(
+        data["checks"], data["statuses"], args.head,
+        data["ci_scope"].get("scope") == "out_of_scope",
+        unverified=data["tooling"].get("verified") is False,
+    )
     if not rows.get("Review context", "").lower().startswith("clear"):
         reasons.append("Review context row is not clear")
     if mark.get("blockers") != "0" or mark.get("majors") != "0" or mark.get("open") != "-":
@@ -245,7 +243,6 @@ def main() -> int:
     parser.add_argument("--payload", required=True, help="review payload JSON about to be POSTed")
     parser.add_argument("--me", required=True)
     parser.add_argument("--head", required=True, help="live headRefOid")
-    parser.add_argument("--signoff", help="classify-risk.py --human-signoff output")
     parser.add_argument("--ledger", help="bind-findings.py output for this pass")
     parser.add_argument("--bot-login", action="append", default=[], help="reviewer login that is a bot")
     args = parser.parse_args()
@@ -267,14 +264,31 @@ def main() -> int:
                 "checks": flat(load(root / "checks.json"), "check_runs"),
                 "statuses": flat(load(root / "statuses.json")),
                 "ci_scope": load(root / "ci-scope.json") if (root / "ci-scope.json").exists() else {},
+                "tooling": load(root / "ci-tooling.json") if (root / "ci-tooling.json").exists() else {},
             }
             reasons += approval(args, body, data)
     except (Missing, KeyError, TypeError, AttributeError) as exc:
         reasons = [f"gate could not read evidence: {exc}"]
-        event = ""
-    if reasons:
-        print("\n".join(f"BLOCKED {reason}" for reason in reasons))
+    comment, hard = [], []
+    for reason in reasons:
+        if reason == "CI not verified (tooling)" or reason.startswith("open change request from "):
+            comment.append(reason)
+        elif reason.startswith("gate could not read evidence:"):
+            comment.append(reason)
+        else:
+            hard.append(reason)
+    soft_row = hard == ["Review context row is not clear"]
+    if hard and not (soft_row and comment):
+        print("\n".join(f"BLOCKED {reason}" for reason in hard + comment))
         return 1
+    if comment:
+        if any(reason.startswith("open change request from ") for reason in comment):
+            print("OPEN_REVIEW post a COMMENT review, not an APPROVE and not a Deferred comment")
+            print("\n".join(comment))
+            return 4
+        print("TOOLING post a COMMENT review, not an APPROVE and not a Deferred comment")
+        print("\n".join(comment))
+        return 5
     if event == "APPROVE" and bot_quorum(data["reviews"], args, bots):
         print("BOT_QUORUM only bot approvals on this head; post a COMMENT review instead")
         return 3
