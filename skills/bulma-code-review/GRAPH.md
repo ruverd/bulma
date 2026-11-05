@@ -10,6 +10,8 @@ start (PR url / number / branch)
   → defer             # CI red / readable-unknown / draft / conflict — issue comment
 ```
 
+`unverified` (CI could not be read) reviews and publishes. It does not defer.
+
 ## Edges
 
 | From | Condition | To |
@@ -20,16 +22,15 @@ start (PR url / number / branch)
 | resolve | another reviewer's change request is open | **review** (COMMENT if the diff is clean) |
 | resolve | room unknown from an access or tooling failure | **review** (no Deferred comment) |
 | resolve | `ci_overall` pending | **review** |
-| resolve | `ci_overall` failure | **defer** |
-| resolve | `ci_overall` unknown and `ci-tooling.json` verified false | **review** (CI cell `not verified (tooling)`) |
-| resolve | `ci_overall` unknown and CI was readable | **defer** |
+| resolve | `ci_overall` failure or unknown | **defer** |
+| resolve | `ci_overall` unverified | **review** (CI cell `not verified (tooling)`; never defer solely for a CI-read failure) |
 | resolve | `ci_overall` success | **review** |
 | resolve | `ci_overall` out_of_scope | **review** (publishes like success) |
 | wait_ci | still pending | **stop** (loop wakes in 5m) |
 | wait_ci | success and retained analysis valid | **publish** (verdict and fresh gates) |
 | wait_ci | head/base/context changed | **review** |
-| wait_ci | failure, or unknown after a successful CI read | **defer** |
-| wait_ci | CI unreadable (`verified: false`) | **publish** the code verdict, CI cell `not verified (tooling)` |
+| wait_ci | failure or unknown | **defer** |
+| wait_ci | unverified | **publish** the code verdict, CI cell `not verified (tooling)` (do not defer solely for the read failure) |
 | wait_ci | CLOSED or MERGED | delete loop, **stop** |
 | review | always | **critic** |
 | critic | CI pending | **wait_ci** (retain analysis) |
@@ -43,6 +44,7 @@ start (PR url / number / branch)
 | defer | posted | delete loop, **stop** |
 
 `--force` skips failure/unknown inspection gates and goes to **review**.
+It does not change the draft gate. `unverified` already reviews.
 Pending CI always allows review but never publication.
 `--dry-run` never creates a loop and never posts.
 Room evidence is loaded before pass selection. All approval gates run again

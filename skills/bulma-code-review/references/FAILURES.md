@@ -19,6 +19,6 @@
 | `gate.py` exits 3 | post the same body as a `COMMENT` review, `reason=bot_quorum` |
 | `gate.py` exits 4 | COMMENT, `reason=review_pending`. The diff was reviewed |
 | `gate.py` exits 5 | COMMENT. CI cell `not verified (tooling)` when that is the line. Other text stays in the private job report |
-| check-runs HTTP 403, or CI still unreadable after the fallbacks | review the diff; no Deferred comment |
+| Actions and rollup unreadable (HTTP 403 or other read failure), `ci_overall` unverified | review the diff; CI cell `not verified (tooling)`; no Deferred comment |
 | `bind-findings.py` exits 3 | not a crash: a blocker/major sits outside the inline set; keep it in the body and never APPROVE |
 | dismissing my own approval fails | say so in the private job report; do not post a Deferred comment for the failure |

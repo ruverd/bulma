@@ -25,7 +25,9 @@ the original reviewer with the publishing session.
 Flags: `--deep` force deep, `--light` force light, `--dry-run` run everything and
 print to chat but post nothing, `--force` review despite non-green CI. `--deep` and
 `--light` override §2 only; nothing but `--force` relaxes a §3 gate, and it relaxes
-the failure/unknown CI inspection rows alone. Pending CI permits inspection by
+the failure/unknown CI inspection rows alone. A CI read failure
+(`unverified`) is not one of those rows: the review continues and the
+artifact says CI unverified. Draft and conflict never yield. Pending CI permits inspection by
 default, but publication still waits.
 
 Stop if the repo or PR cannot be resolved. Never guess a repo.

@@ -13,6 +13,7 @@ Sequential phases per PR. Depth adapts to review history.
 **Multi-PR:** one subagent per PR (see §0).
 **CI fork:** [GRAPH.md](GRAPH.md) · [LOOP.md](LOOP.md). Pending required CI
 allows pinned code review, then waits with retained analysis and does **not** post. Red CI still DEFERS.
+CI that cannot be read is `unverified`: review continues, and the artifact says so. It does not defer on its own. Draft DEFER is unchanged.
 
 ## Invariants — never break
 
@@ -24,7 +25,7 @@ allows pinned code review, then waits with retained analysis and does **not** po
    call) or one issue comment. Never both. Never two of either **on the same PR**.
    Dismissing my own stale approval and resolving my own fixed threads are
    state changes, not artifacts.
-3. **Never APPROVE** while any required check is failed, pending or unknown.
+3. **Never APPROVE** while any required check is failed, pending, unknown or unverified.
    `out_of_scope` is not unknown: the repo's own workflows never build or test
    PRs into this base ([PREFLIGHT.md](references/PREFLIGHT.md) §CI out of scope).
 4. **Never invent a finding.** A finding with no concrete trigger is dropped in
@@ -89,9 +90,9 @@ allows pinned code review, then waits with retained analysis and does **not** po
     another bot already approved this head, and two bot approvals must not
     satisfy a two-approval rule. Exit 4 → COMMENT noting the other reviewer's
     change request is pending. Exit 5 → COMMENT with CI `not verified (tooling)`
-    when that is the reason; other read errors stay in the private job report.
-    Exits 4 and 5 are not Deferred comments. Never post an APPROVE the gate
-    did not pass.
+    when that is the reason (Actions and rollup unreadable); other read errors
+    stay in the private job report. Exits 4 and 5 are not Deferred comments.
+    Never post an APPROVE the gate did not pass.
 18. **Dismiss my approval only for a code defect on a new head.** A blocked
     pass, a DEFER, a COMMENT, or an open change request does not dismiss it.
     Dismiss only when this pass posts REQUEST_CHANGES for a blocker or major

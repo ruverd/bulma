@@ -27,6 +27,7 @@ REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review con
 BUILD_TEST = re.compile(
     r"\b(build|builds|test|tests|unit|integration|e2e|jest|vitest|playwright|cypress|pytest)\b", re.I
 )
+CI_RUN = re.compile(BUILD_TEST.pattern + r"|\bci\b", re.I)
 FAILED = {"failure", "timed_out", "cancelled", "action_required", "startup_failure", "stale", "error"}
 DECISIVE = {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
 DEEP_REASONS = {"coverage", "uncertainty", "critic_failed"}
@@ -142,28 +143,120 @@ def latest_by(items: list[dict[str, Any]], key: str, order: str) -> dict[str, di
     return out
 
 
-def ci(checks: list[dict[str, Any]], statuses: list[dict[str, Any]], head: str, out_of_scope: bool = False,
-       unverified: bool = False) -> list[str]:
-    if unverified:
-        return ["CI not verified (tooling)"]
-    reasons, green = [], False
-    runs = latest_by([c for c in checks if c.get("head_sha") == head], "name", "id")
-    for name, run in runs.items():
-        if not BUILD_TEST.search(name):
+def job_kind(status: Any, conclusion: Any) -> str:
+    done = str(conclusion or "").strip().lower()
+    phase = str(status or "").strip().lower()
+    if done in FAILED:
+        return "failure"
+    if phase != "completed":
+        return "pending"
+    if done == "success":
+        return "success"
+    return "unknown"
+
+
+def rollup_state(rollup: dict[str, Any]) -> str:
+    if rollup.get("error"):
+        return ""
+    return str(rollup.get("state") or "").strip().upper()
+
+
+def classify_ci(actions: dict[str, Any], rollup: dict[str, Any]) -> str:
+    state = rollup_state(rollup)
+    if actions.get("error"):
+        if state in {"FAILURE", "ERROR"}:
+            return "failure"
+        if state in {"PENDING", "EXPECTED"}:
+            return "pending"
+        return "unverified"
+    runs = actions.get("runs")
+    if not isinstance(runs, list):
+        return "unverified"
+    order = {"unknown": 0, "success": 1, "unverified": 2, "pending": 3, "failure": 4}
+    overall: str | None = None
+
+    def bump(kind: str) -> None:
+        nonlocal overall
+        if overall is None or order[kind] > order[overall]:
+            overall = kind
+
+    for run in runs:
+        if not isinstance(run, dict):
+            return "unverified"
+        label = f"{run.get('workflowName') or ''} {run.get('name') or ''}"
+        jobs = run.get("jobs")
+        if run.get("jobs_error"):
+            kind = job_kind(run.get("status"), run.get("conclusion"))
+            if CI_RUN.search(label) and kind in {"failure", "pending"}:
+                bump(kind)
+            else:
+                bump("unverified")
             continue
-        if run.get("status") != "completed":
-            reasons.append(f"build/test check pending: {name}")
-        elif run.get("conclusion") in FAILED:
-            reasons.append(f"build/test check {run['conclusion']}: {name}")
-        elif run.get("conclusion") == "success":
-            green = True
+        if not isinstance(jobs, list):
+            return "unverified"
+        build_jobs = [job for job in jobs if isinstance(job, dict) and BUILD_TEST.search(str(job.get("name") or ""))]
+        if not build_jobs and not BUILD_TEST.search(label):
+            continue
+        if build_jobs:
+            for job in build_jobs:
+                bump(job_kind(job.get("status"), job.get("conclusion")))
+        else:
+            bump(job_kind(run.get("status"), run.get("conclusion")))
+    result = overall or "unknown"
+    if state in {"FAILURE", "ERROR"} and result != "failure":
+        return "failure"
+    if state in {"PENDING", "EXPECTED"} and result in {"success", "unknown", "unverified"}:
+        return "pending"
+    return result
+
+
+def failed_jobs(actions: dict[str, Any]) -> list[tuple[str, str]]:
+    found = []
+    for run in actions.get("runs") or []:
+        if not isinstance(run, dict):
+            continue
+        jobs = run.get("jobs") if isinstance(run.get("jobs"), list) else []
+        named = [job for job in jobs if BUILD_TEST.search(str(job.get("name") or ""))]
+        targets = named or ([run] if BUILD_TEST.search(f"{run.get('workflowName') or ''} {run.get('name') or ''}") else [])
+        for target in targets:
+            if job_kind(target.get("status"), target.get("conclusion")) == "failure":
+                found.append((str(target.get("name") or run.get("name") or "job"), str(target.get("conclusion") or "failure")))
+    return found
+
+
+def ci(actions: dict[str, Any], statuses: list[dict[str, Any]], rollup: dict[str, Any], head: str, out_of_scope: bool = False) -> list[str]:
+    reasons, status_green, status_block = [], False, False
+    if actions.get("head") and actions.get("head") != head:
+        reasons.append(f"actions evidence is not for {head}")
+        actions = {**actions, "error": "head mismatch"}
+    if rollup.get("head") and rollup.get("head") != head and not rollup.get("error"):
+        reasons.append(f"status check rollup is not for {head}")
+        rollup = {**rollup, "error": "head mismatch"}
     for context, status in latest_by(statuses, "context", "created_at").items():
         if BUILD_TEST.search(context):
             if status.get("state") == "success":
-                green = True
+                status_green = True
             else:
+                status_block = True
                 reasons.append(f"build/test status {status.get('state')}: {context}")
-    if not green and not out_of_scope:
+    overall = classify_ci(actions, rollup)
+    if status_block:
+        overall = "failure"
+    elif overall == "unknown" and status_green:
+        overall = "success"
+    if overall == "failure":
+        named = failed_jobs(actions)
+        if named:
+            reasons.extend(f"build/test check {conclusion}: {name}" for name, conclusion in named)
+        elif rollup_state(rollup) in {"FAILURE", "ERROR"}:
+            reasons.append(f"status check rollup {rollup_state(rollup)}")
+        elif not status_block:
+            reasons.append("build/test check failure")
+    elif overall == "pending":
+        reasons.append("build/test check pending")
+    elif overall == "unverified":
+        reasons.append("CI not verified (tooling)")
+    elif overall == "unknown" and not out_of_scope:
         reasons.append(f"no successful build/test check ran on {head}")
     return reasons
 
@@ -202,9 +295,8 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     reasons = room(data["reviews"], data["timeline"], args.me)
     reasons += threads(data["threads"], data["reviews"], args.head)
     reasons += ci(
-        data["checks"], data["statuses"], args.head,
+        data["actions"], data["statuses"], data["rollup"], args.head,
         data["ci_scope"].get("scope") == "out_of_scope",
-        unverified=data["tooling"].get("verified") is False,
     )
     if not rows.get("Review context", "").lower().startswith("clear"):
         reasons.append("Review context row is not clear")
@@ -261,10 +353,10 @@ def main() -> int:
                 "comments": flat(load(root / "comments.json")),
                 "timeline": flat(load(root / "timeline.json")),
                 "threads": load(root / "threads.json"),
-                "checks": flat(load(root / "checks.json"), "check_runs"),
+                "actions": load(root / "actions.json"),
                 "statuses": flat(load(root / "statuses.json")),
+                "rollup": load(root / "rollup.json"),
                 "ci_scope": load(root / "ci-scope.json") if (root / "ci-scope.json").exists() else {},
-                "tooling": load(root / "ci-tooling.json") if (root / "ci-tooling.json").exists() else {},
             }
             reasons += approval(args, body, data)
     except (Missing, KeyError, TypeError, AttributeError) as exc:

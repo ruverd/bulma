@@ -60,7 +60,7 @@ requires zero surviving findings, new **and** carried.
 | any findings, CI pending | retain completed analysis, **wait_ci**, no publication yet |
 | clean, full coverage, CI red (`--force` run) | **DEFER** `reason=ci_red`, marker keeps `pass=deep\|light` |
 | clean, full coverage, CI readable but unknown (`--force` run) | **DEFER** `reason=ci_unknown`, marker keeps `pass=deep\|light` |
-| clean or not, CI `verified: false` | code verdict, CI cell `not verified (tooling)`, marker keeps `pass=deep\|light`. No Deferred comment |
+| clean or not, CI unverified | code verdict, CI cell `not verified (tooling)`, marker keeps `pass=deep\|light`. No Deferred comment, never APPROVE |
 | clean, coverage incomplete | **DEFER** `reason=coverage` |
 | blocker-level, or correctness/contract/security major-level, uncertainty | **DEFER** `reason=uncertainty` |
 | risk high, critic did not complete | **DEFER** `reason=critic_failed`, marker `critic=failed` |
@@ -88,7 +88,7 @@ APPROVE. Body findings rejected only for inline placement still count.
 
 ### 8.1 Promote
 
-All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*`, its
+All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*` or a COMMENT with `reason=ci_unverified`, its
 marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0`, `open=-`. Then
 re-run every approval gate, including room and head-bound CI. CI that is
 `out_of_scope` for the base counts as green here; the first line then says
