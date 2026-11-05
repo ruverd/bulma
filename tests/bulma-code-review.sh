@@ -254,7 +254,7 @@ reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
 [[{"id":5,"user":{"login":"alice","type":"User"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
 EOF
-[[ "$(gate)" == 4 ]] && grep -q 'OPEN_REVIEW' "$TMP/gate.out" && grep -q 'open change request from alice' "$TMP/gate.out" \
+{ [[ "$(gate)" == 4 ]] && grep -q 'OPEN_REVIEW' "$TMP/gate.out" && grep -q 'open change request from alice' "$TMP/gate.out"; } \
   || fail "gate: open change request must comment, not defer ($(cat "$TMP/gate.out"))"
 grep -q 'needs human' "$TMP/gate.out" && fail "gate: open change request must not ask for a person"
 python3 - "$EV/payload.json" <<'PY'
@@ -323,7 +323,7 @@ reset_evidence; write_payload APPROVE "$CLEAN"
 rm -f "$EV/signoff.json"
 [[ "$(gate)" == 0 ]] || fail "gate: missing sensitive-path file must not block ($(cat "$TMP/gate.out"))"
 echo '{"verified":false,"check_runs":"forbidden","fallback":null,"errors":["HTTP 403 commits/{sha}/check-runs"]}' >"$EV/ci-tooling.json"
-[[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'CI not verified (tooling)' "$TMP/gate.out" \
+{ [[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'CI not verified (tooling)' "$TMP/gate.out"; } \
   || fail "gate: unreadable CI must comment ($(cat "$TMP/gate.out"))"
 grep -q '^BLOCKED' "$TMP/gate.out" && fail "gate: unreadable CI must not block as a defer"
 rm -f "$EV/ci-tooling.json"
@@ -398,7 +398,7 @@ EOF
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 rm "$EV/checks.json"
-[[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'evidence missing' "$TMP/gate.out" \
+{ [[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'evidence missing' "$TMP/gate.out"; } \
   || fail "gate: missing evidence must not defer ($(cat "$TMP/gate.out"))"
 ok gate
 
