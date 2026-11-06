@@ -3,10 +3,14 @@
 
 Reads the preflight cache in --dir and the review payload, then exits:
   0  post the payload as written
-  1  blocked: do not APPROVE (reasons on stdout, one per line)
-  3  bot quorum: post the same body as a COMMENT review, not an APPROVE
-  4  open change request: post a COMMENT review, not an APPROVE and not a Deferred comment
-  5  CI or evidence unreadable: post a COMMENT review, not an APPROVE and not a Deferred comment
+  1  blocked: do not APPROVE (reasons on stdout, one per line). REQUEST_CHANGES
+     for a blocker/major, DEFER for CI red or pending, otherwise fix the payload
+  4  another reviewer's concern is open (change request or unresolved thread):
+     DEFER reason=review_pending, never APPROVE and never a COMMENT review
+  5  CI or evidence unreadable: DEFER reason=ci_unknown, never a COMMENT review
+
+The only verdicts are APPROVE, REQUEST_CHANGES and DEFER. A change request
+someone dismissed is no longer open and does not block.
 
 Run it as `gate.py ... && gh api .../reviews -X POST --input "$PAYLOAD"`.
 A failed read does not pass an APPROVE. It is not a Deferred comment.
@@ -63,12 +67,8 @@ def login(item: dict[str, Any]) -> str:
     return ((item.get("user") or item.get("actor") or {}).get("login") or "").lower()
 
 
-def is_bot(user: dict[str, Any], bots: set[str]) -> bool:
-    name = (user.get("login") or "").lower()
-    return user.get("type") == "Bot" or name.endswith("[bot]") or name in bots
-
-
-def room(reviews: list[dict[str, Any]], timeline: list[dict[str, Any]], me: str) -> list[str]:
+def room(reviews: list[dict[str, Any]], me: str) -> list[str]:
+    """Open change requests from others. A dismissed one is DISMISSED, not open."""
     reasons = []
     latest: dict[str, dict[str, Any]] = {}
     for review in sorted(reviews, key=lambda r: r.get("submitted_at") or ""):
@@ -77,24 +77,6 @@ def room(reviews: list[dict[str, Any]], timeline: list[dict[str, Any]], me: str)
     for who, review in latest.items():
         if review["state"] == "CHANGES_REQUESTED":
             reasons.append(f"open change request from {who}: {review.get('html_url', '')}")
-    by_id = {r.get("id"): r for r in reviews}
-    for event in timeline:
-        if event.get("event") != "review_dismissed":
-            continue
-        dismissed = event.get("dismissed_review") or {}
-        review = by_id.get(dismissed.get("review_id"))
-        if dismissed.get("state", "").lower() != "changes_requested" or not review:
-            continue
-        reviewer = login(review)
-        if reviewer in (me, login(event)):
-            continue
-        cleared = any(
-            login(r) == reviewer and r.get("state") == "APPROVED"
-            and (r.get("submitted_at") or "") > (event.get("created_at") or "")
-            for r in reviews
-        )
-        if not cleared:
-            reasons.append(f"change request from {reviewer} dismissed by {login(event)}, never cleared")
     return reasons
 
 
@@ -292,7 +274,7 @@ def template(body: str, head: str) -> list[str]:
 def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[str]:
     rows = {name.strip(): value for name, value in ROW.findall(body)}
     mark = marker(body)
-    reasons = room(data["reviews"], data["timeline"], args.me)
+    reasons = room(data["reviews"], args.me)
     reasons += threads(data["threads"], data["reviews"], args.head)
     reasons += ci(
         data["actions"], data["statuses"], data["rollup"], args.head,
@@ -320,15 +302,6 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     return reasons
 
 
-def bot_quorum(reviews: list[dict[str, Any]], args: argparse.Namespace, bots: set[str]) -> bool:
-    others: dict[str, dict[str, Any]] = {}
-    for review in sorted(reviews, key=lambda r: r.get("submitted_at") or ""):
-        if review.get("state") in DECISIVE and login(review) != args.me:
-            others[login(review)] = review
-    approvers = [r for r in others.values() if r["state"] == "APPROVED" and r.get("commit_id") == args.head]
-    return bool(approvers) and all(is_bot(r.get("user") or {}, bots) for r in approvers)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--dir", required=True, help="preflight cache ($BULMA_ROOT/.bulma-code-review)")
@@ -336,10 +309,9 @@ def main() -> int:
     parser.add_argument("--me", required=True)
     parser.add_argument("--head", required=True, help="live headRefOid")
     parser.add_argument("--ledger", help="bind-findings.py output for this pass")
-    parser.add_argument("--bot-login", action="append", default=[], help="reviewer login that is a bot")
+    parser.add_argument("--bot-login", action="append", default=[], help="ignored; kept for old callers")
     args = parser.parse_args()
     args.me = args.me.lower()
-    bots = {b.lower() for b in args.bot_login} | {args.me}
     root = Path(args.dir)
     try:
         payload = load(Path(args.payload))
@@ -347,6 +319,8 @@ def main() -> int:
         reasons = template(body, args.head)
         if payload.get("commit_id") != args.head:
             reasons.append("payload commit_id is not the live head")
+        if event not in ("APPROVE", "REQUEST_CHANGES"):
+            reasons.append(f"event {event or 'missing'} is not a verdict: APPROVE, REQUEST_CHANGES, or DEFER as an issue comment")
         if event == "APPROVE":
             data = {
                 "reviews": flat(load(root / "reviews.json")),
@@ -361,29 +335,27 @@ def main() -> int:
             reasons += approval(args, body, data)
     except (Missing, KeyError, TypeError, AttributeError) as exc:
         reasons = [f"gate could not read evidence: {exc}"]
-    comment, hard = [], []
+    pending, tooling, hard = [], [], []
     for reason in reasons:
-        if reason == "CI not verified (tooling)" or reason.startswith("open change request from "):
-            comment.append(reason)
-        elif reason.startswith("gate could not read evidence:"):
-            comment.append(reason)
+        if reason.startswith(("open change request from ", "unresolved thread: ")):
+            pending.append(reason)
+        elif reason == "CI not verified (tooling)" or reason.startswith("gate could not read evidence:"):
+            tooling.append(reason)
         else:
             hard.append(reason)
-    soft_row = hard == ["Review context row is not clear"]
-    if hard and not (soft_row and comment):
-        print("\n".join(f"BLOCKED {reason}" for reason in hard + comment))
+    if hard == ["Review context row is not clear"] and (pending or tooling):
+        hard = []
+    if hard:
+        print("\n".join(f"BLOCKED {reason}" for reason in hard + pending + tooling))
         return 1
-    if comment:
-        if any(reason.startswith("open change request from ") for reason in comment):
-            print("OPEN_REVIEW post a COMMENT review, not an APPROVE and not a Deferred comment")
-            print("\n".join(comment))
-            return 4
-        print("TOOLING post a COMMENT review, not an APPROVE and not a Deferred comment")
-        print("\n".join(comment))
+    if pending:
+        print("REVIEW_PENDING DEFER reason=review_pending; never APPROVE or COMMENT")
+        print("\n".join(pending + tooling))
+        return 4
+    if tooling:
+        print("CI_UNKNOWN DEFER reason=ci_unknown; never APPROVE or COMMENT")
+        print("\n".join(tooling))
         return 5
-    if event == "APPROVE" and bot_quorum(data["reviews"], args, bots):
-        print("BOT_QUORUM only bot approvals on this head; post a COMMENT review instead")
-        return 3
     print("PASS")
     return 0
 

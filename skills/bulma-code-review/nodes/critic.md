@@ -71,5 +71,6 @@ with the merged result. STATE `critic=ran`.
 Spawn or script failure: keep the first-pass bound ledger and set
 `critic=failed`. Risk is high, so an unreviewed critic is not a clean pass:
 the verdict is REQUEST_CHANGES when the ledger already has a blocker or major,
-otherwise a **COMMENT** `reason=critic_failed`. The marker says `critic=failed`,
+otherwise retry the critic once and, if it still fails, post nothing this run
+and report it in chat. Never a COMMENT review. The marker says `critic=failed`,
 never `critic=skip`; `skip` is reserved for `risk=low`.

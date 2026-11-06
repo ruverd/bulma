@@ -93,7 +93,7 @@ that no CI workflow turns on, a spy with no assertion on its calls.
 For each changed exported symbol, find importers, callers and tests one hop
 outside the diff, even when tests in the diff pass. For changed API consumers,
 read the provider/serializer or shared client wrapper too. Use existing caps;
-if a required hop cannot be checked, declare incomplete coverage (COMMENT, not DEFER).
+if a required hop cannot be checked, declare incomplete coverage (§7 in verdict.md; never a COMMENT review).
 For config or workflow changes without exports, search for scripts/tests that
 assert the changed keys, action names or paths. A checkout-action replacement
 can break a security guard test outside the workflow diff.

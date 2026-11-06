@@ -255,8 +255,8 @@ reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
 [[{"id":5,"user":{"login":"alice","type":"User"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
 EOF
-{ [[ "$(gate)" == 4 ]] && grep -q 'OPEN_REVIEW' "$TMP/gate.out" && grep -q 'open change request from alice' "$TMP/gate.out"; } \
-  || fail "gate: open change request must comment, not defer ($(cat "$TMP/gate.out"))"
+{ [[ "$(gate)" == 4 ]] && grep -q 'REVIEW_PENDING DEFER reason=review_pending' "$TMP/gate.out" && grep -q 'open change request from alice' "$TMP/gate.out"; } \
+  || fail "gate: open change request must defer, not comment ($(cat "$TMP/gate.out"))"
 grep -q 'needs human' "$TMP/gate.out" && fail "gate: open change request must not ask for a person"
 python3 - "$EV/payload.json" <<'PY'
 import json, sys
@@ -264,7 +264,7 @@ p = json.load(open(sys.argv[1]))
 p["body"] = p["body"].replace("| Review context | clear |", "| Review context | alice's review is pending |")
 json.dump(p, open(sys.argv[1], "w"))
 PY
-[[ "$(gate)" == 4 ]] || fail "gate: pending row plus open change request must still comment ($(cat "$TMP/gate.out"))"
+[[ "$(gate)" == 4 ]] || fail "gate: pending row plus open change request must still defer ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
@@ -274,11 +274,11 @@ cat >"$EV/timeline.json" <<'EOF'
 [[{"event":"review_dismissed","actor":{"login":"author"},"created_at":"2026-10-19T11:00:00Z",
    "dismissed_review":{"state":"changes_requested","review_id":5}}]]
 EOF
-blocked_with 'dismissed by author, never cleared' || fail "gate: author-dismissed change request must block"
+[[ "$(gate)" == 0 ]] || fail "gate: a dismissed change request is not open and must not block ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1"}]}}]}}}}}]' >"$EV/threads.json"
-blocked_with 'unresolved thread: u1' || fail "gate: unresolved thread must block"
+{ [[ "$(gate)" == 4 ]] && grep -q 'unresolved thread: u1' "$TMP/gate.out"; } || fail "gate: unresolved thread must defer"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
@@ -292,7 +292,7 @@ cat >"$EV/reviews.json" <<EOF
 [[{"id":8,"user":{"login":"alice","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}]]
 EOF
 echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1","author":{"login":"alice"}}]}}]}}}}}]' >"$EV/threads.json"
-blocked_with 'unresolved thread: u1' || fail "gate: approval on an older SHA must not clear a thread"
+{ [[ "$(gate)" == 4 ]] && grep -q 'unresolved thread: u1' "$TMP/gate.out"; } || fail "gate: approval on an older SHA must not clear a thread"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"failure","description":"FAIL: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"
@@ -339,10 +339,10 @@ json.dump({"head": head, "error": "403", "runs": []}, open(actions, "w"))
 json.dump({"head": head, "state": None, "error": "403"}, open(rollup, "w"))
 PY
 tooling_comment() {
-  [[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'CI not verified (tooling)' "$TMP/gate.out" \
+  [[ "$(gate)" == 5 ]] && grep -q 'CI_UNKNOWN DEFER reason=ci_unknown' "$TMP/gate.out" && grep -q 'CI not verified (tooling)' "$TMP/gate.out" \
     && ! grep -q '^BLOCKED' "$TMP/gate.out"
 }
-tooling_comment || fail "gate: unreadable CI must comment, not approve or defer ($(cat "$TMP/gate.out"))"
+tooling_comment || fail "gate: unreadable CI must defer ci_unknown, not approve or comment ($(cat "$TMP/gate.out"))"
 echo "{\"head\":\"$HEAD\",\"state\":\"SUCCESS\",\"error\":null}" >"$EV/rollup.json"
 tooling_comment || fail "gate: rollup success must not hide an Actions read failure ($(cat "$TMP/gate.out"))"
 echo "{\"head\":\"$HEAD\",\"state\":\"FAILURE\",\"error\":null}" >"$EV/rollup.json"
@@ -373,7 +373,7 @@ blocked_with 'template row missing: Coverage' || fail "gate: missing row must bl
 [[ "$(status /dev/null python3 "$GATE" --dir "$EV" --payload "$EV/payload.json" --me review-bot --head "$HEAD")" == 1 ]] \
   || fail "gate: missing row must block payloads without approval evidence too"
 
-for event in APPROVE REQUEST_CHANGES COMMENT; do
+for event in APPROVE REQUEST_CHANGES; do
   for row in Model 'Reasoning effort'; do
     for mode in missing empty unknown; do
       reset_evidence; write_payload "$event" "$CLEAN"
@@ -399,6 +399,9 @@ PY
     done
   done
 done
+
+reset_evidence; write_payload COMMENT "$CLEAN"
+blocked_with 'event COMMENT is not a verdict' || fail "gate: a COMMENT review is not a verdict"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '{"kept":[],"body":[{"severity":"blocker","title":"caller breaks"}],"dropped":[]}' >"$EV/bound.json"
@@ -434,13 +437,12 @@ reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF
 [[{"id":9,"user":{"login":"peer-bot","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
 EOF
-[[ "$(gate --bot-login peer-bot)" == 3 ]] || fail "gate: second bot approval must exit 3"
-[[ "$(gate)" == 0 ]] || fail "gate: a human approval must not trip bot quorum"
+[[ "$(gate --bot-login peer-bot)" == 0 ]] || fail "gate: another bot's approval must not turn APPROVE into a COMMENT ($(cat "$TMP/gate.out"))"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 rm "$EV/actions.json"
-{ [[ "$(gate)" == 5 ]] && grep -q 'TOOLING' "$TMP/gate.out" && grep -q 'evidence missing' "$TMP/gate.out"; } \
-  || fail "gate: missing evidence must not defer ($(cat "$TMP/gate.out"))"
+{ [[ "$(gate)" == 5 ]] && grep -q 'CI_UNKNOWN' "$TMP/gate.out" && grep -q 'evidence missing' "$TMP/gate.out"; } \
+  || fail "gate: missing evidence must defer ci_unknown ($(cat "$TMP/gate.out"))"
 ok gate
 
 # --- skill contract ---
@@ -506,7 +508,7 @@ assert 'gh pr checks "$PR"' not in fetch and 'gh run view' in fetch
 gates = (root / 'nodes/gates.md').read_text()
 assert '| `isDraft` | DEFER, `reason=draft` |' in gates
 assert 'ci_overall` = unverified' in gates and 'not a deferral' in gates
-for required in ('in_reply_to_id', 'review_dismissed',
+for required in ('in_reply_to_id', 'DISMISSED',
                  'CI did not run', 'not verified (tooling)', 'reviewed_sha == headRefOid',
                  'Critical/High', 'PR_FILES.txt', 'I did not inspect the diff',
                  'private job report', 'actions.json'):
@@ -618,7 +620,8 @@ assert 'disputes the finding' in fetch
 assert 'Review focus' in publish and 'Human focus' not in publish and 'Nothing to fix.' in publish
 assert 'Not verified' in publish and 'Never hand the merge to a person' in (root / 'references/VOICE.md').read_text()
 assert 'DEFER `reason=uncertainty`' not in verdict and 'DEFER `reason=coverage`' not in verdict
-assert '**DEFER is only for CI and PR state:**' in verdict and 'Nits ride' in verdict
+assert '**Three verdicts only: APPROVE, REQUEST_CHANGES, DEFER.**' in verdict and 'Nits ride' in verdict
+assert '## 💬 Reviewed, no blockers' not in publish and 'bot_quorum' not in verdict
 assert 'unlikely conditions' in review
 PY
 ok convergence-contract

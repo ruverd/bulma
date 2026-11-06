@@ -38,7 +38,7 @@ Fetch the exact commits into the review checkout first. Save the unified diff
 as `PATCH.diff` and its changed paths as `FILES.txt`. Missing old SHA or a
 force-push/rebase → full PR diff and **deep** pass, noting `stale_base` in chat,
 unless [pass_decision.md](pass_decision.md) §Rebase only proved the same content.
-A prior REQUEST_CHANGES, or DEFER/COMMENT `coverage|uncertainty|critic_failed`, of mine
+A prior REQUEST_CHANGES, or DEFER/COMMENT `coverage|uncertainty|critic_failed` (older runs), of mine
 also forces the full PR diff and a deep pass
 ([pass_decision.md](pass_decision.md)).
 Read source from `HEAD_SHA`, never from a moving branch or unrelated checkout.
