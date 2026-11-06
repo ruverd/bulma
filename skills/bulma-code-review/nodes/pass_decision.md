@@ -21,9 +21,8 @@ for room evidence. Take our artifact with the latest timestamp. Parse its marker
 from the review list and takes `first=` from the oldest `pass=deep` marker.
 
 `reason=` carries the DEFER reason (`ci_red`, `ci_unknown`, `draft`,
-`conflict`) on every DEFER, and the COMMENT reason (`bot_quorum`,
-`ci_unverified`, `review_pending`, `coverage`, `critic_failed`, `head_changed`, ...)
-on a COMMENT review.
+`conflict`, `review_pending`, `review_context_unknown`) on every DEFER. There
+is no COMMENT review verdict; older COMMENT markers are read as withdrawn.
 
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
 below that leads to APPROVE must check for a `pass=deep|light` marker first.
@@ -44,14 +43,13 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 |---|---|
 | none | **deep** |
 | `sha == headRefOid`, state APPROVED or CHANGES_REQUESTED | **skip** — post nothing, report in chat |
-| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*`, or COMMENTED `reason=ci_unverified`, CI now green or `out_of_scope`, `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
-| `sha == headRefOid`, COMMENTED `reason=ci_unverified`, CI still unverified | **skip** — the read failure is already on the PR |
+| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*` or `review_pending`, that gate now clear (CI green or `out_of_scope`; the change request approved or dismissed), `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
+| `sha == headRefOid`, COMMENTED (any reason, older runs) | **deep** — a COMMENT is not a verdict. Post one |
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
 | `sha == headRefOid`, DEFERRED, the gated condition still holds (not `ci_pending`, not `review_context`, not `review_context_unknown`) | **skip** — report the same reason in chat, post nothing |
 | `sha == headRefOid`, DEFERRED with `reason=uncertainty`, `coverage`, `critic_failed` or `head_changed` (withdrawn) | **deep** — re-review and post a code verdict |
 | `sha == headRefOid`, DEFERRED `reason=review_context` or `review_context_unknown` | **deep** — that defer skipped the diff. Review it |
-| `sha == headRefOid`, COMMENTED `reason=bot_quorum`, approvals on the head unchanged | **skip** |
 | `sha != headRefOid`, prior marker `pass=none` | **deep** on the full diff — no prior pass to be incremental against |
 | any `sha`, my latest decisive artifact is REQUEST_CHANGES, or a DEFER/COMMENT with `reason=coverage\|uncertainty\|critic_failed`, with no deep pass of mine after it | **deep** on the full PR diff, carry-forward still applies |
 | `sha != headRefOid`, prior marker `pass=deep\|light`, same content (§Rebase only) | **rebase** — re-verify the ledger, no new diff review |
@@ -70,8 +68,9 @@ Dismiss it only after REQUEST_CHANGES for a code defect on the new head
 ([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval).
 
 Skip output is chat-only: state the reason and the SHA. Do not touch the PR.
-If another reviewer has an open change request, do not skip and do not DEFER.
-Review the code and post COMMENT or REQUEST_CHANGES. Reevaluate
+If another reviewer has an open change request, do not skip. Review the code:
+REQUEST_CHANGES for a blocker or major, otherwise DEFER `reason=review_pending`.
+A dismissed change request is not open. Reevaluate
 `review_context`, `review_context_unknown`, and `head_changed` deferrals on
 every run. A prior `reason=human_signoff` is withdrawn: do not skip on it.
 An unresolved thread from a reviewer who approved this head is not blocked

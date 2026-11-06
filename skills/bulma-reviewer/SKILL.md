@@ -23,15 +23,16 @@ Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
 context before pass selection and again before publication, pins the reviewed
 head, and verifies CI execution. A sensitive-path list stays in the private
 job report and does not defer. An unresolved thread whose author approved
-this head is not an open concern. Another reviewer's open change request
-still gets a code review and a COMMENT that their review is pending. Never
+this head is not an open concern, and neither is a dismissed change request.
+Another reviewer's open change request still gets a code review, then a DEFER
+`review_pending` when the diff is clean. Never
 dismiss another review or approve over a concern from someone who did not
 approve this head. Every review POST runs behind the engine's `scripts/gate.py`;
 an APPROVE it rejects is never sent. The engine dismisses its own approval
-only when a new head gets REQUEST_CHANGES for a code defect, and posts a
-COMMENT instead of a second bot approval. Access and tooling errors stay in
-the job report. They are not Deferred comments. CI that cannot be read is a
-normal verdict whose CI cell is `not verified (tooling)`.
+only when a new head gets REQUEST_CHANGES for a code defect. Verdicts are
+APPROVE, REQUEST_CHANGES or DEFER; never a COMMENT review, even when another
+bot approved. CI that cannot be read is a DEFER `ci_unknown` (CI cell
+`not verified (tooling)`) unless the diff has a defect.
 Review preserves the user's checkout. Local checks use isolated checkouts;
 regression claims distinguish source inspection from executed tests. Changes
 that depend on another deployment include counterpart and rollout checks via

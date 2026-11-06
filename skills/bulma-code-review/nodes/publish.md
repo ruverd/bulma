@@ -17,25 +17,24 @@ command, so an APPROVE the gate rejects is never sent:
 
 ```bash
 PAYLOAD=$(mktemp /tmp/bulma-review-XXXX.json)   # session scratchpad if one is set
-# {"commit_id","event":"APPROVE|REQUEST_CHANGES|COMMENT","body":"...","comments":[{"path","line","side":"RIGHT","body"}]}
+# {"commit_id","event":"APPROVE|REQUEST_CHANGES","body":"...","comments":[{"path","line","side":"RIGHT","body"}]}
 python3 scripts/gate.py --dir "$REVIEW_DIR" --payload "$PAYLOAD" --me "$ME" \
-  --head "$HEAD_SHA" --ledger "$REVIEW_DIR/bound.json" $BOT_LOGINS \
+  --head "$HEAD_SHA" --ledger "$REVIEW_DIR/bound.json" \
   && gh api "repos/$REPO/pulls/$PR/reviews" -X POST --input "$PAYLOAD"
 ```
 
-`$BOT_LOGINS` is `--bot-login <login>` for each review bot named in
-`bulma-memory` (accounts that run an AI reviewer under a user login). GitHub
-`Bot` users and `$ME` always count as bots.
+There are three verdicts: APPROVE, REQUEST_CHANGES (reviews) and DEFER (an
+issue comment, below). The gate rejects a `COMMENT` event. Another bot's
+approval on the head does not change an APPROVE.
 
 | Gate exit | Next |
 |---|---|
 | 0 | posted; post-verify below |
-| 1 | nothing posted yet. Each `BLOCKED` line is a real approval block. Do not dismiss my standing approval. A code defect still posts REQUEST_CHANGES. A draft, conflict, or red CI DEFERS. An access or tooling line is not a Deferred comment: put it in the private job report. Record STATE `gate=blocked` |
-| 3 | nothing posted yet. Only bot approvals stand on this head. Rewrite the payload as `event: COMMENT`, header `## 💬 Reviewed, no blockers: <repo>#<pr>`, first line "Another bot already approved this head, so this review is a comment, not a second bot approval.", marker `reason=bot_quorum`; re-run the gate and POST |
-| 4 | nothing posted yet. Another reviewer's change request is open. Rewrite as `event: COMMENT` with the same code review. Say their review is pending and link it. Do not say the diff was not inspected. Do not dismiss my approval. Marker `reason=review_pending`. Re-run the gate and POST |
-| 5 | nothing posted yet. CI or evidence could not be read. Rewrite a clean review as `event: COMMENT`. When the gate prints `CI not verified (tooling)`, the CI cell is exactly that. Put every other gate line in the private job report, not on the PR. Do not dismiss my approval. Marker `reason=ci_unverified`. Re-run the gate and POST |
+| 1 | nothing posted yet. Each `BLOCKED` line is a real approval block. Do not dismiss my standing approval. A code defect still posts REQUEST_CHANGES. A draft, conflict, or red CI DEFERS. Template, marker or deep-pass lines are mine to fix before re-running the gate. Never fall back to COMMENT. Record STATE `gate=blocked` |
+| 4 | nothing posted yet. Another reviewer's change request (not dismissed) or unresolved thread is open. Post the same body as a DEFER issue comment, header `## ⏸️ Deferred: <repo>#<pr>`, marker `reason=review_pending` and the reviewed `pass=`. Link their review. Say the diff was reviewed and found clean. Do not dismiss my approval |
+| 5 | nothing posted yet. CI or evidence could not be read. Post a DEFER issue comment, marker `reason=ci_unknown`, CI cell `not verified (tooling)`. Put every other gate line in the private job report, not on the PR. Do not dismiss my approval |
 
-REQUEST_CHANGES and COMMENT payloads pass through the gate too; it checks
+REQUEST_CHANGES payloads pass through the gate too; it checks
 their template rows, marker and `commit_id`.
 
 `422` means an invalid position and kills the whole review atomically. Retry
@@ -50,7 +49,7 @@ Section order is fixed. The words inside are Voice, not labels pasted as the com
 
 Every verdict body must include the `Model` and `Reasoning effort` rows below,
 filled from this pass's `reviewer_model` and `reviewer_effort`. Keep both in
-APPROVE, REQUEST_CHANGES, COMMENT, DEFER, dry-run and `422` retry bodies.
+APPROVE, REQUEST_CHANGES, DEFER, dry-run and `422` retry bodies.
 These identify the reviewer responsible for the verdict, not the orchestrator or critic. Use `unknown` when the host exposes
 no identity or effort for that field; never omit or leave either row empty,
 or invent a model version or reasoning effort. For retained analysis completed
@@ -132,8 +131,8 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 `open=-`). Without it the next run loses the ledger and re-reviews from scratch.
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
-`## ⏸️ Deferred: <repo>#<pr>`, `## 💬 Reviewed, no blockers: <repo>#<pr>` (bot
-quorum, open change request, or CI that could not be read). The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
+`## ⏸️ Deferred: <repo>#<pr>`. There is no other header; "Reviewed, no
+blockers" is not a verdict. The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
 and `Coverage` are required on every review body, compact or
 not; `gate.py` rejects a body without them or with empty attribution. There is no Human sign-off row. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
@@ -174,13 +173,14 @@ gh api "repos/$REPO/issues/$PR/comments" -F body=@"$BODY"
 
 Same template. A DEFER does not dismiss my standing approval
 ([PREFLIGHT.md](../references/PREFLIGHT.md) §Retire my stale approval). The marker carries the reason
-(`reason=ci_red`, `reason=draft`, ...). A DEFER is only for CI red or unknown,
-draft or conflict. Coverage, critic failure, a moved head and uncertainties
-are COMMENT reviews, never a Deferred comment. The line under the header is a sentence, not a status code.
+(`reason=ci_red`, `reason=draft`, ...). A DEFER is only for CI red, pending or
+unknown, draft, merge conflict, or another reviewer's open (not dismissed)
+change request or thread. Coverage, critic failure, a moved head and
+uncertainties never DEFER and never post a COMMENT review. The line under the header is a sentence, not a status code.
 Use "CI is still red on lint and typecheck, so I did not read the diff." only
 for a real pre-diff gate: draft, conflict, or CI that actually failed. Never
 write `I did not inspect the diff` for an open change request or a tooling
-error. Those are not DEFERS. Under `### ❓ Open`, name the reason: failing
+error: those DEFERS come after the diff was reviewed. Under `### ❓ Open`, name the reason: failing
 checks with log links (max 8), the draft or conflict, the files you could not
 Never call `gh pr review` on a DEFER.
 

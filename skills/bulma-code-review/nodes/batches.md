@@ -2,7 +2,7 @@
 
 A normal PR, including a large one, never enters this node. Batches exist so a
 very large PR (a stack cleanup, a mass rename) gets full coverage instead of a
-`reason=coverage` COMMENT after 15 files.
+partial review after 15 files.
 
 ## When
 
@@ -76,7 +76,7 @@ classes collapse to one finding with `instances`, like any other pass.
 | Exit | Meaning |
 |---|---|
 | 0 | every batch finished and every file has a coverage row |
-| 1 | a batch failed or left files unchecked; re-run only those batches once, then merge again. Still incomplete → `reason=coverage` COMMENT naming the uncovered files |
+| 1 | a batch failed or left files unchecked; re-run only those batches once, then merge again. Still incomplete → no artifact this run; name the uncovered files in chat |
 | 2 | manifest missing or for another head; re-plan |
 
 The critic ([critic.md](critic.md)), the verdict and the publish run **once**,

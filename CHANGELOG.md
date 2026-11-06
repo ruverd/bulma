@@ -8,6 +8,15 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- `bulma-code-review` publishes only APPROVE, REQUEST_CHANGES or DEFER. A
+  `COMMENT` review ("Reviewed, no blockers") is no longer a verdict and
+  `gate.py` rejects it. A change request someone dismissed is closed and no
+  longer blocks APPROVE. DEFER covers CI red, pending or unreadable, draft,
+  merge conflict, and another reviewer's open change request or unresolved
+  thread (`review_pending`). Another bot's approval no longer turns an APPROVE
+  into a COMMENT. Incomplete coverage, a failed critic or an unstable head
+  post nothing that run. Supersedes the COMMENT routing below.
+
 - `bulma-code-review` DEFERs only on CI red or unknown, draft, or conflict.
   An open change request from another reviewer, unreadable CI, incomplete
   coverage, a failed critic or a moved head now post a COMMENT review after

@@ -45,10 +45,12 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
    rows. Resolve both through `bulma-host`; use `unknown` per unavailable field.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
-   before pass selection and again before publishing. An open change request
-   does not skip the diff: review the code and post a COMMENT when it is
-   clean, noting that their review is pending. Unresolved threads and
-   unanswered questions still block approval. A thread whose author approved
+   before pass selection and again before publishing. Verdicts are APPROVE,
+   REQUEST_CHANGES or DEFER only; never a COMMENT review. An open change
+   request does not skip the diff: review the code and DEFER
+   `reason=review_pending` when it is clean. A dismissed change request is
+   closed and never blocks. Unresolved threads and unanswered questions still
+   block approval (DEFER `review_pending`). A thread whose author approved
    this head does not. QA `BLOCKED` (could not run) never gates. A status
    whose text starts with `FAIL` does not by itself block approval.
    Never dismiss another reviewer's review. Never post a Deferred comment
@@ -67,7 +69,7 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
     the critic before verdict. The critic walks contracts, integration/state,
     and security/data-loss on one spawn, without voting findings off. When
     the script prints `low`, skip the spawn. High risk with no completed
-    critic is a **COMMENT** `reason=critic_failed`, marker `critic=failed`.
+    critic posts nothing that run (retry once first), marker `critic=failed`.
 13. **Approve the reviewed head only.** Pin the full reviewed SHA, re-review
     any new commits, and verify CI execution on that SHA. Skipped or missing
     build/test jobs are not green, unless `ci-scope.py` proves the base is out
@@ -86,20 +88,19 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
     Follow [EVIDENCE.md](references/EVIDENCE.md) for test and rollout proof.
 17. **The gate script decides, not memory.** Every review POST runs as
     `scripts/gate.py ... && gh api .../reviews` ([nodes/publish.md](nodes/publish.md)).
-    Exit 1 → do not APPROVE. Exit 3 → the same body as a `COMMENT` review:
-    another bot already approved this head, and two bot approvals must not
-    satisfy a two-approval rule. Exit 4 → COMMENT noting the other reviewer's
-    change request is pending. Exit 5 → COMMENT with CI `not verified (tooling)`
-    when that is the reason (Actions and rollup unreadable); other read errors
-    stay in the private job report. Exits 4 and 5 are not Deferred comments.
-    Never post an APPROVE the gate did not pass.
+    Exit 1 → do not APPROVE (REQUEST_CHANGES for a defect, DEFER for CI).
+    Exit 4 → DEFER `reason=review_pending`, linking the open change request
+    or thread. Exit 5 → DEFER `reason=ci_unknown`, CI `not verified
+    (tooling)`; other read errors stay in the private job report. Another
+    bot's approval never turns an APPROVE into a COMMENT. Never post an
+    APPROVE the gate did not pass, and never post a COMMENT review.
 18. **Dismiss my approval only for a code defect on a new head.** A blocked
-    pass, a DEFER, a COMMENT, or an open change request does not dismiss it.
+    pass, a DEFER, or an open change request does not dismiss it.
     Dismiss only when this pass posts REQUEST_CHANGES for a blocker or major
     and that approval's commit is not the live head
     ([PREFLIGHT.md](references/PREFLIGHT.md) §Retire my stale approval).
 19. **A flip needs a full look.** APPROVE after my own REQUEST_CHANGES, or
-    after my DEFER or COMMENT for `coverage`, `uncertainty` or `critic_failed`, needs a
+    after an older DEFER or COMMENT of mine for `coverage`, `uncertainty` or `critic_failed`, needs a
     **deep** pass on the full PR diff. A delta-only light pass or an empty
     commit cannot clear it.
 20. **Converge, do not loop.** One finding per defect class, with its other
@@ -182,5 +183,5 @@ with those files:
 
 The caller runs the gate before its own APPROVE. A nonempty sensitive-path list
 does not block the caller. A caller that cannot run the gate does not approve;
-it posts its findings as a `COMMENT` or DEFERs for a code reason. It does not
+it posts REQUEST_CHANGES for a blocker/major or DEFERs. It does not
 post a Deferred comment for an access or tooling error.

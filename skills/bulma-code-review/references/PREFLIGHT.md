@@ -51,10 +51,10 @@ Never treat the first 50/100 threads, or the first comment alone, as complete.
 - Read replies and resolution evidence. `isOutdated`, an author saying
   "fixed", or a newer push does not settle a concern. A later `COMMENTED`
   review does not automatically withdraw a change request.
-- Inspect `review_dismissed` timeline events. A dismissal is not a fix or a
-  re-review. If a blocking review was dismissed without the original reviewer
-  explicitly clearing it after the fix, keep `review_context` blocked. This
-  includes author dismissals and dismissals made before the fix was pushed.
+- A dismissed change request is closed. GitHub sets its state to `DISMISSED`;
+  it does not block APPROVE and does not DEFER, whoever dismissed it and
+  whether or not its reviewer re-approved. Do not mention it on the PR as
+  pending.
 - Set `review_context=clear|blocked|unknown` and retain concern URLs plus the
   evidence for clearing them. Failed calls, GraphQL errors/null data, or
   incomplete pagination mean `unknown`, never clear. Retry a read failure once.
@@ -62,10 +62,11 @@ Never treat the first 50/100 threads, or the first comment alone, as complete.
   HTTP status and endpoint in the private job report (STATE and the reviewer
   report). Do not put that text on the PR. Never write `I did not inspect the diff`.
 
-Another reviewer's open change request does not skip the diff and does not
-DEFER. Review the code. Post a COMMENT when the diff has no blocker or major,
-and say their review is pending, with the review URL. Post REQUEST_CHANGES
-when the diff has a blocker or major, and include that same pending note.
+Another reviewer's open (not dismissed) change request does not skip the
+diff. Review the code. DEFER `reason=review_pending` when the diff has no
+blocker or major, and link their review. Post REQUEST_CHANGES when the diff
+has a blocker or major, and include that same pending note. Never a COMMENT
+review.
 Do not approve, resolve their threads, or dismiss their reviews. `--force`
 cannot bypass this. If our own proven blockers or majors already exist,
 REQUEST_CHANGES carries the pending note in the same artifact. Never
@@ -103,9 +104,9 @@ must not be treated as "CI unknown".
 When CI is `unverified` (rules below), review the diff anyway. The CI cell is
 `not verified (tooling)`. Do not post a Deferred comment. Copy the
 `actions.json` / `rollup.json` errors into the private job report only. A
-clean diff posts a COMMENT review with that CI cell; a blocker or major still
-posts REQUEST_CHANGES with the same CI cell. `gate.py` exit 5 means that
-COMMENT, not a defer. A successful empty read (no build/test run) is still
+clean diff DEFERS `reason=ci_unknown` with that CI cell; a blocker or major
+still posts REQUEST_CHANGES with the same CI cell. `gate.py` exit 5 means that
+DEFER, never a COMMENT review. A successful empty read (no build/test run) is still
 the ordinary unknown / out-of-scope rule, not this tooling path.
 
 Record run ids, job names, links, conclusions and SHA in `ci_evidence`.
@@ -129,7 +130,7 @@ from an aggregate job that ran while its tests skipped, or from rollup
 `ci_overall=unverified` means Actions and the rollup could not be read
 (HTTP 403 or any other read failure on both). Continue the review. Do not
 defer solely because of that read failure. The CI row says `not verified (tooling)`.
-Never APPROVE. A clean diff is a COMMENT with `reason=ci_unverified`.
+Never APPROVE. A clean diff is a DEFER with `reason=ci_unknown`.
 If Actions could be read, use them even when the rollup query failed. If
 Actions could not be read and the rollup state is `FAILURE` or `PENDING`,
 that state still counts (`failure` or `pending`). Rollup `SUCCESS` without
@@ -221,8 +222,8 @@ Set `reviewed_sha` only after the code, caller contracts and tests at that
 commit were inspected. If the live head differs, fetch both commits and
 review `git diff <reviewed_sha>..<headRefOid>` plus carried findings, then
 repeat the final check. A missing old commit requires a fresh deep review.
-Never just update the recorded SHA. If pushes prevent a stable review, post a
-COMMENT on the reviewed SHA with `reason=head_changed`. A base change requires a fresh full PR diff too.
+Never just update the recorded SHA. If pushes prevent a stable review, post
+nothing this run and report it in chat. A base change requires a fresh full PR diff too.
 
 APPROVE requires `reviewed_sha == headRefOid`, clear room evidence, CI proven
 on that SHA, complete coverage and zero blockers/majors. A sensitive-path list
@@ -241,7 +242,7 @@ REQUEST_CHANGES for a code defect (§Retire my stale approval).
 
 ## Retire my stale approval
 
-My APPROVE keeps counting until someone dismisses it. A later DEFER, COMMENT,
+My APPROVE keeps counting until someone dismisses it. A later DEFER
 or blocked gate does not replace it and must not dismiss it. Find standing
 approvals in `reviews.json`: latest decisive review by `$ME` with
 `state == APPROVED`.
@@ -286,17 +287,17 @@ still block until I resolve them.
 
 Every review POST goes through [scripts/gate.py](../scripts/gate.py) on the
 refreshed evidence above. It blocks APPROVE on: another reviewer's latest
-decisive review being CHANGES_REQUESTED (exit 4, post a COMMENT that their
-review is pending, do not DEFER), a change request dismissed by someone other
-than its reviewer and not re-approved by them, an unresolved thread whose
-author did not approve this head, no successful build/test job on the head
-(or a failed or pending one), unreadable Actions and rollup (exit 5, COMMENT,
-CI cell `not verified (tooling)`, details only in the private job report), a
+decisive review being CHANGES_REQUESTED or an unresolved thread whose author
+did not approve this head (exit 4, DEFER `reason=review_pending`), no
+successful build/test job on the head (or a failed or pending one),
+unreadable Actions and rollup (exit 5, DEFER `reason=ci_unknown`, CI cell
+`not verified (tooling)`, details only in the private job report), a
 missing template row, a marker that does not match the head, a blocker or
 major in the ledger, `risk=high` without `critic=ran`, and a light approval
 after my own change request. A sensitive-path list does not block. A status or
 check title that starts with `FAIL` does not block and is not a sign-off
-request. An unreadable evidence file does not post a Deferred comment (exit 5).
+request. A dismissed change request does not block. It rejects any `COMMENT`
+event: a COMMENT review is not a verdict.
 Commands are in [nodes/publish.md](../nodes/publish.md).
 
 ## Retrospective sanity check

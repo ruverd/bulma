@@ -21,7 +21,7 @@ not run deploys or destructive operations as review checks.
 Record command, working directory, full source SHA, exit code and output path.
 Separate source inspection, local execution and CI evidence. If a command
 cannot run, record the reason and continue source review. Apply existing
-coverage rule (COMMENT, never DEFER) and list uncertainties under Not verified; missing local execution alone is not
+coverage rule (verdict.md §7) and list uncertainties under Not verified; missing local execution alone is not
 a fabricated defect and never turns unknown CI green.
 
 ## Tests that distinguish the defect
