@@ -13,8 +13,15 @@ Fetch all authors, including AI QA and bots, not just `$ME`:
 
 ```bash
 REVIEW_DIR="$BULMA_ROOT/.bulma-code-review/$REPO/$PR"
-python3 scripts/snapshot.py collect --repo "$REPO" --pr "$PR" --dir "$REVIEW_DIR"
+python3 scripts/snapshot.py collect --repo "$REPO" --pr "$PR" --dir "$REVIEW_DIR" \
+  --checkout "$REVIEW_CHECKOUT"
 ```
+
+`--checkout` names a local clone of the repo. The collector uses it only when
+GitHub refuses the full diff (HTTP 406, over 20,000 lines or 300 files): it
+fetches the exact head and base and writes `git diff base...head` to
+`PR_PATCH.diff`, with `diff_source=local` in `snapshot.json`. Without a clone,
+that case fails collection; a 406 is never a reason to review fewer files.
 
 The collector fetches independent paginated endpoints concurrently, verifies the
 head and base stayed fixed, and writes `snapshot.json` last. Failure means unknown

@@ -68,7 +68,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Model | <reviewer_model> |
 | Reasoning effort | <reviewer_effort> |
 | Reviewed head | <full reviewed_sha> |
-| Pass | deep, 1st review |
+| Pass | deep, 1st review (very large PR: `deep, batched (N batches)`) |
 | CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or not verified (tooling) |
 | Review context | clear, or linked open concerns |
 | Coverage | 12 of 12 changed files |

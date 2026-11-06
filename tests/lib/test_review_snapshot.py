@@ -83,7 +83,7 @@ class SnapshotTest(unittest.TestCase):
 
         with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=record):
             result = m.collect('o/r', 1, self.root)
-        self.assertEqual(result, self.snapshot)
+        self.assertEqual(result, dict(self.snapshot, diff_source='api'))
         self.assertEqual((self.root / 'PR_FILES.txt').read_text(), 'new\nold\n')
         actions = json.loads((self.root / 'actions.json').read_text())
         self.assertIsNone(actions['error'])
@@ -134,6 +134,43 @@ class SnapshotTest(unittest.TestCase):
         actions = json.loads((self.root / 'actions.json').read_text())
         self.assertEqual(actions['runs'][0]['log_failed_tail'], 'boom')
         self.assertEqual(actions['runs'][0]['jobs'][0]['conclusion'], 'failure')
+
+    def test_too_large_diff_falls_back_to_local_git(self):
+        repo = self.root / 'clone'
+        repo.mkdir()
+        git = ['git', '-C', str(repo), '-c', 'user.email=t@t', '-c', 'user.name=t']
+        subprocess.run([*git, 'init', '-q', '-b', 'main'], check=True)
+        (repo / 'a.txt').write_text('one\n')
+        subprocess.run([*git, 'add', '.'], check=True)
+        subprocess.run([*git, 'commit', '-qm', 'base'], check=True)
+        base = subprocess.check_output([*git, 'rev-parse', 'HEAD'], text=True).strip()
+        (repo / 'a.txt').write_text('one\ntwo\n')
+        subprocess.run([*git, 'commit', '-qam', 'head'], check=True)
+        head = subprocess.check_output([*git, 'rev-parse', 'HEAD'], text=True).strip()
+        pr = {'head': {'sha': head}, 'base': {'sha': base, 'ref': 'main'}, 'title': 't', 'body': ''}
+
+        def refuse(*args):
+            if 'Accept: application/vnd.github.diff' in args:
+                raise subprocess.CalledProcessError(
+                    1, 'gh', stderr=b'HTTP 406: Sorry, the diff exceeded the maximum number of lines (20000)')
+            return self.response(*args).replace(b'a' * 40, head.encode())
+
+        with patch.object(m, 'pr', return_value=pr), patch.object(m, 'gh', side_effect=refuse):
+            with self.assertRaises(ValueError):
+                m.collect('o/r', 1, self.root)
+            self.assertFalse((self.root / 'snapshot.json').exists())
+            result = m.collect('o/r', 1, self.root, checkout=repo)
+        self.assertEqual(result['diff_source'], 'local')
+        self.assertIn('+two', (self.root / 'PR_PATCH.diff').read_text())
+
+        def broken(*args):
+            if 'Accept: application/vnd.github.diff' in args:
+                raise subprocess.CalledProcessError(1, 'gh', stderr=b'HTTP 500')
+            return self.response(*args)
+
+        with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', side_effect=broken):
+            with self.assertRaises(subprocess.CalledProcessError):
+                m.collect('o/r', 1, self.root, checkout=repo)
 
     def test_graphql_error_invalidates_old_snapshot(self):
         with patch.object(m, 'pr', return_value=self.pr), patch.object(m, 'gh', return_value=b'[{"errors":["denied"]}]'):

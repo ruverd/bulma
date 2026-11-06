@@ -18,6 +18,13 @@ Notable changes per release. Format follows
 
 ### Added
 
+- `bulma-code-review` batches very large PRs (more than 50 changed files,
+  more than 5000 changed lines, or a diff GitHub refuses with HTTP 406). Each
+  batch of up to 15 files gets the deep caps, and `scripts/batch-plan.py`
+  merges coverage and findings into one review artifact. Smaller PRs keep the
+  single-pass flow. `snapshot.py collect --checkout` builds the full diff from
+  a local `git diff base...head` when the API refuses it.
+
 - Opt-in process assessments, accepted-outcome reporting and matched comparisons,
   plus repository snapshot replay with durable evidence and quota/timeout stops.
   Model-only judgments never promote recurring-failure candidates.
