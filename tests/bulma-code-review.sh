@@ -652,3 +652,4 @@ ok no-project-knowledge
 echo "all passed"
 
 PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_review_snapshot.py"
+PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_review_batches.py"

@@ -129,6 +129,12 @@ Large PR (`additions + deletions > 2500` or `changedFiles > 25`): keep the caps,
 review hotspots first (auth, permissions, data writes, migrations, public API,
 money, PII), and declare uncovered files in the Coverage block.
 
+Very large PR (more than 50 changed files, more than 5000 changed lines, or a
+diff the GitHub API refuses with HTTP 406): a deep pass runs in batches of at
+most 15 files, each with the deep caps, and merges them into **one** review
+artifact ([nodes/batches.md](nodes/batches.md)). Only `scripts/batch-plan.py`
+decides this. Smaller PRs never batch.
+
 ---
 
 ## Where the rest lives
@@ -143,6 +149,7 @@ pass loads only what it needs.
 | 2. State to pass decision (deep or light) | [nodes/pass_decision.md](nodes/pass_decision.md) |
 | 3. Gates, before reading any diff | [nodes/gates.md](nodes/gates.md) |
 | 4. Patches, risk, then Reads after spec | [nodes/fetch.md](nodes/fetch.md) |
+| 4b. Batched deep pass, very large PRs only | [nodes/batches.md](nodes/batches.md) |
 | 5. Spec checklist, then axes, then bind | [nodes/review.md](nodes/review.md) |
 | 6. High-risk critic (no-op when low) | [nodes/critic.md](nodes/critic.md) |
 | 7-8. Severity, coverage, verdict | [nodes/verdict.md](nodes/verdict.md) |

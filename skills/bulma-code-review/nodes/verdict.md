@@ -36,6 +36,8 @@ A preference with no `path:line` in the diff is dropped, like any other nit.
 One row per changed file with what was verified. Silence is not evidence. A file
 left unverified because of a cap is declared and forces a **COMMENT**
 `reason=coverage` that names the files, never APPROVE and never DEFER.
+A very large PR is batched ([batches.md](batches.md)) before this rule
+applies; coverage counts the merged rows from every batch.
 
 ## 8. Verdict
 

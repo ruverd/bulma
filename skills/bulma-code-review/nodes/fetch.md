@@ -17,11 +17,10 @@ Write both under `$BULMA_ROOT/.bulma-code-review/`:
 - `PATCH.diff` — the unified diff this pass will bind against
 - `FILES.txt` — one changed path per line
 
-**Deep** — full PR diff:
-
-```bash
-gh pr diff "$PR" --repo "$REPO"
-```
+**Deep** — full PR diff: copy `PR_PATCH.diff` from the collected snapshot
+([PREFLIGHT.md](../references/PREFLIGHT.md)). Do not call `gh pr diff`; GitHub
+refuses diffs over 20,000 lines or 300 files with HTTP 406, and the snapshot
+already fell back to a local `git diff base...head` for those.
 
 Save the full PR path list as `PR_FILES.txt` for the sensitive-path list in
 [PREFLIGHT.md](../references/PREFLIGHT.md). That list stays in the private job
@@ -86,7 +85,9 @@ not hold → carry the entry and answer the reason in one sentence with the
 
 ## 4.3 Product-file Read — after Phase 1
 
-**Deep** — `Read` each changed file in full, highest churn first, up to the cap.
+**Deep** — run `scripts/batch-plan.py plan` first. When it says
+`"batched": true`, follow [batches.md](batches.md) instead of this section.
+Otherwise `Read` each changed file in full, highest churn first, up to the cap.
 
 **Light** — do not Read whole files except §4.2 and up to 4 files to confirm a
 suspicion.

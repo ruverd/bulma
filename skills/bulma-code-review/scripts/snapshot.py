@@ -27,7 +27,7 @@ def sha(data):
 
 
 def gh(*args):
-    return subprocess.check_output(['gh', *args])
+    return subprocess.check_output(['gh', *args], stderr=subprocess.PIPE)
 
 
 def denial(exc):
@@ -104,6 +104,33 @@ def collect_rollup(repo, number, head):
     return {'head': head, 'state': rollup.get('state'), 'error': None}
 
 
+def too_large(exc):
+    err = exc.stderr or b''
+    text = err.decode('utf-8', 'replace') if isinstance(err, bytes) else str(err)
+    return '406' in text or 'too_large' in text or 'too large' in text.lower()
+
+
+def local_patch(checkout, data):
+    """Full PR diff from a local clone, for diffs the GitHub API refuses (HTTP 406)."""
+    head, base = data['head']['sha'], data['base']['sha']
+    git = ['git', '-C', str(checkout)]
+    for ref in (head, base):
+        if subprocess.run([*git, 'cat-file', '-e', ref + '^{commit}'], capture_output=True).returncode:
+            subprocess.check_output([*git, 'fetch', '--quiet', 'origin', ref], stderr=subprocess.PIPE)
+    return subprocess.check_output([*git, 'diff', '--no-color', '--no-ext-diff', f'{base}...{head}'])
+
+
+def pr_patch(repo, number, data, checkout):
+    try:
+        return gh('api', f'repos/{repo}/pulls/{number}', '-H', 'Accept: application/vnd.github.diff'), 'api'
+    except subprocess.CalledProcessError as exc:
+        if not too_large(exc):
+            raise
+    if checkout is None:
+        raise ValueError('PR diff too large for the API (HTTP 406); retry with --checkout <local clone>')
+    return local_patch(checkout, data), 'local'
+
+
 def pr(repo, number):
     return json.loads(gh('api', f'repos/{repo}/pulls/{number}'))
 
@@ -113,7 +140,7 @@ def revision(data):
             'base_ref': data['base']['ref'], 'title': data['title'], 'body': data.get('body')}
 
 
-def collect(repo, number, directory):
+def collect(repo, number, directory, checkout=None):
     directory.mkdir(parents=True, exist_ok=True)
     marker = directory / 'snapshot.json'
     marker.unlink(missing_ok=True)
@@ -131,9 +158,9 @@ def collect(repo, number, directory):
     owner, name = repo.split('/')
     commands['threads.json'] = ('api', 'graphql', '--paginate', '--slurp', '-f', f'owner={owner}',
                                '-f', f'name={name}', '-F', f'number={number}', '-f', 'query=' + THREADS)
-    commands['PR_PATCH.diff'] = ('api', f'{prefix}/pulls/{number}', '-H', 'Accept: application/vnd.github.diff')
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         values = dict(zip(commands, pool.map(lambda argv: gh(*argv), commands.values())))
+    values['PR_PATCH.diff'], diff_source = pr_patch(repo, number, before, checkout)
     statuses, _ = try_json('api', f'{prefix}/commits/{head}/statuses?per_page=100', '--paginate', '--slurp')
     # A token without commit-status read must not abort the snapshot; Actions and rollup carry CI.
     values['statuses.json'] = json.dumps(statuses if isinstance(statuses, list) and statuses else [[]]).encode()
@@ -167,7 +194,7 @@ def collect(repo, number, directory):
     (directory / 'rollup.json').write_text(json.dumps(rollup))
     (directory / 'PR_FILES.txt').write_text('\n'.join(sorted(paths)) + '\n')
     (directory / 'pr.json').write_text(json.dumps(after))
-    snapshot = {'repo': repo, 'pr': number, **revision(after)}
+    snapshot = {'repo': repo, 'pr': number, **revision(after), 'diff_source': diff_source}
     marker.write_text(json.dumps(snapshot))
     return snapshot
 
@@ -215,12 +242,14 @@ def main():
     parser.add_argument('--repo')
     parser.add_argument('--pr', type=int)
     parser.add_argument('--context', type=Path)
+    parser.add_argument('--checkout', type=Path,
+                        help='local clone used for the full diff when the API refuses it (HTTP 406)')
     args = parser.parse_args()
     try:
         if args.action == 'collect':
             if not args.repo or not args.pr:
                 raise ValueError('collect requires --repo and --pr')
-            result = collect(args.repo, args.pr, args.dir)
+            result = collect(args.repo, args.pr, args.dir, args.checkout)
         elif args.context is None:
             raise ValueError('seal/check requires freshly built --context')
         elif args.action == 'seal':
@@ -230,10 +259,13 @@ def main():
             print(json.dumps({'reusable_analysis': ok, 'approval_authorized': False}))
             return 0 if ok else 1
         if args.action == 'collect':
-            result = {name: result[name] for name in ('repo', 'pr', 'head', 'base')}
+            result = {name: result[name] for name in ('repo', 'pr', 'head', 'base', 'diff_source')}
         print(json.dumps(result))
         return 0
-    except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as exc:
+    except subprocess.CalledProcessError as exc:
+        err = exc.stderr.decode('utf-8', 'replace') if isinstance(exc.stderr, bytes) else str(exc.stderr or '')
+        parser.exit(2, f'{exc}\n{err}')
+    except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.exit(2, str(exc) + '\n')
 
 
