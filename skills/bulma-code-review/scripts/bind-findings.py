@@ -2,7 +2,7 @@
 """Place findings: inline when path:line sits in the patch, body when the
 defect surfaces elsewhere but cause_path:cause_line sits in the patch.
 
-Exit 3 when a blocker or major ends up in `body`, or in `dropped` without
+Exit 3 when a blocker, major or medium ends up in `body`, or in `dropped` without
 `pre_existing: true`. Those findings still block APPROVE; the exit code keeps a
 placement miss from silently erasing them.
 """
@@ -102,6 +102,13 @@ def bind(
         path = str(finding.get("path") or "")
         number = line_number(finding)
         record = dict(finding)
+        if (finding.get("kind") == "acceptance" and finding.get("axis") == "spec"
+                and finding.get("severity") == "medium"
+                and str(finding.get("criterion") or "").strip()
+                and str(finding.get("evidence_url") or "").startswith("https://")):
+            record["placement"] = "body"
+            body.append(record)
+            continue
         if finding.get("in_diff") is not False and in_patch(path, number, covered, allow):
             kept.append(finding)
             continue
@@ -121,7 +128,7 @@ def bind(
 
 
 def blocking(result: dict[str, list[dict[str, Any]]]) -> bool:
-    serious = ("blocker", "major")
+    serious = ("blocker", "major", "medium")
     if any(f.get("severity") in serious for f in result["body"]):
         return True
     return any(

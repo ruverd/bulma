@@ -4,12 +4,19 @@
 |---|---|---|
 | **blocker** | proven defect, security flaw, broken contract (a reachable caller crashes, writes wrong data or loses data), data loss; request body written into role, tenant, price, or flag/permission | REQUEST_CHANGES |
 | **major** | closed list only: new logic without a test; swallowed error or silent catch or masking fallback; missing error or loading state on a new data flow; `any` or cast that erases a real check; documented repo rule broken; a new helper, hook, query or component that duplicates an existing one (existing `path:line` named, same inputs and outputs); contract change whose unhandled callers degrade without a crash or bad write (wrong empty state, missing field); a new special-case branch bolted onto an unrelated flow (concrete path and trigger); user input concatenated into SQL, HTML, shell, or href; broad catch, or `?.` skipping a required operation | REQUEST_CHANGES |
+| **medium** | an explicit acceptance criterion is unmet, including required mutation-run results or other validation evidence missing from the PR; quote the criterion, link its source, and verify the omission on the reviewed head | REQUEST_CHANGES |
 | **nit** | everything else, including the reviewer preferences below | collapsed Nits block, max 5, never blocks |
 
 Introduced or worsened by this PR, wherever it surfaces. A break in an
 unchanged caller or test counts when a changed hunk causes it (`cause_path`).
 Pre-existing problems the PR merely touches are nits. A defect reachable when
 a flag is on keeps its severity.
+
+### Acceptance evidence
+
+Existing blocker/major definitions take precedence; missing evidence never downgrades a proven code defect.
+
+An unmet mandatory criterion is a medium even when CI is green and no code defect exists. Publish it as a finding, not only under Not verified or as DEFER `review_pending`. If the evidence is present or the criterion has an explicit accepted waiver, close the finding. Optional evidence or reviewer preferences are nits and never block APPROVE. Do not turn an unreadable ticket or unavailable tooling into a medium: establish the requirement and omission first.
 
 ### Reviewer preferences — always nits
 
@@ -35,7 +42,7 @@ A preference with no `path:line` in the diff is dropped, like any other nit.
 
 One row per changed file with what was verified. Silence is not evidence. A file
 left unverified because of a cap blocks APPROVE. Re-run the missing batches
-once. Still incomplete: REQUEST_CHANGES when the ledger has a blocker or major,
+once. Still incomplete: REQUEST_CHANGES when the ledger has a blocker, major or medium,
 otherwise post nothing this run and report the uncovered files in chat. Never
 a COMMENT review and never a DEFER.
 A very large PR is batched ([batches.md](batches.md)) before this rule
@@ -52,12 +59,12 @@ Apply [pass_decision.md](pass_decision.md) §Convergence first when this would
 be my third or later REQUEST_CHANGES on the PR.
 
 Carried findings that still reproduce (§4.2) count exactly like new ones. APPROVE
-requires zero surviving blockers and majors, new **and** carried. Nits ride
+requires zero surviving blockers, majors and mediums, new **and** carried. Nits ride
 along with an APPROVE; they never turn it into a DEFER.
 
 **Three verdicts only: APPROVE, REQUEST_CHANGES, DEFER.** A `COMMENT` review
 ("Reviewed, no blockers") is never a verdict. REQUEST_CHANGES for a blocker or
-major. APPROVE when only nits remain and the approval gates pass. **DEFER is
+major or medium. APPROVE when only nits remain and the approval gates pass. **DEFER is
 only for:** CI red, pending past the loop, or unreadable; draft; merge
 conflict; another reviewer's open change request or unresolved thread. A change
 request that someone dismissed is no longer open: it does not block and does
@@ -67,6 +74,7 @@ not DEFER, whoever dismissed it.
 |---|---|
 | ≥1 blocker (new or carried) | **REQUEST_CHANGES** |
 | ≥1 major (new or carried), 0 blocker | **REQUEST_CHANGES** |
+| ≥1 medium (new or carried), 0 blocker/major | **REQUEST_CHANGES**, including mandatory acceptance evidence missing with green CI |
 | clean, another reviewer's change request (not dismissed) or unresolved thread is open | **DEFER** `reason=review_pending`, link it. The diff was reviewed; marker keeps `pass=deep\|light` |
 | clean, another reviewer's change request was dismissed | not open. **APPROVE** when the other gates pass |
 | clean, room unknown because a read failed | **DEFER** `reason=review_context_unknown`. The read error stays in the private job report |
@@ -75,14 +83,14 @@ not DEFER, whoever dismissed it.
 | any findings, CI pending | retain completed analysis, **wait_ci**, no publication yet |
 | clean, full coverage, CI red (`--force` run) | **DEFER** `reason=ci_red`, marker keeps `pass=deep\|light` |
 | clean, full coverage, CI readable but unknown (`--force` run) | **DEFER** `reason=ci_unknown`, marker keeps `pass=deep\|light` |
-| ≥1 blocker or major, CI unverified | **REQUEST_CHANGES**, CI cell `not verified (tooling)` |
+| ≥1 blocker, major or medium, CI unverified | **REQUEST_CHANGES**, CI cell `not verified (tooling)` |
 | clean, CI unverified | **DEFER** `reason=ci_unknown`, CI cell `not verified (tooling)`, marker keeps `pass=deep\|light` |
 | clean, coverage incomplete | no artifact this run; report the uncovered files in chat |
 | an uncertainty (fact outside the repo and CI) | no verdict effect. List it under Not verified; the verdict comes from the findings |
-| risk high, critic did not complete, no blocker/major | retry the critic once; still failed → no artifact this run, report `critic=failed` in chat |
+| risk high, critic did not complete, no blocker/major/medium | retry the critic once; still failed → no artifact this run, report `critic=failed` in chat |
 | prior own REQUEST_CHANGES, or my DEFER/COMMENT `coverage\|uncertainty\|critic_failed` (older runs), and this pass was not deep on the full diff | run the deep pass; never APPROVE from a light pass |
 | empty delta after my own APPROVE, all approval gates above pass | **APPROVE**, body says no code changes |
-| `gate.py` exits 1 | do not APPROVE. REQUEST_CHANGES if the ledger has a blocker or major; DEFER `reason=ci_red` for CI red or pending; otherwise fix the payload (template, marker, deep pass) and re-run the gate. Never fall back to COMMENT. Do not dismiss my approval |
+| `gate.py` exits 1 | do not APPROVE. REQUEST_CHANGES if the ledger has a blocker, major or medium; DEFER `reason=ci_red` for CI red or pending; otherwise fix the payload (template, marker, deep pass) and re-run the gate. Never fall back to COMMENT. Do not dismiss my approval |
 | `gate.py` exits 4 (another reviewer's open change request or thread) | **DEFER** `reason=review_pending` with their links |
 | `gate.py` exits 5 (CI or evidence unreadable) | **DEFER** `reason=ci_unknown`, CI cell `not verified (tooling)`. Other lines stay in the private job report |
 | another bot already approved this head | **APPROVE** anyway. A second bot approval is still an approval |
@@ -106,7 +114,7 @@ APPROVE. Body findings rejected only for inline placement still count.
 ### 8.1 Promote
 
 All must hold: SHA unchanged, prior artifact was a DEFER with `reason=ci*` or `reason=review_pending` (now clear), its
-marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0`, `open=-`. Then
+marker says **`pass=deep` or `pass=light`**, `blockers=0 majors=0 mediums=0`, `open=-`. Then
 re-run every approval gate, including room and head-bound CI. CI that is
 `out_of_scope` for the base counts as green here; the first line then says
 "I already reviewed this SHA. CI does not run on PRs into `<base>`, so this is

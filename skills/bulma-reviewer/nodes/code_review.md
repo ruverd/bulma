@@ -47,3 +47,5 @@ alone is not confirmation; leave unverified concerns pending. Include bot
 findings in assessments, while preserving human-only observation rules above.
 Reuse LSTM source keys and existing tasks. Never launch LSTM, a developer or QA
 for this assessment. It cannot change or bypass the engine publication gate.
+
+Verified missing mandatory acceptance evidence is a medium and REQUEST_CHANGES, even with green CI. Optional evidence is a nit and does not block APPROVE on its own. Apply engine verdict §6 before treating acceptance questions as pending review context.

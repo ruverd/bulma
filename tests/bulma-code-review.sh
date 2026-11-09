@@ -193,6 +193,27 @@ python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/wrap.json" >"$TMP/wr
 assert_json "$TMP/wrap-bound.json" "len(d['kept']) == 1"
 ok bind-wrapper
 
+# Required acceptance evidence has a source, not a fabricated code location.
+cat >"$TMP/acceptance.json" <<'EOF'
+[{"severity":"medium","axis":"spec","kind":"acceptance",
+  "criterion":"Record three mutation-red runs in the PR body",
+  "evidence_url":"https://example.com/ticket/123","title":"Missing mutation results"}]
+EOF
+[[ "$(status "$TMP/acceptance-bound.json" python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/acceptance.json")" == 3 ]] \
+  || fail "bind: acceptance medium must survive as a blocking body finding"
+assert_json "$TMP/acceptance-bound.json" "len(d['body']) == 1 and d['kept'] == [] and d['dropped'] == []"
+python3 - "$TMP/acceptance.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+finding = json.load(open(path))[0]
+del finding['criterion']
+json.dump([finding], open(path, 'w'))
+PY
+[[ "$(status "$TMP/unproven-bound.json" python3 "$BIND" --patch "$TMP/sample.diff" --findings "$TMP/acceptance.json")" == 3 ]] \
+  || fail "bind: malformed acceptance medium must not disappear"
+assert_json "$TMP/unproven-bound.json" "d['body'] == [] and len(d['dropped']) == 1"
+ok bind-acceptance-medium
+
 # --- gate ---
 
 GATE="$SKILL/scripts/gate.py"
@@ -250,6 +271,29 @@ CLEAN="pass=deep blockers=0 majors=0 reason=- open=- risk=low critic=skip"
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 [[ "$(gate)" == 0 ]] || fail "gate: clean approve must pass ($(cat "$TMP/gate.out"))"
+
+# Green CI cannot erase a medium, even if marker counts or placement are wrong.
+for bucket in kept body dropped; do
+  reset_evidence; write_payload APPROVE "$CLEAN"
+  python3 - "$EV/bound.json" "$TMP/acceptance-bound.json" "$bucket" <<'PY'
+import json, sys
+path, source, bucket = sys.argv[1:]
+ledger = {name: [] for name in ('kept', 'body', 'dropped')}
+ledger[bucket] = json.load(open(source))['body']
+json.dump(ledger, open(path, 'w'))
+PY
+  blocked_with "medium in ledger ($bucket)" || fail "gate: green CI must not hide medium in $bucket"
+done
+write_payload REQUEST_CHANGES "pass=deep blockers=0 majors=0 mediums=1 reason=- open=acceptance:mutation-results risk=low critic=skip"
+[[ "$(gate)" == 0 ]] || fail "gate: acceptance medium must allow REQUEST_CHANGES"
+
+reset_evidence; write_payload APPROVE "pass=deep blockers=0 majors=0 mediums=1 reason=- open=- risk=low critic=skip"
+blocked_with 'marker still lists' || fail "gate: medium marker must block even without ledger finding"
+
+reset_evidence; write_payload APPROVE "pass=deep blockers=0 majors=0 mediums=0 reason=- open=- risk=low critic=skip"
+echo '{"kept":[{"severity":"nit","title":"Optional validation evidence"}],"body":[],"dropped":[]}' >"$EV/bound.json"
+[[ "$(gate)" == 0 ]] || fail "gate: optional evidence nit must allow APPROVE"
+ok gate-medium-and-nit
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 cat >"$EV/reviews.json" <<EOF

@@ -23,7 +23,7 @@ ignore review bots).
 | `state` is CLOSED or MERGED | print state, post nothing, stop |
 | `isDraft` | DEFER, `reason=draft` |
 | `mergeStateStatus` in `DIRTY`, `CONFLICTING` | DEFER, `reason=conflict` |
-| another reviewer's change request is open (not dismissed) | **review** the diff. REQUEST_CHANGES if it has a blocker or major; otherwise DEFER `reason=review_pending`. A dismissed change request is not open. Never write `I did not inspect the diff` |
+| another reviewer's change request is open (not dismissed) | **review** the diff. REQUEST_CHANGES if it has a blocker, major or medium; otherwise DEFER `reason=review_pending`. A dismissed change request is not open. Never write `I did not inspect the diff` |
 | `review_context` unknown because a read failed | **review** the diff. Do not post a Deferred comment. The failure goes in the private job report |
 | `ci_overall` = failure | DEFER, `reason=ci_red`, list ≤8 failing checks with log links |
 | `ci_overall` = pending | **review** pinned head now; after critic retain analysis and **wait_ci**. No PR artifact while pending. |

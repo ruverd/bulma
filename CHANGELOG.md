@@ -8,6 +8,12 @@ Notable changes per release. Format follows
 
 ### Changed
 
+- Review treats verified missing mandatory acceptance evidence as medium and
+  REQUEST_CHANGES, even with green CI. Optional evidence remains a nonblocking
+  nit. Mediums survive body placement, batch merging, carry-forward and the
+  approval gate; required mutation-red results no longer become a clean
+  pending-review verdict.
+
 - `bulma-code-review` publishes only APPROVE, REQUEST_CHANGES or DEFER. A
   `COMMENT` review ("Reviewed, no blockers") is no longer a verdict and
   `gate.py` rejects it. A change request someone dismissed is closed and no

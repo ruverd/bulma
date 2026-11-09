@@ -62,13 +62,15 @@ Never treat the first 50/100 threads, or the first comment alone, as complete.
   HTTP status and endpoint in the private job report (STATE and the reviewer
   report). Do not put that text on the PR. Never write `I did not inspect the diff`.
 
+Before treating an unanswered acceptance-evidence request as review context, apply verdict §6: a verified unmet mandatory criterion is a medium and REQUEST_CHANGES, even with green CI. Optional requests are nits and never block our verdict on their own. Do not manufacture severity from an unanswered comment alone. An independently active change request still has the gate below.
+
 Another reviewer's open (not dismissed) change request does not skip the
 diff. Review the code. DEFER `reason=review_pending` when the diff has no
-blocker or major, and link their review. Post REQUEST_CHANGES when the diff
-has a blocker or major, and include that same pending note. Never a COMMENT
+blocker, major or medium, and link their review. Post REQUEST_CHANGES when the diff
+has a blocker, major or medium, and include that same pending note. Never a COMMENT
 review.
 Do not approve, resolve their threads, or dismiss their reviews. `--force`
-cannot bypass this. If our own proven blockers or majors already exist,
+cannot bypass this. If our own proven blockers, majors or mediums already exist,
 REQUEST_CHANGES carries the pending note in the same artifact. Never
 manufacture a code finding from review state alone. A prior DEFER with
 `reason=review_context` or `reason=review_context_unknown` skipped the diff
@@ -104,7 +106,7 @@ must not be treated as "CI unknown".
 When CI is `unverified` (rules below), review the diff anyway. The CI cell is
 `not verified (tooling)`. Do not post a Deferred comment. Copy the
 `actions.json` / `rollup.json` errors into the private job report only. A
-clean diff DEFERS `reason=ci_unknown` with that CI cell; a blocker or major
+clean diff DEFERS `reason=ci_unknown` with that CI cell; a blocker, major or medium
 still posts REQUEST_CHANGES with the same CI cell. `gate.py` exit 5 means that
 DEFER, never a COMMENT review. A successful empty read (no build/test run) is still
 the ordinary unknown / out-of-scope rule, not this tooling path.
@@ -226,7 +228,7 @@ Never just update the recorded SHA. If pushes prevent a stable review, post
 nothing this run and report it in chat. A base change requires a fresh full PR diff too.
 
 APPROVE requires `reviewed_sha == headRefOid`, clear room evidence, CI proven
-on that SHA, complete coverage and zero blockers/majors. A sensitive-path list
+on that SHA, complete coverage and zero blockers/majors/mediums. A sensitive-path list
 does not change that. CI `not verified (tooling)` is not proven CI.
 Any **Critical/High** in our body, inline comments, carried findings or critic
 output is a blocker/major, never an approving caveat. Reconcile the final

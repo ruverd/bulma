@@ -66,3 +66,5 @@ Verified external concerns feed [FEEDBACK.md](../bulma-bus/FEEDBACK.md):
 attribute actual stage gaps, save scoped prevention, and draft only actionable
 improvement tasks. A request for changes or LSTM invocation alone proves no
 miss. Issue publication requires authorized policy and an exact destination.
+
+Verified missing mandatory acceptance evidence is a medium and REQUEST_CHANGES, even with green CI. Optional evidence is a nit and does not block APPROVE on its own. Apply engine verdict §6 before treating acceptance questions as pending review context.

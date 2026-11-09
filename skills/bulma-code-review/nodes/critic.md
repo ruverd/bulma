@@ -17,7 +17,7 @@ Pass, and nothing else:
 - this node file
 - PR url + head SHA
 - `$BULMA_ROOT/.bulma-code-review/AC.md`
-- bound findings JSON (blockers and majors only; nits stay on the parent)
+- bound findings JSON (blockers, majors and mediums only; nits stay on the parent)
 - `$BULMA_ROOT/.bulma-code-review/PATCH.diff`
 - whitelist: at most 4 high-risk paths from `FILES.txt`, plus 20–40 line
   excerpts of cited hunks
@@ -45,8 +45,9 @@ reason to drop.
    SQL/HTML/shell/href, SSRF, path concat, CSRF on cookie-auth writes,
    PII in logs.
 
-For each bound blocker or major: keep it only if a lens's hunk proves the
-trigger. Drop it if the refutation holds. If the line is not the bug but the
+For each bound blocker, major or medium: keep it only if a lens's hunk proves the
+trigger. For an acceptance-evidence medium, verify the quoted requirement and
+current omission using its linked source and PR evidence instead of a code hunk. Drop it if the refutation holds. If the line is not the bug but the
 defect is proven, correct its anchor or preserve it as a body finding. Apply
 the same rule to the parent's separate body findings; include their one-hop
 evidence in the bounded excerpts. Placement cannot erase a proven defect.
@@ -70,7 +71,7 @@ with the merged result. STATE `critic=ran`.
 
 Spawn or script failure: keep the first-pass bound ledger and set
 `critic=failed`. Risk is high, so an unreviewed critic is not a clean pass:
-the verdict is REQUEST_CHANGES when the ledger already has a blocker or major,
+the verdict is REQUEST_CHANGES when the ledger already has a blocker, major or medium,
 otherwise retry the critic once and, if it still fails, post nothing this run
 and report it in chat. Never a COMMENT review. The marker says `critic=failed`,
 never `critic=skip`; `skip` is reserved for `risk=low`.
