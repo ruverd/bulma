@@ -21,7 +21,7 @@ GitHub body into chat.
 | Critic | skip (low risk), ran, or failed |
 | Gate | pass, blocked — reasons, review_pending, or ci_unknown |
 | Read | 12 files, 5 codegraph queries |
-| Findings | N blockers · N majors · N nits · N dropped by self-verify · N dropped by bind |
+| Findings | N blockers · N majors · N mediums · N nits · N dropped by self-verify · N dropped by bind |
 | Carried | N re-verified — N still reproduce, N resolved |
 | Coverage | 12/12 |
 | Posted | APPROVED \| CHANGES_REQUESTED \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |

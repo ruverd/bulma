@@ -66,8 +66,14 @@ Map each `AC.md` bullet to code in the diff. Rewrite `AC.md` as:
 - missing | <criterion>
 ```
 
-`missing` or a behaviour added beyond the ticket that changes existing flows:
-finding, `axis: spec`. Wording mismatches are nits — silent.
+`missing` mandatory acceptance evidence: **medium**, `axis: spec`. Quote the
+criterion, link its source, and check the PR body, attachments and replies for
+results or an accepted waiver. Required mutation-red runs are separate from
+normal green CI. Do not leave this only under Not verified or DEFER for review
+context. Optional evidence is a nit; with no blocking findings and other gates
+clear, APPROVE.
+Other missing behaviour or behaviour added beyond the ticket that changes existing flows:
+finding, `axis: spec`, severity from verdict §6. Wording mismatches are nits — silent.
 `AC.md` of `none` → skip this phase as the table above.
 
 ### Phase 4 — Tests
@@ -240,7 +246,7 @@ No new reading in this phase. Every surviving finding must carry all of:
 
 ```json
 {
-  "severity": "blocker | major",
+  "severity": "blocker | major | medium | nit",
   "axis": "spec | tests | correctness | contract | security | standards | perf | a11y | deps",
   "path": "src/x.ts",
   "line": 42,
@@ -256,6 +262,8 @@ No new reading in this phase. Every surviving finding must carry all of:
   "instances": ["src/z.ts:88", "src/w.ts:12"]
 }
 ```
+
+For a medium acceptance-evidence finding with no code line, use `kind: acceptance`, `criterion` (the exact requirement) and `evidence_url` (its source), plus the trigger, impact and fix above. The binder keeps it in `body` without a fake `path:line`. Recheck required evidence on each head.
 
 `instances` is optional. When the same defect appears in more than one place
 (the same unchecked null, the same missing guard on sibling handlers), file
@@ -284,7 +292,7 @@ Cut rules, biased toward refutation:
   guard against it, that missing guard is the finding instead. Uncertainty
   about a nit disappears
 - a claim about pre-existing code the diff neither changed nor broke sets
-  `pre_existing: true`; that is the only way a blocker or major leaves the
+  `pre_existing: true`; that is the only way a blocker, major or medium leaves the
   ledger without a placement
 
 Write the survivors to `$BULMA_ROOT/.bulma-code-review/findings.json`. Then:
@@ -297,15 +305,16 @@ python3 scripts/bind-findings.py \
 ```
 
 `scripts/` sits next to this skill's `SKILL.md`. It prints
-`{kept, body, dropped}` and exits 3 when a blocker or major sits in `body`, or
+`{kept, body, dropped}` and exits 3 when a blocker, major or medium sits in `body`, or
 in `dropped` without `pre_existing: true`. Save the output as
 `$BULMA_ROOT/.bulma-code-review/bound.json`; [publish.md](publish.md) passes it
 to `gate.py` as the ledger.
 
 `kept` become inline comments. `body` findings are introduced by this PR and
 surface elsewhere; publish them in the body with their `path:line` and the
-causal changed hunk. A blocker or major in `dropped` that is not pre-existing
+causal changed hunk. A blocker, major or medium in `dropped` that is not pre-existing
 needs its anchor or `cause_path` fixed and a re-run, never a silent drop.
+Acceptance mediums use their criterion/source body placement instead.
 Count actual drops for chat. A placement miss must never erase a
 Critical/High and turn REQUEST_CHANGES into APPROVE.
 

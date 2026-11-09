@@ -44,7 +44,9 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
    Every verdict body includes the executing reviewer's `Model` and `Reasoning effort`
    rows. Resolve both through `bulma-host`; use `unknown` per unavailable field.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
-9. **Read the room before approving.** Follow [PREFLIGHT.md](references/PREFLIGHT.md)
+9. **Read the room before approving.** Classify verified missing mandatory
+   acceptance evidence as medium + REQUEST_CHANGES, never a clean pending
+   review. Optional requests are nits and do not block on their own. Follow [PREFLIGHT.md](references/PREFLIGHT.md)
    before pass selection and again before publishing. Verdicts are APPROVE,
    REQUEST_CHANGES or DEFER only; never a COMMENT review. An open change
    request does not skip the diff: review the code and DEFER
@@ -61,7 +63,7 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
     `scripts/bind-findings.py`. A `path:line` that is not in this pass's patch
     (or a carry-forward allow-path) cannot be inline. A defect this diff
     causes elsewhere carries `cause_path`/`cause_line` and lands in the
-    script's `body` bucket. Exit 3 means a blocker or major sits outside the
+    script's `body` bucket. Exit 3 means a blocker, major or medium sits outside the
     inline set: it still blocks APPROVE. Binding failure is not evidence that a
     High disappeared. A finding with no `axis` must be completed before
     publishing.
@@ -183,5 +185,5 @@ with those files:
 
 The caller runs the gate before its own APPROVE. A nonempty sensitive-path list
 does not block the caller. A caller that cannot run the gate does not approve;
-it posts REQUEST_CHANGES for a blocker/major or DEFERs. It does not
+it posts REQUEST_CHANGES for a blocker/major/medium or DEFERs. It does not
 post a Deferred comment for an access or tooling error.

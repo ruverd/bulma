@@ -4,7 +4,7 @@
 Reads the preflight cache in --dir and the review payload, then exits:
   0  post the payload as written
   1  blocked: do not APPROVE (reasons on stdout, one per line). REQUEST_CHANGES
-     for a blocker/major, DEFER for CI red or pending, otherwise fix the payload
+     for a blocker/major/medium, DEFER for CI red or pending, otherwise fix the payload
   4  another reviewer's concern is open (change request or unresolved thread):
      DEFER reason=review_pending, never APPROVE and never a COMMENT review
   5  CI or evidence unreadable: DEFER reason=ci_unknown, never a COMMENT review
@@ -282,8 +282,8 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     )
     if not rows.get("Review context", "").lower().startswith("clear"):
         reasons.append("Review context row is not clear")
-    if mark.get("blockers") != "0" or mark.get("majors") != "0" or mark.get("open") != "-":
-        reasons.append("marker still lists blockers, majors or open findings")
+    if mark.get("blockers") != "0" or mark.get("majors") != "0" or mark.get("mediums", "0") != "0" or mark.get("open") != "-":
+        reasons.append("marker still lists blockers, majors, mediums or open findings")
     if mark.get("risk") == "high" and mark.get("critic") != "ran":
         reasons.append(f"risk=high but critic={mark.get('critic', 'missing')}")
     if needs_deep(data["reviews"], data["comments"], args.me) and mark.get("pass") != "deep":
@@ -294,7 +294,7 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
     else:
         for bucket in ("kept", "body", "dropped"):
             for finding in ledger.get(bucket) or []:
-                if finding.get("severity") not in ("blocker", "major"):
+                if finding.get("severity") not in ("blocker", "major", "medium"):
                     continue
                 if bucket == "dropped" and finding.get("pre_existing") is True:
                     continue

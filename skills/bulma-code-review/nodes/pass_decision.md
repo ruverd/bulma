@@ -9,7 +9,7 @@ from its cached reviews/comments. Filter by `$ME` only for this ledger, never
 for room evidence. Take our artifact with the latest timestamp. Parse its marker:
 
 ```
-<!-- bulma-review: v=1 pass=deep|light|none sha=<sha> blockers=<n> majors=<n> reason=<slug>
+<!-- bulma-review: v=1 pass=deep|light|none sha=<sha> blockers=<n> majors=<n> mediums=<n> reason=<slug>
      open=<path>:<line>:<slug>|<path>:<line>:<slug> risk=low|high critic=skip|ran|failed
      round=<n> first=<sha> preflight=1 -->
 ```
@@ -27,11 +27,13 @@ is no COMMENT review verdict; older COMMENT markers are read as withdrawn.
 `pass=none` means the run stopped at a §3 gate and **read no code**. Any decision
 below that leads to APPROVE must check for a `pass=deep|light` marker first.
 
-`open=` lists every **blocker and major** published by that run, max 10, `-` when
+`open=` lists every **blocker, major and medium** published by that run, max 10, `-` when
 none. Nits never enter the ledger — they are said once and never carried. It is the
 carry-forward ledger (§4.2): a light pass must re-verify each entry, because the
 incremental diff alone cannot prove a prior finding was addressed. Slugs are short
-kebab-case labels of the finding title.
+kebab-case labels of the finding title. Acceptance mediums use
+`acceptance:<criterion-slug>` instead of a code location. Older markers without
+`mediums=` mean zero mediums; all new markers include the count.
 
 A review without a marker (older tooling, manual review) still counts: use its
 `commit_id` as `sha` and its `state` as the verdict.
@@ -42,8 +44,9 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 | Last artifact | Decision |
 |---|---|
 | none | **deep** |
+| `open=` contains an acceptance key | recheck PR evidence and waivers even on an unchanged SHA before skip; changed evidence needs a fresh verdict, APPROVE after our change request still requires deep |
 | `sha == headRefOid`, state APPROVED or CHANGES_REQUESTED | **skip** — post nothing, report in chat |
-| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*` or `review_pending`, that gate now clear (CI green or `out_of_scope`; the change request approved or dismissed), `blockers=0 majors=0` | **promote** — §8.1, no diff re-read |
+| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*` or `review_pending`, that gate now clear (CI green or `out_of_scope`; the change request approved or dismissed), `blockers=0 majors=0 mediums=0` | **promote** — §8.1, no diff re-read |
 | `sha == headRefOid`, COMMENTED (any reason, older runs) | **deep** — a COMMENT is not a verdict. Post one |
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
@@ -69,7 +72,7 @@ Dismiss it only after REQUEST_CHANGES for a code defect on the new head
 
 Skip output is chat-only: state the reason and the SHA. Do not touch the PR.
 If another reviewer has an open change request, do not skip. Review the code:
-REQUEST_CHANGES for a blocker or major, otherwise DEFER `reason=review_pending`.
+REQUEST_CHANGES for a blocker, major or medium, otherwise DEFER `reason=review_pending`.
 A dismissed change request is not open. Reevaluate
 `review_context`, `review_context_unknown`, and `head_changed` deferrals on
 every run. A prior `reason=human_signoff` is withdrawn: do not skip on it.
@@ -98,7 +101,7 @@ content. Then:
 - Prior APPROVE with a clean ledger → APPROVE, first line "Rebase only, same
   change as <sha7>." Prior REQUEST_CHANGES → the carried findings decide, and
   invariant 19 still applies.
-- Marker `pass=light reason=rebase`, `blockers`/`majors`/`open` from the
+- Marker `pass=light reason=rebase`, `blockers`/`majors`/`mediums`/`open` from the
   re-verified ledger.
 
 Different ids, a missing prior SHA, or a failed command → **light** or
@@ -117,6 +120,7 @@ REQUEST_CHANGES on the PR (`round >= 3`):
   in `first..headRefOid` is a blocker or it is silent. Majors there go to the
   Nits block once, prefixed "Missed in my earlier passes". The author
   already had them in front of me.
+- Required acceptance evidence remains mandatory across rounds; code-line convergence does not downgrade its medium finding.
 - Blockers, carried findings and anything in lines changed since `first`
   keep their severity. Convergence never hides a proven defect.
 - The body adds one paragraph under the summary: this is my `<n>`th change

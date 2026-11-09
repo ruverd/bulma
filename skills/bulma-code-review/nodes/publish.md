@@ -60,7 +60,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 ```markdown
 ## ❌ Changes requested: <repo>#<pr>
 
-1 blocker and 2 majors. The seat picker has an unchecked seat cap and a retry-state defect.
+1 blocker, 2 majors and 1 medium. The seat picker has an unchecked seat cap and a retry-state defect.
 
 | | |
 |---|---|
@@ -71,7 +71,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or not verified (tooling) |
 | Review context | clear, or linked open concerns |
 | Coverage | 12 of 12 changed files |
-| Findings | 1 blocker · 2 majors |
+| Findings | 1 blocker · 2 majors · 1 medium |
 | Acceptance | 1 done · 1 missing |
 | Review focus | `src/x.ts:30-60` seat cap rules; the rest is mechanical |
 
@@ -81,6 +81,9 @@ Markdown table delimiters or line breaks in the value before rendering it.
 ### ⚠️ Majors
 1. `src/y.ts:10`. Empty list has no test. Add one that asserts the empty state.
 2. `src/a.ts:42`. Seat cap is not checked again before the write. Validate there. _(still open from 9b2f1ac)_
+
+### ⚠️ Mediums
+1. [Acceptance criterion](https://example.com/ticket). Required mutation-red results are absent from the PR body and replies. Add the three failing test names and results, or an accepted waiver.
 
 ### 🔎 Not verified
 - api-v2's response to a duplicate submit was not readable from here. I assumed a 409; without it this path double-writes.
@@ -110,12 +113,12 @@ Markdown table delimiters or line breaks in the value before rendering it.
 - Perf. No render, query or effect change in the diff.
 </details>
 
-<!-- bulma-review: v=1 pass=deep sha=<full reviewed_sha> blockers=1 majors=2 reason=-
-     open=src/x.ts:42:unreset-retry-count|src/y.ts:10:missing-empty-list-test|src/a.ts:42:seat-cap-not-rechecked
+<!-- bulma-review: v=1 pass=deep sha=<full reviewed_sha> blockers=1 majors=2 mediums=1 reason=-
+     open=acceptance:mutation-red-results|src/x.ts:42:unreset-retry-count|src/y.ts:10:missing-empty-list-test|src/a.ts:42:seat-cap-not-rechecked
      risk=low critic=skip round=1 first=<full reviewed_sha> preflight=1 -->
 ```
 
-The line under the header starts with the count: "1 blocker and 2 majors.",
+The line under the header starts with the count: "1 blocker, 2 majors and 1 medium.",
 "Nothing to fix." on a clean APPROVE, or the DEFER reason. Then one sentence
 on what the findings have in common. A reader who stops after that line knows
 whether there is work to do.
@@ -137,7 +140,8 @@ and `Coverage` are required on every review body, compact or
 not; `gate.py` rejects a body without them or with empty attribution. There is no Human sign-off row. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
 Acceptance when `AC.md` is `none`. Inline findings still appear in the body
-list so the summary stands alone. Do not print `axis` labels on the PR; the
+list so the summary stands alone. Acceptance findings use the linked criterion
+and evidence instead of a code location. Do not print `axis` labels on the PR; the
 Acceptance table is the spec report, and a standards finding already quotes
 the rule.
 
@@ -152,7 +156,7 @@ happens and what to change. No `Trigger:` / `Fix:` labels on the PR.
 On first render `user.email` is still undefined, and this calls `send` anyway. Guard before the call.
 ```
 
-`⚠️ **Major.**` for majors. No praise. No questions. No list of other ways to
+`⚠️ **Major.**` for majors; `⚠️ **Medium.**` for mediums. Acceptance findings belong in the body, with the criterion source and missing evidence instead of a fake code line. Include their stable `acceptance:<criterion-slug>` key in marker `open=`. No praise. No questions. No list of other ways to
 fix it.
 
 A finding with `instances` names the pattern and ends with "Same in" plus the

@@ -66,6 +66,7 @@ can publish. Reads here are **outside** the light file cap, bounded by the
 
 | Entry | Action |
 |---|---|
+| `acceptance:<criterion-slug>` | recheck the linked criterion and current PR evidence; close only when results exist or an explicit accepted waiver is recorded |
 | its file appears in the incremental diff | re-verify against the new code |
 | its file is untouched | `Read` that file at the head SHA and re-verify |
 | still reproduces | re-publish it, same severity, suffixed `carried from <sha7>` |
@@ -73,7 +74,8 @@ can publish. Reads here are **outside** the light file cap, bounded by the
 | its file was deleted, or the code it pointed at is gone | drop it in silence |
 
 An author reply, a comment, or a pushed commit is **not** evidence that a carried
-finding was fixed. Only the code at the head SHA is. A run that cannot re-verify
+finding was fixed. Only the code at the head SHA is, except acceptance findings,
+which require the specified results or an explicit accepted waiver. A run that cannot re-verify
 an entry (file unreadable, cap exhausted) treats it as unresolved and keeps it.
 
 A reply that disputes the finding is different from a reply that claims a fix.

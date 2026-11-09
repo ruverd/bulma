@@ -79,7 +79,13 @@ class BatchTest(unittest.TestCase):
             if index == 1:
                 rows = rows[:-1]
             (folder / 'coverage.json').write_text(json.dumps(rows))
-            found = [{'path': batch['files'][0], 'line': 2, 'severity': 'nit', 'class': 'naming'}]
+            found = [{'path': batch['files'][0], 'line': 2, 'severity': 'nit', 'class': 'naming'},
+                     {'severity': 'nit', 'title': 'Validation evidence'}]
+            if index == 0:
+                found.append({'severity': 'medium', 'title': 'Validation evidence',
+                              'kind': 'acceptance', 'axis': 'spec',
+                              'criterion': 'Record mutation-red results',
+                              'evidence_url': 'https://example.com/ticket/123'})
             if index == 0:
                 found.append({'path': batch['files'][0], 'line': 2, 'severity': 'blocker', 'class': 'naming'})
             (folder / 'findings.json').write_text(json.dumps(found))
@@ -88,7 +94,10 @@ class BatchTest(unittest.TestCase):
         self.assertEqual(summary['uncovered'], [batches[1]['files'][-1]])
         merged = json.loads((self.root / 'findings.json').read_text())
         self.assertEqual(merged[0]['severity'], 'blocker')
-        self.assertEqual(len(merged), len(batches))
+        self.assertEqual(len(merged), len(batches) + 1)
+        self.assertEqual(merged[1]['severity'], 'medium')
+        self.assertEqual(merged[1]['criterion'], 'Record mutation-red results')
+        self.assertEqual(summary['findings']['medium'], 1)
         folder = self.root / batches[1]['dir']
         (folder / 'coverage.json').write_text(json.dumps([{'path': p} for p in batches[1]['files']]))
         summary, complete = m.merge(self.root)

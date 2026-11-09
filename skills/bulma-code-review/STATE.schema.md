@@ -28,6 +28,7 @@ init | waiting_ci | reviewing | published | deferred | done
 | `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; preserve paired role attribution across contributing sessions |
 | `ci` | pending \| green \| red \| unknown \| unverified |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
+| `mediums` | surviving medium findings, including unmet mandatory acceptance evidence; included in marker counts and carry-forward |
 | `verdict` | APPROVE \| REQUEST_CHANGES \| DEFER. Never COMMENT |
 | `defer_reason` | set whenever `verdict=DEFER` (`ci_red`, `ci_unknown`, `draft`, `conflict`, `review_pending`, `review_context_unknown` only) |
 | `gate` | last `gate.py` result: pass \| blocked \| review_pending \| ci_unknown, with its reasons |
@@ -56,7 +57,7 @@ skip | ran | failed
 ## Rules
 
 - One artifact per PR per pass. Re-running with an unchanged SHA and unchanged
-  evidence does not duplicate an artifact. New concerns, a legacy marker needing
+  evidence does not duplicate an artifact. New concerns, changed acceptance evidence or an accepted waiver, a legacy marker needing
   revalidation, or a valid CI promotion can require a new verdict on that SHA.
 - `waiting_ci` never posts to the PR. It retains analysis, then revalidates on green.
 - A DEFER is recorded with its reason. It is not an APPROVE with caveats.
