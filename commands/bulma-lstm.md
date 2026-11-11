@@ -17,4 +17,6 @@ Patch via `bulma-fd-coder` + TDD. Grill only if the fix is complicated.
 ASK last resort (same rule as `/bulma-developer`).
 Every GitHub reply runs bundled `kevin` first. Never POST the
 first draft. Every analyzed comment gets 👍 + a thread reply.
-Then dismiss `CHANGES_REQUESTED`. Re-request if a fix landed.
+After proof passes on the live PR head, complete the reply node's dismissal
+and re-review steps. Confirm each fully addressed review by its exact GitHub
+review ID.

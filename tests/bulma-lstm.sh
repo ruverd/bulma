@@ -60,6 +60,9 @@ ok prove-before-reply
 
 has 'Never dismiss an APPROVED review' "$LSTM/nodes/reply.md"
 has 'whose entire feedback' "$LSTM/nodes/reply.md"
+has 'proof_sha' "$LSTM/nodes/prove.md"
+has 'addressed_review_ids' "$LSTM/nodes/prove.md"
+has 'review-actions.py --dismiss' "$LSTM/nodes/reply.md"
 has 'requested_reviewers' "$LSTM/references/GITHUB.md"
 has '/dismissals' "$LSTM/references/GITHUB.md"
 has 'Skip-only runs' "$LSTM/nodes/reply.md"

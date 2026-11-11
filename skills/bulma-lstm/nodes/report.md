@@ -18,7 +18,8 @@ Do not paste GitHub reply bodies.
 | Sign-off | not requested \| pending \| evidence ready, human approval pending |
 | QA evidence | tested SHA + attached QA comment URL, or blocker |
 | Ack | 👍 + reply on comment ids … (none missing) |
-| Dismissed | fully addressed review ids … \| none |
+| Dismissed | confirmed review ids … \| none |
+| Changes requested | current PR reviewDecision; still-active review ids in scope and why |
 | Summary | COMMENT URL |
 | Pending actions | reviewer requests / API failures … \| none |
 | Resolved | N threads |

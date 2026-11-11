@@ -7,9 +7,10 @@ One home for fetch / 👍 / reply / kevin / resolve / re-request.
 ```bash
 gh pr view "$PR" --repo "$REPO" --json number,url,isDraft,state,mergeable,mergeStateStatus,headRefOid,baseRefName,headRefName,reviewDecision,statusCheckRollup
 
-gh api "repos/$REPO/pulls/$PR/reviews" --paginate
-gh api "repos/$REPO/pulls/$PR/comments" --paginate
-gh api "repos/$REPO/issues/$PR/comments" --paginate
+gh api "repos/$REPO/pulls/$PR/reviews" --paginate --slurp
+gh api "repos/$REPO/pulls/$PR/comments" --paginate --slurp
+gh api "repos/$REPO/issues/$PR/comments" --paginate --slurp
+gh api "repos/$REPO/pulls/$PR/requested_reviewers" --jq '.users | map(.login)'
 ```
 
 URL fragments: `#pullrequestreview-<id>` · `#discussion_r<id>` ·
@@ -110,39 +111,54 @@ paginated reviews, the live head, requested reviewers and prove output:
 }
 ```
 
-`reviews` is the flattened REST list, including id, state, user.login and
-submitted_at. `code_changed` compares the run's starting code/tree with its
-pushed final tree, not merely two commit SHAs. `addressed_review_ids` includes
-only reviews whose complete body and inline findings have final proof. A scoped
-comment URL does not establish that its parent review is fully addressed.
+Flatten the REST pages into one review list, including `id`, `state`, `user.login`
+and `submitted_at`. Use REST `id` / GraphQL `databaseId` for the review ID.
+Join inline findings via `pull_request_review_id`. For a scoped run, fetch the
+whole review body and the paginated review comments at
+`repos/$REPO/pulls/$PR/reviews/$REVIEW_ID/comments` before deciding coverage.
+Keep issue comments separate unless they document an outstanding request
+from that review. PR-level `reviewDecision` is for re-request policy and
+reporting. It does not identify which review is eligible for dismissal.
+
+Populate `proof_sha`, `code_changed` and `addressed_review_ids` from the
+recorded prove output. Set `proof_pass` true only when spec, quality and
+tester all passed at `proof_sha`. Use the live PR for `head`, `pr_state`
+and `review_decision`. Keep `original_reviewers` for re-requests and use
+`requested_reviewers` for live pending user requests.
+
+Run these commands from the LSTM skill directory or use the installed skill's
+absolute script path. Set `ACTION_STATE` to the path of `review-actions.json`.
 
 ```bash
-python3 scripts/review-actions.py "$BULMA_ROOT/.bulma-lstm/review-actions.json"
+python3 scripts/review-actions.py "$ACTION_STATE"
 ```
-
-This prints a plan, not an authorization to use stale evidence. Re-fetch HEAD
-and each target review before a mutation; head drift returns to verify/prove.
-Permission denial stays pending. Never change branch protection to make it work.
 
 ## Dismiss a fully addressed change request
 
-After replies, summary and resolved fixed conversations, dismiss each planned
-active CHANGES_REQUESTED review with a message citing fix SHA and proof:
+After replies, summary and resolved fixed conversations, execute each ID
+from the plan's `dismiss` list. Set `DISMISS_REASON` to a message citing the
+fix SHA, proof and summary URL.
 
 ```bash
-gh api -X PUT "repos/$REPO/pulls/$PR/reviews/$REVIEW_ID/dismissals"   -f message="$DISMISS_REASON"
+python3 scripts/review-actions.py "$ACTION_STATE" --dismiss "$REVIEW_ID" \
+  --repo "$REPO" --pr "$PR" --message "$DISMISS_REASON"
 ```
 
-Store confirmed DISMISSED review IDs. Never dismiss APPROVED reviews or unresolved
-feedback. A dismissal is administrative cleanup, not the original reviewer's
-approval. The review engine still requires that reviewer to clear their concern.
+The command refreshes the paginated reviews and live head before any PUT to
+`/dismissals`. It checks the exact ID and `DISMISSED` state in the response and
+reads the same review back. Store only confirmed IDs. On resume or ambiguous
+failure, read back the exact ID before retrying. Record nonzero exit status
+and stderr in pending actions. Return to verify/prove on head drift. Leave
+permission denials pending and report them without changing branch protection.
+Other reviewers can still keep the PR in `CHANGES_REQUESTED`.
 
 ## Re-request after changes, unless approved
 
 Refresh reviews and `reviewDecision` after dismissal. Recompute the action plan.
 Only request when code changed, prove passed, neither the original reviewer's
 latest decisive state nor overall reviewDecision is APPROVED, and no request is
-already pending. On resume also check the reviewer+SHA request ledger.
+already pending. Recheck the live PR head before each request. On resume also
+check the reviewer+SHA request ledger.
 
 ```bash
 gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers"   -f "reviewers[]=$LOGIN"

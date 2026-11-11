@@ -7,7 +7,11 @@ Load skill **`receiving-code-review`**. Verify before implementing.
 Do not implement in this node.
 
 Fetch reviews + inline comments + issue comments
-([GITHUB.md](../references/GITHUB.md)).
+([GITHUB.md](../references/GITHUB.md)). Preserve the REST review ID for every
+review body and `pull_request_review_id` for each inline finding. For a review
+or discussion URL, scope replies as requested but fetch the full parent review
+and its paginated comments for dismissal eligibility. Acknowledged comments
+may reuse evidence only if it still proves their findings on the final head.
 
 Skip a comment only if STATE `processed_comment_ids` already has 👍
 **and** a reply on that comment. A review in `processed_review_ids`
