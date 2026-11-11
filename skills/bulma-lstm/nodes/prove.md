@@ -51,10 +51,20 @@ before pass. UI + `risk=elevated` on a fix row: After of that route.
 spec_verdict: pending | pass | fail
 quality_verdict: pending | pass | fail
 tester: pending | pass | fail
-sha: <head>
+proof_sha: <full live PR head SHA checked by all three gates>
+code_changed: <true if feedback fixes changed the pre_patch_tree>
 ```
 
 Pass only when every fix slice has both verdicts pass and tester pass.
+Confirm the tested SHA matches the live PR head. Record `proof_sha` separately
+from mutable STATE `sha`, and compare its tree to `pre_patch_tree`.
+Record a coverage entry for each processed `CHANGES_REQUESTED` review by REST
+ID. Cite the final proof for every body finding and inline thread, or record
+the exact unresolved or unverified items. Only complete entries with a proved
+fix and no outstanding concern go into `addressed_review_ids`. A reply, a
+reaction or a resolved thread alone does not prove a finding. An explicit
+human approval request remains outstanding until the human clears it.
+
 Then **request_qa** when `signoff_required=yes`; otherwise **reply**.
 
 ## Final group proof

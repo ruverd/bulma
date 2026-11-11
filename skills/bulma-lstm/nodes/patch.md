@@ -25,6 +25,9 @@ the trigger and the fix, a neighbor pattern exists.
 
 Grill ASK → `waiting_user`, stop. Resume continues here.
 
+Record `pre_patch_tree` before the first feedback-driven edit, after any
+initial conflict rebase. Keep that baseline across fix groups and retries.
+
 ## Coder
 
 Follow [implement.md](../../bulma-feature-delivery/nodes/implement.md) +

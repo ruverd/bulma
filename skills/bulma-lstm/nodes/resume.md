@@ -6,7 +6,11 @@ Load `.bulma-lstm/STATE.md`. Reconcile `pr_url` / `sha` with `gh pr view`.
 If `waiting_user`, the current message is the answer. Then jump to
 `status` (verifying / patching / replying / rebasing). Do not re-ack
 comment ids already in `processed_comment_ids`. Missing acks →
-**reply**, even if the parent review id is listed.
+**reply**, even if the parent review id is listed. Reconcile pending
+dismissals by exact REST review ID before rebuilding the action plan. Reuse
+proof only on the same live head. If an older run lacks the baseline or final
+proof, recover it from that run's recorded commits and evidence or report the
+missing guard. Never infer proof from reactions or a reply.
 
 For `status=qa_requested`, load [request_qa.md](request_qa.md). Reconcile the
 parked request/queue or apply the matching `QA_RESULT`; never enqueue a duplicate

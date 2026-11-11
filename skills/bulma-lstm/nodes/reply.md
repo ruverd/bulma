@@ -16,8 +16,9 @@ or verify finishes a skip-only run. Never dismiss a failed or unresolved fix.
    after its reply. Skip/disputed or unresolved comments stay open.
 4. When code changed and prove passed, dismiss active `CHANGES_REQUESTED` reviews
    whose entire feedback, including body findings, is proved addressed. Include
-   fix SHA, evidence and summary URL in the dismissal reason. Re-fetch the exact
-   review and live head before dismissal. Never dismiss an APPROVED review,
+   fix SHA, evidence and summary URL in the dismissal reason. Run the planner
+   and execute every eligible ID with `review-actions.py --dismiss` as shown
+   in [GITHUB.md](../references/GITHUB.md). Never dismiss an APPROVED review,
    another unresolved concern, or a request just to unblock merge.
 5. Refresh review state. Re-request each original reviewer only when code changed
    and their latest decisive status is not `APPROVED`, overall review decision is
@@ -28,10 +29,12 @@ or verify finishes a skip-only run. Never dismiss a failed or unresolved fix.
    and appear in report. Continue independent replies; never claim completion of
    a rejected mutation. New head during mutations returns to verify/prove.
 
-Use `scripts/review-actions.py` with freshly collected state as the deterministic
-planner for steps 4–5. Its input and API operations are in GITHUB.md. Recompute
-after dismissal rather than replaying an old plan. Dismissal is not approval;
-reviewer gates still require the original reviewer to clear their concern.
+Run the planner even when every comment was already acknowledged and this run
+has pending proved review actions. Report the exact ID and error for any
+unconfirmed dismissal. If a processed change request remains active and
+wasn't eligible, report its missing coverage or failed guard. Refresh the PR's
+`reviewDecision` and reviews before planning re-requests. Dismissal does not
+grant reviewer approval.
 
 Skip-only runs still reply and comment, but never dismiss or re-request. A new
 comment ID needs its own reply even if it repeats an old finding. `done` requires

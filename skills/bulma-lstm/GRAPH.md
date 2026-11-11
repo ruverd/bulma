@@ -48,7 +48,8 @@ start (ARGS.md: URL | resume | LSTM_REQUEST)
 | request_qa | BLOCKED / PENDING_TRIAGE / incomplete evidence / provider external / stack refused | report blocker, keep sign-off pending; **escalate** when no independent work remains |
 | prove | either fail + loops left | **patch** |
 | prove | either fail + loops exhausted | **escalate** |
-| reply | always | **learn** |
+| reply | proof head drifted | **verify** and renew proof before review mutations |
+| reply | applicable actions confirmed or recorded as pending | **learn** |
 | learn | assessed or feedback pending | **report** |
 | report | stacked | `LSTM_RESULT` + pop |
 | report | invoked alone | chat report only |

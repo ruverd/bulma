@@ -18,6 +18,11 @@ init | resolving | rebasing | verifying | grilling | patching | proving | qa_req
 | `sha` | head oid |
 | `mergeable` | MERGEABLE / CONFLICTING / DIRTY / … |
 | `ci` | green / red / pending / unknown |
+| `pre_patch_tree` | tree before the first feedback fix, captured after any initial conflict rebase |
+| `proof_sha` | full live PR head at which all prove gates passed |
+| `code_changed` | whether the proved tree differs from the feedback patch baseline |
+| `addressed_review_ids` | REST IDs with complete final proof of body and inline findings |
+| `review_coverage` | per-review evidence and any remaining concerns, inline or in a file beside STATE |
 | `dismissed_review_ids` | confirmed dismissals of fully proved change requests |
 | `summary_url` | idempotent COMMENT summary for final SHA and analyzed IDs |
 | `re_requested` | confirmed reviewer + fix SHA pairs |
