@@ -21,7 +21,8 @@ If the SHA changed, recapture After and `gh pr edit --body` so the
 Before → After section matches HEAD.
 [evidence.md](../../bulma-feature-delivery/nodes/evidence.md).
 
-Before completing the PR update, refresh and read back its `## Agent run`
-section per [PR run attribution](../../bulma-host/PR_ATTRIBUTION.md).
-Include the fix workers' actual model/effort pairs. Each affected stacked child
-needs its own section, even when the parent already has one.
+Before completing the PR update, apply and read back
+[PR run attribution](../../bulma-host/PR_ATTRIBUTION.md). Include only known
+fix worker model identities with their roles; never publish effort or unknown
+placeholders. Omit `## Agent run` when no contributor model is known. Apply the
+same rule independently to each affected stacked child.

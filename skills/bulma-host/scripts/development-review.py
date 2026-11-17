@@ -32,7 +32,7 @@ def timestamp():
 
 def git(repo, *args):
     return subprocess.check_output(['git', '-C', str(repo), *args], text=True,
-                                   stderr=subprocess.PIPE, timeout=15).strip()
+                                   stderr=subprocess.PIPE, timeout=15).rstrip('\n')
 
 
 def paths(repo, home):
@@ -128,8 +128,19 @@ def call(argv, payload, directory, name, timeout):
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            proc.wait()
-        if out.stat().st_size > LIMIT or err.stat().st_size > LIMIT:
+            except PermissionError:
+                # A reaped process may no longer own this group on macOS.
+                if proc.poll() is None:
+                    reason = 'cleanup_failed'
+                    try:
+                        proc.kill()
+                    except OSError:
+                        pass
+            try:
+                proc.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                reason = 'cleanup_failed'
+        if reason != 'cleanup_failed' and (out.stat().st_size > LIMIT or err.stat().st_size > LIMIT):
             reason = 'output_limit'
         reason = reason or ('unavailable' if proc.returncode else None)
     with out.open('rb') as stream:
@@ -311,7 +322,8 @@ def operate(repo, home, request, fallback=None):
             except (ValueError, TypeError, AttributeError):
                 reason = 'invalid_discovery'
         if not candidate:
-            record.update(reason=reason or 'no_eligible_candidate', action='spawn_worker')
+            record.update(reason=reason or 'no_eligible_candidate',
+                          action='blocked' if reason == 'cleanup_failed' else 'spawn_worker')
             return save(path, record)
         record['candidate'] = candidate
         save(path, record)
@@ -322,13 +334,17 @@ def operate(repo, home, request, fallback=None):
             reason = process_reason
         record.update(findings=findings, alternative_executor=executor, failed_axes=sorted(failed))
         expected = identity(candidate.get('identity'))
-        diverse = bool(executor.get('family') and executor == expected)
+        diverse = bool(executor.get('family') and all(
+            executor.get(key) == expected.get(key) for key in ('model', 'family')))
         record['diversity_verified'] = diverse
         # Product edits or a moved HEAD invalidate completion, including otherwise clean output.
         try:
             snapshot(repo, request)
         except (ValueError, subprocess.SubprocessError):
             record.update(reason='snapshot_changed', action='blocked', diversity_verified=False)
+            return save(path, record)
+        if process_reason == 'cleanup_failed':
+            record.update(reason=process_reason, action='blocked', diversity_verified=False)
             return save(path, record)
         if failed:
             record.update(mode='alternative', executor=executor, reason=reason or process_reason or

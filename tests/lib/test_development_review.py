@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +28,8 @@ else:
     for event in cfg['events']:
         print(json.dumps(event), flush=True)
     if cfg.get('malformed'): print('not json', flush=True)
+    if cfg.get('mutate'): (Path(p['repo']) / 'product').write_text('changed by adapter')
+    if cfg.get('overflow'): print('x' * cfg['overflow'], flush=True)
     time.sleep(cfg.get('sleep', 0))
     sys.exit(cfg.get('exit', 0))
 '''
@@ -63,7 +66,7 @@ class ReviewTest(unittest.TestCase):
                      'events': [{'type': 'identity', 'identity': IDENTITY}, self.result()]}
         self.config.write_text(json.dumps({'version': 1,
             'adapter': [sys.executable, str(self.adapter), str(self.control), str(self.calls)],
-            'candidates': ['other'], 'timeout_seconds': 0.2, 'discovery_timeout_seconds': 1,
+            'candidates': ['other'], 'timeout_seconds': 1, 'discovery_timeout_seconds': 2,
             'read_only': True}))
 
     def git(self, *args):
@@ -205,6 +208,144 @@ class ReviewTest(unittest.TestCase):
         with self.assertRaises(ValueError): self.run_review()
         (self.repo / 'product').write_text('dirty\n')
         with self.assertRaises(ValueError): self.run_review()
+
+    def test_discovery_and_execution_may_have_different_metadata_sources(self):
+        self.configure()
+        self.data['events'][0]['identity'] = dict(IDENTITY, source='system')
+        result = self.run_review()
+        self.assertEqual(result['action'], 'complete')
+        self.assertTrue(result['diversity_verified'])
+        self.assertEqual(result['executor']['source'], 'system')
+
+    def test_no_config_preserves_dirty_workflow(self):
+        (self.repo / 'product').write_text('uncommitted')
+        self.assertEqual(self.run_review()['mode'], 'default')
+
+    def test_candidate_order_and_single_attempt_with_multiple_candidates(self):
+        self.configure()
+        cfg = json.loads(self.config.read_text())
+        cfg['candidates'] = ['first', 'other']
+        self.config.write_text(json.dumps(cfg))
+        self.data['candidates'].append(dict(id='first', identity=IDENTITY))
+        self.data['events'] = [{'type': 'error', 'reason': 'auth'}]
+        self.data['exit'] = 1
+        result = self.run_review()
+        self.assertEqual(result['candidate']['id'], 'first')
+        self.assertEqual(result['reason'], 'auth')
+        calls = [json.loads(s) for s in self.calls.read_text().splitlines()]
+        self.assertEqual([c.get('candidate') for c in calls if c['operation'] == 'review'], ['first'])
+        self.request['round_id'] += 'x'
+        self.data['candidates'][-1]['access'] = {'available': False, 'checked_at': m.timestamp()}
+        self.assertEqual(self.run_review()['candidate']['id'], 'other')
+
+    def test_unknown_or_future_quota_does_not_fabricate_unavailability(self):
+        self.configure()
+        for checked_at in (None, 'bad', '2999-01-01T00:00:00+00:00', '2026-11-17T00:00:00'):
+            self.request['round_id'] += 'x'
+            self.data['candidates'][0]['quota'] = {'available': False, 'checked_at': checked_at}
+            self.assertEqual(self.run_review()['action'], 'complete')
+
+    def test_interrupted_round_keeps_partial_findings_without_retry(self):
+        self.configure()
+        self.data['events'] = [{'type': 'finding', 'finding': FINDING}]
+        result = self.run_review()
+        receipt = Path(result['receipt'])
+        result['action'] = 'running'
+        receipt.write_text(json.dumps(result))
+        count = len(self.calls.read_text().splitlines())
+        result = self.run_review()
+        self.assertEqual(result['reason'], 'interrupted')
+        self.assertEqual(result['findings'], [FINDING])
+        self.assertEqual(len(self.calls.read_text().splitlines()), count)
+        (self.home / 'memory.md').write_text('## Preferences\n- development_review: off\n')
+        self.assertEqual(self.run_review(), result)
+        final = m.finish(self.repo, self.home, self.request, self.result(identity={}))
+        self.assertEqual(final['quality_verdict'], 'fail')
+        self.assertFalse(final['diversity_verified'])
+
+    def test_invalid_fallback_cannot_complete(self):
+        self.configure()
+        self.data['events'] = [{'type': 'error', 'reason': 'quota'}]
+        self.run_review()
+        for result in (dict(self.result(), head='wrong'), dict(self.result(), spec_verdict='approved'),
+                       self.result(findings=['bad'])):
+            with self.assertRaises(ValueError):
+                m.finish(self.repo, self.home, self.request, result)
+
+    def test_findings_in_malformed_result_are_not_silently_dropped(self):
+        self.configure()
+        self.data['events'][-1]['findings'] = [FINDING]
+        result = self.run_review()
+        self.assertEqual(result['action'], 'spawn_worker')
+        self.assertEqual(result['findings'], [FINDING])
+        final = m.finish(self.repo, self.home, self.request, self.result())
+        self.assertEqual(final['quality_verdict'], 'fail')
+
+    def test_adapter_mutation_blocks_review(self):
+        self.configure()
+        self.data['mutate'] = True
+        result = self.run_review()
+        self.assertEqual(result['action'], 'blocked')
+        self.assertEqual(result['reason'], 'snapshot_changed')
+
+    def test_output_limit_and_discovery_commands_are_data(self):
+        self.configure()
+        self.data['candidates'][0]['adapter'] = ['/not/authorized']
+        self.data['overflow'] = 64 * 1024
+        original = m.LIMIT
+        try:
+            m.LIMIT = 16 * 1024
+            result = self.run_review()
+        finally:
+            m.LIMIT = original
+        self.assertEqual(result['action'], 'spawn_worker')
+        self.assertEqual(result['reason'], 'output_limit')
+        self.assertEqual(len(self.calls.read_text().splitlines()), 2)
+
+    def test_config_in_git_is_rejected(self):
+        self.configure()
+        path = self.repo / 'local-config.json'
+        path.write_text(self.config.read_text())
+        self.git('add', '.')
+        self.git('commit', '-qm', 'config')
+        self.request['head'] = self.git('rev-parse', 'HEAD')
+        (self.home / 'memory.md').write_text('## Preferences\n- development_review: ' + str(path) + '\n')
+        result = self.run_review()
+        self.assertEqual(result['reason'], 'invalid_config')
+        self.assertFalse(self.calls.exists())
+
+    def test_context_prompt_text_never_runs_as_shell(self):
+        self.configure()
+        marker = self.root / 'should-not-exist'
+        self.request['task'] += ' $(touch ' + str(marker) + ') `exit 1`'
+        result = self.run_review()
+        self.assertEqual(result['action'], 'complete')
+        self.assertFalse(marker.exists())
+
+    def test_process_cleanup_failure_blocks_instead_of_spawning_another_worker(self):
+        directory = self.root / 'cleanup'
+        directory.mkdir()
+        with patch.object(m.os, 'killpg', side_effect=PermissionError):
+            _, reason = m.call([sys.executable, '-c', 'import time; time.sleep(5)'],
+                               {}, directory, 'test', 0.05)
+        self.assertEqual(reason, 'cleanup_failed')
+        self.configure()
+        discovery = json.dumps({'candidates': self.data['candidates']})
+        with patch.object(m, 'call', side_effect=[(discovery, None), ('', reason)]):
+            self.assertEqual(self.run_review()['action'], 'blocked')
+
+    def test_cli_round_and_graph_limits(self):
+        self.configure()
+        self.control.write_text(json.dumps(self.data))
+        path = self.root / 'request.json'
+        path.write_text(json.dumps(self.request))
+        output = subprocess.check_output([sys.executable, str(ROOT / 'skills/bulma-host/scripts/development-review.py'),
+            '--repo', str(self.repo), '--home', str(self.home), '--request', str(path)], text=True)
+        self.assertEqual(json.loads(output)['action'], 'complete')
+        graph = (ROOT / 'skills/bulma-feature-delivery/GRAPH.md').read_text()
+        self.assertIn('review_fix_loops: 2', graph)
+        self.assertIn('plan_critic_loops: 1', graph)
+        self.assertIn('| review | spec_verdict=pass and quality_verdict=pass | **tester** |', graph)
 
 
 if __name__ == '__main__':

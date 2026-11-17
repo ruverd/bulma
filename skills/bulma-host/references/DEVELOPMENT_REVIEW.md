@@ -173,4 +173,5 @@ On operational failure emit `{"type":"error","reason":"auth"}` (also `quota`,
 fallback. Malformed/missing/duplicate results, wrong SHA, missing identity,
 identity drift, process failure, timeout and output overflow cannot pass.
 A well-formed negative result stays negative even alongside malformed output.
-A product/worktree mutation blocks the round; do not silently fallback over it.
+A product/worktree mutation or inability to terminate a live executor
+(`cleanup_failed`) blocks the round; do not silently fallback over it.

@@ -51,11 +51,14 @@ class AttributionTest(unittest.TestCase):
     def test_public_templates_do_not_require_effort_or_unknown(self):
         for name in ('skills/bulma-feature-delivery/templates/PR_BODY.md',
                      'skills/bulma-code-review/nodes/publish.md',
-                     'skills/bulma-code-review/references/CHAT.md'):
+                     'skills/bulma-code-review/references/CHAT.md',
+                     'skills/bulma-developer/nodes/fix.md',
+                     'skills/bulma-lstm/nodes/patch.md'):
             text = (ROOT / name).read_text()
             self.assertNotIn('| Reasoning effort |', text)
             self.assertNotIn('- Reasoning effort:', text)
             self.assertNotIn('- Code review reasoning effort:', text)
+            self.assertNotIn('actual model/effort pairs', text)
         self.assertIn('reviewer_effort', (ROOT / 'skills/bulma-code-review/templates/STATE.md').read_text())
 
 
