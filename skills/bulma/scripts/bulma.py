@@ -1264,6 +1264,11 @@ def build_parser():
     p.add_argument("model_id", nargs="?")
     p.set_defaults(func=cmd_model)
 
+    from answer import protocol
+    p = sub.add_parser("answer", help="investigate a conversation over a host JSON-lines session")
+    p.add_argument("--memory", help="host-selected local Answer profile")
+    p.set_defaults(func=lambda args: protocol(sys.stdin, sys.stdout, args.memory))
+
     dispatch.register(sub, sys.modules[__name__])
     return parser
 
