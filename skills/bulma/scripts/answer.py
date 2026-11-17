@@ -94,7 +94,10 @@ available source via need, then reassess. Cite the specific finding and rational
 Separate verified security consequences and Bulma reviewer verdict from actual repository merge
 protection. Distinguish another reviewer's open concern from a finding you verified.
 Compare historical evidence to the relevant revision. Distinguish missing proof from a confirmed defect. State exact access limitations only when material. Never say work was performed or queued without a
-receipt. Never present review, feedback and merge as a menu. Preserve requested scope. In citations include only exact evidence URLs used for your answer."""
+receipt. Answer the latest question directly; omit unrelated PR summaries. When source search returns
+a path but the function body is needed, request code with that exact path and line as a search term.
+When an attachment could not be read, distinguish candidate matches from a verified identification.
+Never present review, feedback and merge as a menu. Preserve requested scope. In citations include only exact evidence URLs used for your answer."""
 
 
 def investigate(
@@ -222,13 +225,13 @@ def investigate(
         for pr in evidence["github"]:
             if pr["url"].split("/")[-3] not in repos:
                 continue
-            if pr["state"] != "OPEN" or pr["isDraft"] or pr["url"] not in references:
+            if pr["state"] != "OPEN" or pr["url"] not in references:
                 continue
             owned = login and pr["author"]["login"].casefold() == login.casefold()
             if plan["scope"] == "author_open" and not owned:
                 continue
             feedback = []
-            if owned and "address_feedback" in plan["actions"]:
+            if owned and not pr["isDraft"] and "address_feedback" in plan["actions"]:
                 feedback.extend(r["url"] for r in pr.get("changeRequests", []))
                 for thread_item in pr["threads"]:
                     review = thread_item.get("pullRequestReview")
