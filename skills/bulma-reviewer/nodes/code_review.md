@@ -45,6 +45,10 @@ prior review evidence at the affected head. After the verdict, assess confirmed
 gaps through [FEEDBACK.md](../../bulma-bus/FEEDBACK.md). A request for changes
 alone is not confirmation; leave unverified concerns pending. Include bot
 findings in assessments, while preserving human-only observation rules above.
+For a confirmed external defect that recurred, apply the shared
+[bad-example lookup](../../bulma-bus/FEEDBACK.md#find-existing-bad-examples)
+unless the engine already assessed that cause on this SHA. Include verified
+correction suggestions in the private report rather than posting again.
 Reuse LSTM source keys and existing tasks. Never launch LSTM, a developer or QA
 for this assessment. It cannot change or bypass the engine publication gate.
 

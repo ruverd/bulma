@@ -10,6 +10,12 @@ findings. Do not treat invocation, CHANGES_REQUESTED, or missing evidence as a
 confirmed escape. Skip-only runs record `no_action` and the reason unless a
 confirmed defect remains, such as a valid out-of-scope finding.
 
+For verified recurring defects, apply
+[Find existing bad examples](../../bulma-bus/FEEDBACK.md#find-existing-bad-examples).
+Check the current pinned source. If the same mistake remains in an example,
+save the correction suggestion and evidence in the assessment and surface it
+in the report. Keep this lookup read-only and within the learning step.
+
 Set `status=learning`. Record `feedback_status`, `feedback_paths` and
 `feedback_tasks` in STATE. Reconcile existing source/pattern records before
 writing, so resume does not create another lesson or issue. Follow the shared

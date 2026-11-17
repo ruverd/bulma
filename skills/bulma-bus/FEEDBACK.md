@@ -72,6 +72,40 @@ local, and only report CI coverage when the workflow actually runs the check.
 If useful prevention requires a broader change, record it as a follow-up
 candidate under the task criteria below.
 
+## Find existing bad examples
+
+When a confirmed code defect matches the same verified cause on another PR
+in this repository, look for existing code or examples that still demonstrate
+that mistake. Use a recorded assessment or a prevention entry with source
+evidence for the prior occurrence. Multiple comments, sibling instances or
+review rounds on one PR do not establish recurrence.
+
+Search once per cause in the pinned target worktree. Use the local Julius
+structural search after discovering its tool schema if it can scope the lookup
+and keep its cache outside the checkout. For the CLI, set `CACHE` to a
+directory in the job's scratch space outside Git. If there is no map for the
+checked head, build it once with
+`julius --dir "$CACHE" build --no-gitignore --no-ignore .`. Use
+`--only-dir <affected-directory>` when the relevant area is known. Then run
+`julius --dir "$CACHE" ask "<symbol or concrete pattern>" --no-refresh --source --limit 5 .`
+from the pinned worktree. Allow up to 10 seconds for the Julius lookup,
+including any build. Use structural analysis only. If Julius is unavailable,
+times out or misses the pattern, use one targeted source search. Inspect up
+to three candidates. Skip the lookup when the pinned source is unavailable.
+
+Treat results and learnings as leads. Read each candidate at the checked
+revision. Verify the same reachable trigger and failure against its callers
+or contract. Matching syntax, an old learning or code that handles a
+different case does not prove a bad example. Do not claim the agent copied it.
+
+If an example still exhibits the defect, suggest one concrete correction.
+Name its path and line, the wrong behavior, and the replacement pattern.
+Point to a verified good example if one exists. Record the location, checked
+SHA and evidence with the assessment or private report. If no candidate is
+confirmed, omit the suggestion. An example outside the current fix is an
+optional follow-up. Keep it out of the patch, finding ledger and approval
+criteria. Use the existing publication and task eligibility rules.
+
 ## Decide whether a task is useful
 
 Draft a task only for a confirmed, reusable gap with a concrete change to a
