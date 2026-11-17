@@ -232,6 +232,7 @@ reset_evidence() {
 EOF
   echo "{\"head\":\"$HEAD\",\"state\":\"SUCCESS\",\"error\":null}" >"$EV/rollup.json"
   echo '[[]]' >"$EV/statuses.json"
+  rm -f "$EV/review-context.json" "$EV/inline.json"
   echo '[]' >"$EV/signoff.json"
   echo '{"kept":[],"body":[],"dropped":[]}' >"$EV/bound.json"
 }
@@ -320,23 +321,114 @@ cat >"$EV/timeline.json" <<'EOF'
 EOF
 [[ "$(gate)" == 0 ]] || fail "gate: a dismissed change request is not open and must not block ($(cat "$TMP/gate.out"))"
 
-reset_evidence; write_payload APPROVE "$CLEAN"
-echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1"}]}}]}}}}}]' >"$EV/threads.json"
-{ [[ "$(gate)" == 4 ]] && grep -q 'unresolved thread: u1' "$TMP/gate.out"; } || fail "gate: unresolved thread must defer"
+write_thread() {
+  python3 - "$EV/threads.json" "$1" "${2-alice}" "${3-false}" <<'PYTEST'
+import json, sys
+path, body, login, resolved = sys.argv[1:]
+node = {"id": "T1", "isResolved": resolved == "true", "comments": {"nodes": [
+    {"url": "u1", "author": {"login": login} if login else None, "body": body}
+]}}
+json.dump([{"data": {"repository": {"pullRequest": {"reviewThreads": {"nodes": [node]}}}}}],
+          open(path, "w"))
+PYTEST
+}
+
+context() {
+  status "$TMP/context.out" python3 "$GATE" --context-only --dir "$EV" --me review-bot --head "$HEAD"
+}
+
+context_and_gate() {
+  local expected=$1 label=$2
+  [[ "$(context)" == "$expected" ]] || fail "$label: preflight ($(cat "$TMP/context.out"))"
+  [[ "$(gate)" == "$expected" ]] || fail "$label: final gate ($(cat "$TMP/gate.out"))"
+}
+
+write_assessment() {
+  python3 - "$TMP/context.out" "$EV/review-context.json" "$1" "$2" "$3" <<'PYTEST'
+import json, sys
+source, path, disposition, url, evidence = sys.argv[1:]
+key = json.load(open(source))["evidence_key"]
+json.dump({"evidence_key": key, disposition: {url: evidence}}, open(path, "w"))
+PYTEST
+}
+
+# Canva embed replay: author approval withdrawn, only open thread is Low, no
+# active change request or blocking findings, full deep coverage, green CI.
+reset_evidence; write_payload APPROVE "pass=deep blockers=0 majors=0 mediums=0 reason=- open=- risk=low critic=skip"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":8,"user":{"login":"alice","type":"User"},"state":"DISMISSED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
+EOF
+write_thread '[Low] Can the CSP test assert the exact position of the pattern?'
+python3 - "$EV/payload.json" <<'PYTEST'
+import json, sys
+path = sys.argv[1]
+payload = json.load(open(path))
+payload["body"] = payload["body"].replace("3 of 3 changed files", "13 of 13 changed files, 27 of 27 hunks")
+payload["body"] = payload["body"].replace("| clear |", "| clear ([optional CSP test suggestion](u1)) |")
+json.dump(payload, open(path, "w"))
+PYTEST
+context_and_gate 0 "Canva Low thread with approval withdrawn"
+
+for note in '[Nit] Rename the helper' 'Suggestion: extract this helper' 'What is this helper for?' '[Medium](https://example.org) is the article'; do
+  reset_evidence; write_payload APPROVE "$CLEAN"
+  write_thread "$note" ""
+  context_and_gate 0 "non-blocking thread: $note"
+done
 
 reset_evidence; write_payload APPROVE "$CLEAN"
+write_thread '[Low] Optional naming suggestion'
+cat >"$EV/reviews.json" <<EOF
+[[{"id":9,"user":{"login":"alice"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"},
+  {"id":10,"user":{"login":"alice"},"state":"COMMENTED","body":"This is optional now","submitted_at":"2026-10-19T11:00:00Z","commit_id":"$HEAD"}]]
+EOF
+context_and_gate 4 "active change request with Low thread and later comment"
+grep -q 'open change request from alice' "$TMP/gate.out" || fail "gate: formal change request lost"
+
+for severity in Medium Major High Critical Blocker Blocking; do
+  reset_evidence; write_payload APPROVE "$CLEAN"
+  write_thread "**[$severity]** Retry drops the update after a timeout"
+  context_and_gate 4 "$severity thread"
+  grep -q 'blocking review concern: u1' "$TMP/gate.out" || fail "gate: missing concern link"
+done
+write_thread '[Medium] Retry drops the update' alice true
+context_and_gate 0 "resolved Medium thread"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+write_thread 'What preserves existing tenant data if this migration is rolled back?'
+[[ "$(context)" == 0 ]] || fail "unlabeled question should need evidence"
+write_assessment blocking u1 "The down migration drops the only column storing existing tenant IDs"
+context_and_gate 4 "evidence-backed blocking question"
+echo '[[{"id":111,"in_reply_to_id":110,"body":"I updated the migration"}]]' >"$EV/inline.json"
+context_and_gate 5 "assessment stale after a reply"
+write_assessment blocking u1 "Rollback still drops the source column before copying its values"
+context_and_gate 4 "blocking question after refreshed assessment"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+write_thread '[Medium] Retry drops the update after a timeout'
+[[ "$(context)" == 4 ]] || fail "Medium must block before resolution is verified"
+write_assessment cleared u1 "Pinned head preserves the update, confirmed by the retry regression test"
+context_and_gate 0 "independently verified clearance"
+cat >"$EV/reviews.json" <<EOF
+[[{"id":9,"user":{"login":"alice"},"state":"CHANGES_REQUESTED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
+EOF
+[[ "$(context)" == 4 ]] || fail "formal change request survives stale assessment"
+write_assessment cleared u1 "Pinned head preserves the update, confirmed by the retry regression test"
+context_and_gate 4 "thread clearance cannot override formal change request"
+
+reset_evidence; write_payload APPROVE "$CLEAN"
+write_thread '[Medium] Retry drops the update after a timeout'
 cat >"$EV/reviews.json" <<EOF
 [[{"id":8,"user":{"login":"alice","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"$HEAD"}]]
 EOF
-echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1","author":{"login":"alice"}}]}}]}}}}}]' >"$EV/threads.json"
-[[ "$(gate)" == 0 ]] || fail "gate: approver's own thread must not block ($(cat "$TMP/gate.out"))"
-
-reset_evidence; write_payload APPROVE "$CLEAN"
-cat >"$EV/reviews.json" <<EOF
+context_and_gate 0 "current-head approver's own Medium thread"
+write_thread '[Medium] Retry drops the update after a timeout' bob
+context_and_gate 4 "current-head approval cannot clear another reviewer's thread"
+write_thread '[Medium] Retry drops the update after a timeout'
+cat >"$EV/reviews.json" <<'EOF'
 [[{"id":8,"user":{"login":"alice","type":"User"},"state":"APPROVED","submitted_at":"2026-10-19T10:00:00Z","commit_id":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}]]
 EOF
-echo '[{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[{"id":"T1","isResolved":false,"comments":{"nodes":[{"url":"u1","author":{"login":"alice"}}]}}]}}}}}]' >"$EV/threads.json"
-{ [[ "$(gate)" == 4 ]] && grep -q 'unresolved thread: u1' "$TMP/gate.out"; } || fail "gate: approval on an older SHA must not clear a thread"
+context_and_gate 4 "older approval cannot clear a Medium thread"
+ok shared-review-context
 
 reset_evidence; write_payload APPROVE "$CLEAN"
 echo '[[{"context":"AI QA","state":"failure","description":"FAIL: login fails","created_at":"2026-10-19T10:00:00Z"}]]' >"$EV/statuses.json"

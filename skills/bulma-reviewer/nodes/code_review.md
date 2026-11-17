@@ -12,7 +12,7 @@ AI QA `BLOCKED` (could not run) never blocks review. A status whose text
 starts with `FAIL` does not by itself block APPROVE. An open change request
 is reviewed, then DEFERRED `review_pending` when the diff is clean. A
 dismissed change request is closed. Verdicts are APPROVE, REQUEST_CHANGES or
-DEFER (CI, draft, conflict, open change request); never a COMMENT review.
+DEFER (CI, draft, conflict, active change request or blocking concern); never a COMMENT review.
 Access and tooling errors are job-report notes, not Deferred comments.
 The observation collection below is telemetry, not a replacement for that gate.
 Apply the engine's [evidence rules](../../bulma-code-review/references/EVIDENCE.md)

@@ -31,7 +31,7 @@ approval on the head does not change an APPROVE.
 |---|---|
 | 0 | posted; post-verify below |
 | 1 | nothing posted yet. Each `BLOCKED` line is a real approval block. Do not dismiss my standing approval. A code defect still posts REQUEST_CHANGES. A draft, conflict, or red CI DEFERS. Template, marker or deep-pass lines are mine to fix before re-running the gate. Never fall back to COMMENT. Record STATE `gate=blocked` |
-| 4 | nothing posted yet. Another reviewer's change request (not dismissed) or unresolved thread is open. Post the same body as a DEFER issue comment, header `## ⏸️ Deferred: <repo>#<pr>`, marker `reason=review_pending` and the reviewed `pass=`. Link their review. Say the diff was reviewed and found clean. Do not dismiss my approval |
+| 4 | nothing posted yet. Another reviewer's change request (not dismissed) or blocking review concern is open. Post the same body as a DEFER issue comment, header `## ⏸️ Deferred: <repo>#<pr>`, marker `reason=review_pending` and the reviewed `pass=`. Link their review. Say the diff was reviewed and found clean. Do not dismiss my approval |
 | 5 | nothing posted yet. CI or evidence could not be read. Post a DEFER issue comment, marker `reason=ci_unknown`, CI cell `not verified (tooling)`. Put every other gate line in the private job report, not on the PR. Do not dismiss my approval |
 
 REQUEST_CHANGES payloads pass through the gate too; it checks
@@ -69,7 +69,7 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review (very large PR: `deep, batched (N batches)`) |
 | CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or not verified (tooling) |
-| Review context | clear, or linked open concerns |
+| Review context | clear (optionally link non-blocking notes), or linked blocking concerns |
 | Coverage | 12 of 12 changed files |
 | Findings | 1 blocker · 2 majors · 1 medium |
 | Acceptance | 1 done · 1 missing |

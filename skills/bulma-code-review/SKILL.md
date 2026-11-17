@@ -51,9 +51,10 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
    REQUEST_CHANGES or DEFER only; never a COMMENT review. An open change
    request does not skip the diff: review the code and DEFER
    `reason=review_pending` when it is clean. A dismissed change request is
-   closed and never blocks. Unresolved threads and unanswered questions still
-   block approval (DEFER `review_pending`). A thread whose author approved
-   this head does not. QA `BLOCKED` (could not run) never gates. A status
+   closed and never blocks. Applicable Medium-or-higher findings and
+   evidence-backed blocking questions defer a clean review as `review_pending`.
+   Open Low findings, nits and suggestions can be linked in a clear room.
+   An approval on this head covers the reviewer's own threads. QA `BLOCKED` (could not run) never gates. A status
    whose text starts with `FAIL` does not by itself block approval.
    Never dismiss another reviewer's review. Never post a Deferred comment
    for an access or tooling error. `--force` cannot bypass these approval gates.

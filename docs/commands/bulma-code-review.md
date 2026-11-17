@@ -35,8 +35,11 @@ Skill: [`../../skills/bulma-code-review`](../../skills/bulma-code-review).
 6. Nits never block. Max 5, collapsed. Most stay silent.
 7. Read reviews, unresolved threads and comments, including AI QA, before
    pass selection and publication. An open change request still gets a code
-   review and a comment that their review is pending. A thread whose author
-   approved this head does not block. Never dismiss another review.
+   review. Defer a clean review for an active change request or an applicable
+   Medium-or-higher finding or evidence-backed approval blocker. Low findings
+   and optional suggestions can be linked as context. A current-head approval
+   covers the reviewer's own threads. Leave other reviewers' threads and
+   reviews untouched.
 8. Approve only the exact reviewed head with CI execution proved on that SHA.
    Review new commits before approving. Missing/skipped tests are not green.
    If CI cannot be read, review the diff and note `not verified (tooling)`.
@@ -69,7 +72,7 @@ the review continues and the artifact says so. It does not defer on its own.
 |---|---|
 | ≥1 blocker or major | `REQUEST_CHANGES` |
 | clean or nits only, full coverage, CI green | `APPROVE` |
-| clean, another reviewer's change request (not dismissed) or thread still open | `DEFER` |
+| clean, another reviewer's active change request or blocking concern | `DEFER` |
 | clean, another reviewer's change request was dismissed | `APPROVE` (dismissed is closed) |
 | CI red/pending/unreadable, draft, merge conflict | `DEFER` |
 | incomplete coverage, critic failed, head moved | nothing posted; reported in chat |

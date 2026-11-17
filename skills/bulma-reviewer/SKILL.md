@@ -22,12 +22,11 @@ Init `.bulma-reviewer/STATE.md`. Walk GRAPH (**admit** first).
 Its [preflight](../bulma-code-review/references/PREFLIGHT.md) reads all review
 context before pass selection and again before publication, pins the reviewed
 head, and verifies CI execution. A sensitive-path list stays in the private
-job report and does not defer. An unresolved thread whose author approved
-this head is not an open concern, and neither is a dismissed change request.
-Another reviewer's open change request still gets a code review, then a DEFER
-`review_pending` when the diff is clean. Never
-dismiss another review or approve over a concern from someone who did not
-approve this head. Every review POST runs behind the engine's `scripts/gate.py`;
+job report and does not defer. An active change request or a blocking
+concern from preflight still gets a code review, then a DEFER `review_pending`
+when the diff is clean. Use relevant Low findings, nits and suggestions as
+context. A current-head approval covers the reviewer's own threads. Never
+dismiss another review or resolve another reviewer's threads. Every review POST runs behind the engine's `scripts/gate.py`;
 an APPROVE it rejects is never sent. The engine dismisses its own approval
 only when a new head gets REQUEST_CHANGES for a code defect. Verdicts are
 APPROVE, REQUEST_CHANGES or DEFER; never a COMMENT review, even when another
