@@ -58,8 +58,12 @@ files that only exist to serve the same screen.
 ## Blast radius
 
 Map each changed file or symbol to the **user flows** that call it.
-Grep, or CodeGraph when the repo has it. Do not add GitNexus as a
-required tool.
+Use the repository's configured code navigation, such as Julius or
+CodeGraph, for a scoped lookup of changed symbols and direct callers. If a
+Julius learning names a project recipe, use it as a pointer and verify the
+recipe's applicability against the diff. Fall back to targeted source
+search if the graph is missing, stale or inconclusive. Do not wait for an
+optional index or publish new learnings from QA planning.
 
 | Changed | d=1 callers / screens | User flow to walk | Risk |
 |---|---|---|---|
