@@ -25,10 +25,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bulma-host/scripts"))
+from model_identity import known
+
 MARKER = re.compile(r"<!--\s*bulma-review:(.*?)-->", re.S)
 PAIR = re.compile(r"(\w+)=(\S+)")
 ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|\s*$", re.M)
-REQUIRED_ROWS = ("Model", "Reasoning effort", "Reviewed head", "CI", "Review context", "Coverage")
+REQUIRED_ROWS = ("Reviewed head", "CI", "Review context", "Coverage")
 BUILD_TEST = re.compile(
     r"\b(build|builds|test|tests|unit|integration|e2e|jest|vitest|playwright|cypress|pytest)\b", re.I
 )
@@ -304,9 +308,12 @@ def needs_deep(reviews: list[dict[str, Any]], comments: list[dict[str, Any]], me
 def template(body: str, head: str) -> list[str]:
     rows = {name.strip(): value for name, value in ROW.findall(body)}
     reasons = [f"template row missing: {name}" for name in REQUIRED_ROWS if name not in rows]
-    for name in ("Model", "Reasoning effort"):
-        if name in rows and not rows[name].strip():
-            reasons.append(f"template row empty: {name}")
+    if "Reasoning effort" in rows:
+        reasons.append("template row forbidden: Reasoning effort")
+    if "Model" in rows:
+        values = re.split(r";|<br\s*/?>", rows["Model"], flags=re.I)
+        if not all(known(value.rsplit(":", 1)[-1].strip().strip("`")) for value in values):
+            reasons.append("template Model must contain only known identities; omit unavailable attribution")
     if head not in rows.get("Reviewed head", ""):
         reasons.append("Reviewed head row does not name the live head")
     mark = marker(body)

@@ -123,6 +123,15 @@ model for elevated-risk plans: `codex`, `gemini`, or `claude`. Leave it out
 for `off`. It names a CLI installed on this machine, so it is usually a user
 preference, not a project one. How it runs: `bulma-host` §Second opinion.
 
+`development_review:` under `## Preferences` enables an optional alternative
+executor for the fd code review node. Value: an absolute local JSON config path,
+or `off`. Home → shared project → worktree precedence applies. No configuration
+keeps the current reviewer. Store adapter mechanism and authorized candidate
+order outside Git, never live quota as durable truth. This is independent of
+`second_opinion` for plans. Contract and synthetic example:
+[Development review](../bulma-host/references/DEVELOPMENT_REVIEW.md).
+Do not create this preference or a personal adapter without the user's request.
+
 `## Gotchas` and `## Checks` live only in the **project** file.
 
 - `## Gotchas`: one line per domain fact the code does not make obvious

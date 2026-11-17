@@ -30,15 +30,11 @@ After:
 
 <!-- Paired PRs in other repos and the safe merge and deploy order, flag and default, and how to revert (one command, or why a revert is unsafe after a migration). Evidence: links or n/a. -->
 
+<!-- Optional final section: include only when at least one executing model is known from runtime/system evidence. Omit unknown contributors, ambiguous aliases and empty rows; omit this entire section when none are known. Never publish reasoning effort. Follow bulma-host PR_ATTRIBUTION.md. Keep each known model with its role and preserve earlier supported contributions on updates. -->
+
 ## Agent run
 
-<!-- Required in every PR, including each stacked child. Always the last section. Follow bulma-host PR_ATTRIBUTION.md. Model and reasoning effort: actual executing session values, else `unknown` per field. Multiple contributors: list each distinct model/effort pair and role. Time: wall clock from the first branch commit (or STATE start) to PR open, rounded to minutes. Tokens: the host-reported total from `session_usage`, else `n/a`. Never estimate a number. On update, preserve earlier contributions and refresh this section. -->
-
-- Model:
-- Reasoning effort:
-- Code review model:
-- Code review reasoning effort:
-- Time:
-- Tokens:
-
-<!-- Model/Reasoning effort identify implementation contributors. Code review fields identify the reviewer responsible for the pre-PR verdict, copied from its result, including role/pair entries when multiple reviewers contributed. Never substitute the shipper's or critic's settings. If review ran but a field is unavailable, use `unknown`. If no review ran, write `not run` and the reason; attribution does not bypass a required review gate. -->
+- Implementation model: <!-- Include only when known. -->
+- Code review model: <!-- Copy only a known identity from the actual review result for this tree. -->
+- Time: <!-- Optional wall clock from STATE start or first branch commit to PR open, rounded to minutes. -->
+- Tokens: <!-- Optional host-reported session_usage total, else omit. Never estimate. -->

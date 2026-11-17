@@ -122,3 +122,8 @@ pass, or after residuals are logged.
 Resolve spec and tickets through STATE paths. Compact mode points both at the
 same canonical contract; read it once and critique its decisions without expanding
 it into a second plan. Risk still controls whether this node runs.
+
+Keep source attribution for critic contributions internally. If surfaced in a
+PR, include only runtime/system-known model identity with the critic role, never
+reasoning effort or unknown placeholders. A critic never replaces the final
+code reviewer attribution; follow [PR attribution](../../bulma-host/PR_ATTRIBUTION.md).

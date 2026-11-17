@@ -23,6 +23,11 @@ never goes above it.
 | tester, shipper | `light` by rule (`dispatch role tester`) |
 | reviewer, quality, plan-critic, debugger, triage, grill | `heavy`, always |
 
+The fd review node may use the explicit local `development_review` opt-in in
+[bulma-host](../bulma-host/references/DEVELOPMENT_REVIEW.md). This is independent
+of cost tiers: one authorized alternative, unchanged verdict criteria, then the
+normal heavy/session worker on operational failure. No other gate changes.
+
 Gates never get a weaker model. Under `shadow` every role prints `heavy`.
 
 ## Rules (in code)

@@ -10,13 +10,10 @@ description: >
 
 # Host contract
 
-Graphs name **primitives**. This file maps them onto the harness in
-front of you. If a node mentions a primitive, do that mapping here.
+Graphs name **primitives**. Map them onto this harness here.
 Do not copy harness APIs into GRAPH.md.
 
-In this repo, skills live under `skills/<name>/`.
-After install they are siblings (`bulma-qa` next to `bulma-bus`
-and `kevin`).
+Skills live under `skills/<name>/`; after install they remain siblings.
 Resolve a skill **by name** via the host skill loader, or by the
 relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 `~/.claude`, or `~/.codex`.
@@ -31,6 +28,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `worktree` | Isolated checkout of the same branch | Orca when available; otherwise `git worktree add` under the memory-resolved worktree root ([JOBS.md](../bulma-bus/JOBS.md#worktree)) |
 | `schedule_wake` | Resume this graph later without blocking the turn | Ask the user to re-run the slash command when CI moves; do not `gh pr checks --watch` |
 | `cancel_wake` | Drop that scheduled resume | No-op if none exists |
+| `development_review` | One optional local alternative for the fd review node ([contract](references/DEVELOPMENT_REVIEW.md)) | One separate `session_model` reviewer; preserve findings |
 | `second_opinion` | Run one read-only prompt on another vendor's model through its CLI (§Second opinion) | `second_opinion: failed` with the reason; never a silent skip |
 | `worker_usage` | Token total the host reported for one finished worker (§worker_usage) | None: omit the count, never estimate it |
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
@@ -41,12 +39,11 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 For review attribution, read the executing session's model identity from host
 runtime metadata or explicit system-provided identity. Keep the reported model
 name or id, including its version. Do not infer it from the host name, a default
-in config, a requested worker tier, or a parent's model. If only a family or
-alias is exposed, keep that value without adding a version. If no identity is
-exposed, return `unknown`. This lookup does not select or change a model.
+in config, a requested worker tier, or a parent's model. If only an ambiguous family or alias is exposed, or no identity is exposed,
+record `unknown` internally and omit public attribution. Never add a version. This lookup does not select or change a model.
 
 Each review worker resolves its own model and actual effort from runtime metadata or explicit system settings, else `unknown` per field.
-Never infer effort from requested tiers, defaults or parents. A critic does not replace the verdict reviewer. PR creation follows [PR run attribution](PR_ATTRIBUTION.md).
+Never infer effort from requested tiers, defaults or parents. Effort stays internal; public output includes known model identities only. A critic does not replace the verdict reviewer. PR creation follows [PR run attribution](PR_ATTRIBUTION.md).
 
 ## spawn_worker
 
@@ -91,7 +88,9 @@ Check whether failed creation left a checkout before retrying. Raw Git does not 
 ### Worker tier
 
 `session_model` is the default for every worker. Only the `/bulma`
-overlay may run a worker on another model or effort
+overlay may change worker tiers or effort. The explicit local `development_review`
+opt-in is a separate exception for the fd reviewer only; it never lowers verdict
+criteria or changes post-PR code review. Otherwise the overlay selects models
 ([../bulma/DISPATCH.md](../bulma/DISPATCH.md)); the user maps the tiers in
 `$BULMA_HOME/bulma.json`. What each host can apply per call (checked
 2026-09):

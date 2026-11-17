@@ -35,20 +35,15 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
    If the fragment has no PNGs yet, capture merge-base vs HEAD here.
    Capture failure does not block the PR. A repo `pr-description`
    skill may fill leftover fields. It is not the body.
-   If the repo has its own PR template, keep it and append any missing
-   **How to test** and **Agent run** sections. **Agent run** is always
-   last: model, reasoning effort, wall-clock time and `session_usage` tokens
-   (`n/a` when the host does not report tokens). Follow
-   [PR run attribution](../../bulma-host/PR_ATTRIBUTION.md), including
-   worker contributions and `unknown` for unavailable model/effort fields.
-   Every stacked child and fullstack sibling needs its own section. Refresh
-   and read back each saved PR description on creation and every update;
-   missing or empty model/effort fields mean packaging is incomplete.
-   Include **Code review model** and **Code review reasoning effort** in
-   `Agent run`, copied from the reviewer result for this PR's final tree.
-   These are separate from implementation attribution. Preserve these fields
-   with repository templates too, including every stacked child. Missing
-   reviewer metadata uses `unknown`; never fill it from the shipper session.
+   Keep the repo PR template and append missing **How to test** steps.
+   Follow [PR run attribution](../../bulma-host/PR_ATTRIBUTION.md): append
+   **Agent run** last only when at least one executing model is known. List
+   known implementation/review/critic contributors by role; copy review identity
+   from the verdict result for this PR's final tree, never from the shipper.
+   Omit unknown or ambiguous identities, empty rows and public reasoning effort.
+   If no models are known, omit the whole section. Each stacked child and
+   fullstack sibling uses its own evidence. Preserve supported prior contributions
+   and read back each saved description after creation or update.
 8. **Reviewers + assignee** per PRODUCT.md §6 (re-read at PR open).
    ```bash
    ME=$(gh api user --jq .login)   # or glab equivalent

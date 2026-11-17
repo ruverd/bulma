@@ -56,6 +56,8 @@ check legacy-name python3 "$LIB/check_legacy_name.py" "$ROOT"
 check legacy-name-fixtures env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_legacy_name.py"
 
 check trail-adapter env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_trail_adapter.py"
+check development-review env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_development_review.py"
+check model-attribution env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_model_attribution.py"
 check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_runtime.py"
 check process-feedback env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_process_feedback.py"
 check task-playbooks env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_playbooks.py"
