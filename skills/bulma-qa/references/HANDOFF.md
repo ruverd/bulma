@@ -18,6 +18,9 @@ findings. Do not spawn a second triage run per finding.
 * each finding: step, surface, expected, actual, reproducible,
   evidence (agent-browser / video / screenshots / API / logs),
   whether the failing code is in this PR's diff
+* when a finding used a recipe, include its entry and the exact failing
+  step, prerequisites and observable result to retest after a correction.
+  Separate recipe drift and fixture failures from suspected product defects.
 * `payload_path` if the body would be huge
 
 Omit a field only when it does not exist. Never omit the PR link.
@@ -40,6 +43,7 @@ Findings file: .bulma-qa/FINDINGS.md
 
 ## F1
 Plan step: S<n> — <title>
+Recipe entry: <path and entry, or none>
 Surface: <route / endpoint>
 In this PR diff: yes | no | unknown
 Reproduction:
