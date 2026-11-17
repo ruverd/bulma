@@ -76,8 +76,8 @@ REQUEST_CHANGES for a blocker, major or medium, otherwise DEFER `reason=review_p
 A dismissed change request is not open. Reevaluate
 `review_context`, `review_context_unknown`, and `head_changed` deferrals on
 every run. A prior `reason=human_signoff` is withdrawn: do not skip on it.
-An unresolved thread from a reviewer who approved this head is not blocked
-room. Promotion always re-runs the full preflight, including the sensitive-path
+Use the current preflight result to decide whether the earlier concern still
+blocks approval. Promotion always re-runs the full preflight, including the sensitive-path
 list and CI evidence. The sensitive-path list stays in the private job report.
 
 ## Rebase only

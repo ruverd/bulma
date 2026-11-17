@@ -37,7 +37,7 @@ start (PR url / number / branch)
 | critic | otherwise | **publish** |
 | publish | head or base changed | **review** (fresh diff, repeat preflight) |
 | publish | approval gate blocked (`gate.py` exit 1) | **defer** only for a real gate; do not dismiss my approval |
-| publish | `gate.py` exit 4 (open change request or thread) | **defer** `review_pending` |
+| publish | `gate.py` exit 4 (open change request or blocking concern) | **defer** `review_pending` |
 | publish | `gate.py` exit 5 (CI or evidence unreadable) | **defer** `ci_unknown` |
 | publish | posted | delete loop, **stop** |
 | defer | posted | delete loop, **stop** |

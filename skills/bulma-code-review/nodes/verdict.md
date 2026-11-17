@@ -66,7 +66,7 @@ along with an APPROVE; they never turn it into a DEFER.
 ("Reviewed, no blockers") is never a verdict. REQUEST_CHANGES for a blocker or
 major or medium. APPROVE when only nits remain and the approval gates pass. **DEFER is
 only for:** CI red, pending past the loop, or unreadable; draft; merge
-conflict; another reviewer's open change request or unresolved thread. A change
+conflict; another reviewer's open change request or blocking review concern. A change
 request that someone dismissed is no longer open: it does not block and does
 not DEFER, whoever dismissed it.
 
@@ -75,7 +75,7 @@ not DEFER, whoever dismissed it.
 | ≥1 blocker (new or carried) | **REQUEST_CHANGES** |
 | ≥1 major (new or carried), 0 blocker | **REQUEST_CHANGES** |
 | ≥1 medium (new or carried), 0 blocker/major | **REQUEST_CHANGES**, including mandatory acceptance evidence missing with green CI |
-| clean, another reviewer's change request (not dismissed) or unresolved thread is open | **DEFER** `reason=review_pending`, link it. The diff was reviewed; marker keeps `pass=deep\|light` |
+| clean, another reviewer's active change request or a blocking review concern is open | **DEFER** `reason=review_pending`, link it. The diff was reviewed; marker keeps `pass=deep\|light` |
 | clean, another reviewer's change request was dismissed | not open. **APPROVE** when the other gates pass |
 | clean, room unknown because a read failed | **DEFER** `reason=review_context_unknown`. The read error stays in the private job report |
 | head moved and delta not reviewed | re-review the delta; if pushes keep moving it, post nothing this run |
@@ -91,13 +91,13 @@ not DEFER, whoever dismissed it.
 | prior own REQUEST_CHANGES, or my DEFER/COMMENT `coverage\|uncertainty\|critic_failed` (older runs), and this pass was not deep on the full diff | run the deep pass; never APPROVE from a light pass |
 | empty delta after my own APPROVE, all approval gates above pass | **APPROVE**, body says no code changes |
 | `gate.py` exits 1 | do not APPROVE. REQUEST_CHANGES if the ledger has a blocker, major or medium; DEFER `reason=ci_red` for CI red or pending; otherwise fix the payload (template, marker, deep pass) and re-run the gate. Never fall back to COMMENT. Do not dismiss my approval |
-| `gate.py` exits 4 (another reviewer's open change request or thread) | **DEFER** `reason=review_pending` with their links |
+| `gate.py` exits 4 (another reviewer's open change request or blocking concern) | **DEFER** `reason=review_pending` with their links |
 | `gate.py` exits 5 (CI or evidence unreadable) | **DEFER** `reason=ci_unknown`, CI cell `not verified (tooling)`. Other lines stay in the private job report |
 | another bot already approved this head | **APPROVE** anyway. A second bot approval is still an approval |
 
 A sensitive-path list stays in STATE and the private job report. It does not
-DEFER and it does not block APPROVE. An unresolved thread whose author approved
-this head is a clear room, not `review_context`. A prior DEFER with
+DEFER and it does not block APPROVE. Use the shared preflight check to decide
+whether review context is clear. Link relevant non-blocking notes as context. A prior DEFER with
 `reason=human_signoff`, `review_context`, `review_context_unknown`,
 `coverage`, `uncertainty`, `critic_failed` or `head_changed` is withdrawn
 policy: do not skip on it. Never write `I did not inspect the diff`

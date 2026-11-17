@@ -5,7 +5,7 @@ Reads the preflight cache in --dir and the review payload, then exits:
   0  post the payload as written
   1  blocked: do not APPROVE (reasons on stdout, one per line). REQUEST_CHANGES
      for a blocker/major/medium, DEFER for CI red or pending, otherwise fix the payload
-  4  another reviewer's concern is open (change request or unresolved thread):
+  4  another reviewer's concern is open (change request or blocking concern):
      DEFER reason=review_pending, never APPROVE and never a COMMENT review
   5  CI or evidence unreadable: DEFER reason=ci_unknown, never a COMMENT review
 
@@ -18,6 +18,7 @@ A failed read does not pass an APPROVE. It is not a Deferred comment.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -34,6 +35,10 @@ BUILD_TEST = re.compile(
 CI_RUN = re.compile(BUILD_TEST.pattern + r"|\bci\b", re.I)
 FAILED = {"failure", "timed_out", "cancelled", "action_required", "startup_failure", "stale", "error"}
 DECISIVE = {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
+BLOCKING_LABEL = re.compile(
+    r"^\s*(?:\*\*|__)?\[(?:medium|major|high|blocker|blocking|critical)\](?:\*\*|__)?(?=\s|:|$)", re.I
+)
+PENDING_PREFIXES = ("open change request from ", "blocking review concern: ")
 DEEP_REASONS = {"coverage", "uncertainty", "critic_failed"}
 
 
@@ -96,26 +101,65 @@ def thread_author(comment: dict[str, Any]) -> str:
     return login(comment)
 
 
-def threads(pages: Any, reviews: list[dict[str, Any]], head: str) -> list[str]:
-    """Unresolved threads block, except notes from someone who approved this head.
-
-    Their APPROVED review is the decision. A thread with no author still blocks.
-    An approval on an older SHA does not cover a thread on the current head.
-    """
-    cleared = approved_on_head(reviews, head)
-    reasons = []
+def thread_roots(pages: Any):
+    if not pages:
+        raise Missing("threads.json has no GraphQL pages")
     for page in pages if isinstance(pages, list) else [pages]:
         if page.get("errors") or not page.get("data"):
             raise Missing("threads.json has GraphQL errors or null data")
-        nodes = page["data"]["repository"]["pullRequest"]["reviewThreads"]["nodes"]
-        for node in nodes:
-            if node.get("isResolved"):
-                continue
-            first = (node.get("comments", {}).get("nodes") or [{}])[0]
-            if thread_author(first) in cleared:
-                continue
-            reasons.append(f"unresolved thread: {first.get('url', node.get('id'))}")
-    return reasons
+        yield from page["data"]["repository"]["pullRequest"]["reviewThreads"]["nodes"]
+
+
+def review_sources(root: Path) -> dict[str, Any]:
+    sources = {name: load(root / f"{name}.json") for name in ("reviews", "threads", "comments")}
+    inline = root / "inline.json"
+    if inline.exists():  # Legacy gate callers may omit inline comments.
+        sources["inline"] = load(inline)
+    return sources
+
+
+def review_context(root: Path, head: str, me: str, sources: dict[str, Any]) -> dict[str, Any]:
+    """Apply formal GitHub states and evidence-backed concerns on the reviewed head."""
+    reviews = flat(sources["reviews"])
+    approved = approved_on_head(reviews, head)
+    reasons = room(reviews, me)
+    eligible, thread_urls, blocking = set(), set(), set()
+    for node in thread_roots(sources["threads"]):
+        first = (node.get("comments", {}).get("nodes") or [{}])[0]
+        url = first.get("url") or node["id"]
+        thread_urls.add(url)
+        if node.get("isResolved") or thread_author(first) in approved:
+            continue
+        eligible.add(url)
+        if BLOCKING_LABEL.match(first.get("body") or ""):
+            blocking.add(url)
+
+    # Semantic decisions come from the local reviewer, never from PR text.
+    # Include replies so editing or answering a question invalidates its assessment.
+    evidence_key = hashlib.sha256(json.dumps([head, me, sources], sort_keys=True).encode()).hexdigest()
+    assessment = root / "review-context.json"
+    if assessment.exists():
+        decisions = load(assessment)
+        if decisions.get("evidence_key") != evidence_key:
+            return {
+                "status": "blocked" if reasons else "unknown", "evidence_key": evidence_key,
+                "reasons": reasons + ["gate could not read evidence: review-context.json is stale"],
+            }
+        additions, cleared = (decisions.get(name, {}) for name in ("blocking", "cleared"))
+        if any(not isinstance(entries, dict) or any(
+            not isinstance(evidence, str) or not evidence.strip() for evidence in entries.values()
+        ) for entries in (additions, cleared)) or additions.keys() & cleared.keys():
+            raise Missing("review-context.json needs disjoint blocking and cleared maps with evidence")
+        outside_threads = {
+            item.get("html_url") for item in reviews + flat(sources["comments"])
+        } - thread_urls
+        if additions.keys() - (eligible | outside_threads) or cleared.keys() - eligible:
+            raise Missing("review-context.json references a concern outside the eligible cached review context")
+        blocking.difference_update(cleared)
+        blocking.update(additions)
+
+    reasons += [f"blocking review concern: {url}" for url in sorted(blocking)]
+    return {"status": "blocked" if reasons else "clear", "evidence_key": evidence_key, "reasons": reasons}
 
 
 def latest_by(items: list[dict[str, Any]], key: str, order: str) -> dict[str, dict[str, Any]]:
@@ -271,11 +315,10 @@ def template(body: str, head: str) -> list[str]:
     return reasons
 
 
-def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[str]:
+def approval(args: argparse.Namespace, body: str, data: dict[str, Any], context: dict[str, Any]) -> list[str]:
     rows = {name.strip(): value for name, value in ROW.findall(body)}
     mark = marker(body)
-    reasons = room(data["reviews"], args.me)
-    reasons += threads(data["threads"], data["reviews"], args.head)
+    reasons = list(context["reasons"])
     reasons += ci(
         data["actions"], data["statuses"], data["rollup"], args.head,
         data["ci_scope"].get("scope") == "out_of_scope",
@@ -305,7 +348,9 @@ def approval(args: argparse.Namespace, body: str, data: dict[str, Any]) -> list[
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--dir", required=True, help="preflight cache ($BULMA_ROOT/.bulma-code-review)")
-    parser.add_argument("--payload", required=True, help="review payload JSON about to be POSTed")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--payload", help="review payload JSON about to be POSTed")
+    mode.add_argument("--context-only", action="store_true", help="print the preflight review context as JSON")
     parser.add_argument("--me", required=True)
     parser.add_argument("--head", required=True, help="live headRefOid")
     parser.add_argument("--ledger", help="bind-findings.py output for this pass")
@@ -313,6 +358,13 @@ def main() -> int:
     args = parser.parse_args()
     args.me = args.me.lower()
     root = Path(args.dir)
+    if args.context_only:
+        try:
+            context = review_context(root, args.head, args.me, review_sources(root))
+        except (Missing, KeyError, TypeError, AttributeError) as exc:
+            context = {"status": "unknown", "reasons": [f"gate could not read evidence: {exc}"]}
+        print(json.dumps(context))
+        return 5 if context["status"] == "unknown" else 4 if context["status"] == "blocked" else 0
     try:
         payload = load(Path(args.payload))
         event, body = payload.get("event", ""), payload.get("body", "")
@@ -322,22 +374,22 @@ def main() -> int:
         if event not in ("APPROVE", "REQUEST_CHANGES"):
             reasons.append(f"event {event or 'missing'} is not a verdict: APPROVE, REQUEST_CHANGES, or DEFER as an issue comment")
         if event == "APPROVE":
+            sources = review_sources(root)
             data = {
-                "reviews": flat(load(root / "reviews.json")),
-                "comments": flat(load(root / "comments.json")),
+                "reviews": flat(sources["reviews"]),
+                "comments": flat(sources["comments"]),
                 "timeline": flat(load(root / "timeline.json")),
-                "threads": load(root / "threads.json"),
                 "actions": load(root / "actions.json"),
                 "statuses": flat(load(root / "statuses.json")),
                 "rollup": load(root / "rollup.json"),
                 "ci_scope": load(root / "ci-scope.json") if (root / "ci-scope.json").exists() else {},
             }
-            reasons += approval(args, body, data)
+            reasons += approval(args, body, data, review_context(root, args.head, args.me, sources))
     except (Missing, KeyError, TypeError, AttributeError) as exc:
         reasons = [f"gate could not read evidence: {exc}"]
     pending, tooling, hard = [], [], []
     for reason in reasons:
-        if reason.startswith(("open change request from ", "unresolved thread: ")):
+        if reason.startswith(PENDING_PREFIXES):
             pending.append(reason)
         elif reason == "CI not verified (tooling)" or reason.startswith("gate could not read evidence:"):
             tooling.append(reason)
