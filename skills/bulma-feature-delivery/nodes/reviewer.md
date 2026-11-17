@@ -2,11 +2,11 @@
 
 **Verb:** review (read-only)
 **Capability:** read-only
-**Focus:** two verdicts, one spawn
+**Focus:** two verdicts, one reviewer result
 
 ## Mission
 
-Two questions, one worker. Never implement.
+Two questions, one reviewer result. Never implement.
 
 1. Did we build the requested thing? (`spec_verdict`)
 2. Is what we built good? (`quality_verdict`)
@@ -51,7 +51,15 @@ Spec axis: the ticket + SPEC.md, not a new design.
 Pass only if both pass. Either fail → **implement** (same ticket) while
 `review_fix_loops` remain. Loops exhausted → escalate.
 
-Do not spawn a second reviewer.
+The coordinator invokes `development_review` through
+[bulma-host](../../bulma-host/references/DEVELOPMENT_REVIEW.md) when the local
+memory preference is enabled. Without it, keep one separate `session_model`
+worker. The runner selects at most one authorized alternative per round. Only
+operational failure permits one normal worker fallback, preserving findings.
+A negative verdict returns to implement; never try another model for approval.
+The coordinator owns routing; review workers do not spawn another reviewer.
+Context is isolated task/spec/diff/SHA/evidence and applicable rules, never the
+author's conclusion. No change to verdict criteria or graph round limits.
 
 ## Observe
 
@@ -68,8 +76,12 @@ Review section in STATE: `spec_verdict`, `quality_verdict`, findings.
 Also return `reviewer_model` and `reviewer_effort` for this review pass using
 [bulma-host](../../bulma-host/SKILL.md#review-model-identity). Resolve actual
 executing session values, or `unknown` per unavailable field. The coordinator
-preserves each pair with its role and reviewed SHA in the review result for
-shipper to copy into the PR description. Never use parent or critic settings.
+preserves each pair internally with role, provenance and reviewed SHA. Shipper
+publishes only known model identities; effort and unknown/ambiguous identities
+stay out of public output. Never use parent or critic settings.
+When configured, retain the development-review receipt, actual executor,
+alternative executor, mode, reason and `diversity_verified` in STATE. Use the
+runner's finalized verdicts so fallback cannot erase prior findings.
 `status: testing` only when both pass; else `implementing`.
 
 ## Hard rules

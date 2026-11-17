@@ -69,7 +69,7 @@ done_report | escalated
 | plan_critic | SPEC.md, TICKETS.md, decisions | plan_critic_verdict, plan_critic section |
 | diagnose | sentry/linear, repo | debug (root cause, evidence, one ticket) |
 | implement | one ticket + spec excerpt | code, tdd evidence, files_touched |
-| review | spec, ticket, diff, runtime receipts | spec_verdict, quality_verdict, review, reviewer_model, reviewer_effort |
+| review | spec, ticket, diff, runtime receipts | spec_verdict, quality_verdict, review, reviewer_model, reviewer_effort (internal), development_review |
 | tester | files, scripts | hard gate, floor_guard, floor_allowed + runtime receipt paths |
 | evidence | qa_tool, pr_url, sha | fragment, before/after png paths |
 | blast | diff | blast section |
@@ -94,3 +94,12 @@ cannot skip. Keep all historical baseline pointers when after evidence expires.
   [runtime evidence](../bulma-bus/PERFORMANCE.md), never from memory or a
   log-summary command's status.
 - No secrets in STATE.
+
+`development_review` is optional for older states. When enabled, retain its
+receipt path, round_id, reviewed head, mode (`alternative` or `fallback`),
+actual executor and identity source, alternative executor, fallback reason,
+`diversity_verified`, findings and finalized spec/quality verdicts. Resume uses
+the same round receipt; no second alternative attempt for that round. A changed
+payload/SHA needs re-review within existing loop caps. `action: spawn_worker`
+is incomplete, `blocked` is never a pass. Public attribution is known-only;
+reviewer effort remains internal telemetry.

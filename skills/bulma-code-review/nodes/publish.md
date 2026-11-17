@@ -47,15 +47,15 @@ an ambiguous network failure until checking whether the review was created.
 
 Section order is fixed. The words inside are Voice, not labels pasted as the comment.
 
-Every verdict body must include the `Model` and `Reasoning effort` rows below,
-filled from this pass's `reviewer_model` and `reviewer_effort`. Keep both in
-APPROVE, REQUEST_CHANGES, DEFER, dry-run and `422` retry bodies.
-These identify the reviewer responsible for the verdict, not the orchestrator or critic. Use `unknown` when the host exposes
-no identity or effort for that field; never omit or leave either row empty,
-or invent a model version or reasoning effort. For retained analysis completed
-by another session, preserve each contributing reviewer model/effort pair with
-its role; a critic does not replace reviewer attribution. Escape any
-Markdown table delimiters or line breaks in the value before rendering it.
+The `Model` row is optional: include only executing reviewer identities supported
+by runtime/system evidence for this pass. Omit unknown/undefined/null values and
+ambiguous aliases; omit the row entirely when none are known. Never publish
+reasoning effort. Apply this to APPROVE, REQUEST_CHANGES, DEFER, dry-run and
+`422` retries. For retained analysis, preserve each known contributing reviewer
+with its role. A critic or publisher does not replace the verdict reviewer.
+Keep all findings and verdicts even when attribution is omitted. Escape Markdown
+delimiters and newlines. See [PR attribution](../../bulma-host/PR_ATTRIBUTION.md)
+for the shared known-only formatter and identity provenance rules.
 
 ```markdown
 ## ❌ Changes requested: <repo>#<pr>
@@ -65,7 +65,6 @@ Markdown table delimiters or line breaks in the value before rendering it.
 | | |
 |---|---|
 | Model | <reviewer_model> |
-| Reasoning effort | <reviewer_effort> |
 | Reviewed head | <full reviewed_sha> |
 | Pass | deep, 1st review (very large PR: `deep, batched (N batches)`) |
 | CI | green on <sha>, <run links>; not run: PRs into `<base>` do not trigger build or test workflows; CI did not run; or not verified (tooling) |
@@ -135,9 +134,9 @@ The marker is written on **every** artifact, including gate DEFERs (`pass=none`,
 
 Headers: `## ✅ Approved: <repo>#<pr>`, `## ❌ Changes requested: <repo>#<pr>`,
 `## ⏸️ Deferred: <repo>#<pr>`. There is no other header; "Reviewed, no
-blockers" is not a verdict. The table rows `Model`, `Reasoning effort`, `Reviewed head`, `CI`, `Review context`,
-and `Coverage` are required on every review body, compact or
-not; `gate.py` rejects a body without them or with empty attribution. There is no Human sign-off row. Findings in the bind `body` bucket
+blockers" is not a verdict. The table rows `Reviewed head`, `CI`, `Review context`, and `Coverage` are
+required on every review body. `Model` is optional and known-only; `gate.py`
+rejects empty/unknown attribution and any `Reasoning effort` row. There is no Human sign-off row. Findings in the bind `body` bucket
 name both where the break surfaces and the changed hunk that causes it. Sections with no content are omitted. Omit
 Acceptance when `AC.md` is `none`. Inline findings still appear in the body
 list so the summary stands alone. Acceptance findings use the linked criterion

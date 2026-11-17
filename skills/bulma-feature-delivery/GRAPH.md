@@ -19,7 +19,11 @@ goal / resume
 ```
 
 Each ticket completes blast when applicable and quality before independent review
-and tester. After all tickets pass, capture final **evidence**, then ship.
+and tester. Review uses the host `development_review` primitive when locally
+configured; absent configuration keeps the existing separate session worker.
+One alternative attempt per round, operational fallback only, unchanged verdict
+criteria and round limits. A failed verdict is never an executor retry.
+After all tickets pass, capture final **evidence**, then ship.
 
 `implement*` is one fresh coder subagent **per ticket**. Verify the
 ticket before starting the next (bundled

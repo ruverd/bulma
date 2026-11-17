@@ -25,7 +25,7 @@ init | waiting_ci | reviewing | published | deferred | done
 | `human_signoff` | `not_required`, or `required` plus the sensitive paths. Private job report and STATE only. Never a PR row |
 | `ci_evidence` | run/check IDs, links, SHA and execution results; local tests recorded separately |
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
-| `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; preserve paired role attribution across contributing sessions |
+| `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; internal telemetry only; preserve paired role attribution across contributing sessions |
 | `ci` | pending \| green \| red \| unknown \| unverified |
 | `pass` | deep \| light, decided by [nodes/pass_decision.md](nodes/pass_decision.md) |
 | `mediums` | surviving medium findings, including unmet mandatory acceptance evidence; included in marker counts and carry-forward |

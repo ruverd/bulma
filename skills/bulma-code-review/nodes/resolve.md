@@ -20,7 +20,11 @@ Read actual reasoning effort from runtime metadata or explicit system settings,
 not a requested tier, config default or parent. Use `unknown` when unavailable.
 Retained analysis keeps its originating model/effort pair; if another session
 continues that analysis, record both pairs with their roles instead of replacing
-the original reviewer with the publishing session.
+the original reviewer with the publishing session. These pairs are internal
+telemetry: public output omits effort and any unknown or ambiguous model. Keep
+runtime/system identity provenance with each contributor; model prose is not
+identity evidence. Critic findings keep their source without replacing reviewer
+attribution.
 
 Flags: `--deep` force deep, `--light` force light, `--dry-run` run everything and
 print to chat but post nothing, `--force` review despite non-green CI. `--deep` and

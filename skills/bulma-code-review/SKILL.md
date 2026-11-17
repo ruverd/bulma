@@ -41,8 +41,8 @@ CI that cannot be read is `unverified`: review continues, and the artifact says 
 6. **Voice.** GitHub text and chat follow **Voice** (just above §9). Teammate
    English on the PR. Chat: `bulma-memory`. Never caveman. Never a form.
 7. **Fixed output template** (§9). Section order never changes; empty sections vanish.
-   Every verdict body includes the executing reviewer's `Model` and `Reasoning effort`
-   rows. Resolve both through `bulma-host`; use `unknown` per unavailable field.
+   Include `Model` only for known executing reviewer identities from `bulma-host`.
+   Omit unknown/ambiguous attribution and never publish reasoning effort.
 8. **Phases run in order.** Do not start a phase before the previous one is done.
 9. **Read the room before approving.** Classify verified missing mandatory
    acceptance evidence as medium + REQUEST_CHANGES, never a clean pending

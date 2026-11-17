@@ -10,7 +10,6 @@ GitHub body into chat.
 | | |
 |---|---|
 | Model | <reviewer_model> |
-| Reasoning effort | <reviewer_effort> |
 | Head | <sha7> |
 | Prior | none | deep@<sha7> APPROVED | ... |
 | CI | success \| failure \| pending \| unknown \| not verified (tooling) |
@@ -26,3 +25,6 @@ GitHub body into chat.
 | Coverage | 12/12 |
 | Posted | APPROVED \| CHANGES_REQUESTED \| DEFERRED — reason \| WAITING — loop <id> \| SKIPPED — reason \| DRY-RUN |
 ```
+
+Omit `Model` when identity is unavailable or ambiguous. With multiple reviewers,
+include only supported identities and roles. Never display reasoning effort.

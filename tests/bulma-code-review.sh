@@ -246,7 +246,6 @@ body = f"""## Approved: o/r#1
 | | |
 |---|---|
 | Model | test-model |
-| Reasoning effort | high |
 | Reviewed head | {head} |
 | Pass | deep |
 | CI | green on {head} |
@@ -510,30 +509,37 @@ blocked_with 'template row missing: Coverage' || fail "gate: missing row must bl
   || fail "gate: missing row must block payloads without approval evidence too"
 
 for event in APPROVE REQUEST_CHANGES; do
-  for row in Model 'Reasoning effort'; do
-    for mode in missing empty unknown; do
-      reset_evidence; write_payload "$event" "$CLEAN"
-      python3 - "$EV/payload.json" "$row" "$mode" <<'PY'
+  for mode in missing empty unknown undefined null auto known; do
+    reset_evidence; write_payload "$event" "$CLEAN"
+    python3 - "$EV/payload.json" "$mode" <<'PYTEST'
 import json, sys
-path, row, mode = sys.argv[1:]
+path, mode = sys.argv[1:]
 p = json.load(open(path))
 lines = []
 for line in p['body'].splitlines():
-    if line.startswith(f'| {row} |'):
+    if line.startswith('| Model |'):
         if mode == 'missing':
             continue
-        line = f'| {row} | ' + ('unknown' if mode == 'unknown' else '') + ' |'
+        value = '' if mode == 'empty' else 'reviewer: fixture-v1' if mode == 'known' else mode
+        line = f'| Model | {value} |'
     lines.append(line)
 p['body'] = '\n'.join(lines)
 json.dump(p, open(path, 'w'))
-PY
-      if [[ "$mode" == unknown ]]; then
-        [[ "$(gate)" == 0 ]] || fail "gate: $event must accept unknown $row"
-      else
-        blocked_with "template row $mode: $row" || fail "gate: $event must reject $mode $row"
-      fi
-    done
+PYTEST
+    if [[ "$mode" == missing || "$mode" == known ]]; then
+      [[ "$(gate)" == 0 ]] || fail "gate: $event must accept $mode attribution"
+    else
+      blocked_with 'template Model must contain only known identities' || fail "gate: $event must reject $mode attribution"
+    fi
   done
+  reset_evidence; write_payload "$event" "$CLEAN"
+  python3 - "$EV/payload.json" <<'PYTEST'
+import json, sys
+p = json.load(open(sys.argv[1]))
+p['body'] += '\n| Reasoning effort | high |'
+json.dump(p, open(sys.argv[1], 'w'))
+PYTEST
+  blocked_with 'template row forbidden: Reasoning effort' || fail "gate: $event must reject public effort"
 done
 
 reset_evidence; write_payload COMMENT "$CLEAN"
