@@ -9,7 +9,7 @@ Follow [../references/PLAN.md](../references/PLAN.md).
 2. Fill inventory, blast radius, and happy and user-break steps
    from the diff and ACs.
 3. STATE: `status=planning`, `plan_path=.bulma-qa/PLAN.md`, `surface`
-   = routes/endpoints/specs listed.
+   = routes/endpoints listed. Record `verification_recipe` if discovered.
 4. Chat the step list (English). Then **execute**.
 
 No e2e, no browser, no HTTP execute, no verdict in this node.

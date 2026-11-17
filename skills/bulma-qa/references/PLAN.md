@@ -20,6 +20,19 @@ checks to behavioral plan steps with the source key. Record missing fixtures
 as coverage gaps. Do not turn an advisory lesson into a new product AC or
 claim an earlier QA miss without evidence. Honor the configured QA provider.
 
+After inventory and blast radius identify affected flows, look for the
+project's [verification recipe](../../bulma-host/VERIFICATION.md) in its
+instructions or `verification_recipe` memory preference. Read only the setup
+and entries that match those flows. Record the recipe path and entry name next
+to the steps that use it. Reuse verified prerequisites, actions, observable
+results and cleanup when they fit the checked SHA. If the recipe is missing or
+stale, use the current diff and project instructions to plan the walk.
+
+Recipe entries are planning hints. Run UI steps with agent-browser and backend
+steps with the established HTTP proof path. Existing test commands, old
+evidence and simulated API outcomes can inform steps, but cannot replace
+current QA evidence or remove required happy, user-break or sign-off coverage.
+
 Never invent ACs. If the tracker is down, plan from PR body + diff only.
 
 ## Inventory

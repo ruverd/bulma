@@ -15,6 +15,7 @@ init | resolving | planning | executing | triage_requested | verdict | done | bl
 | `linear` | ticket id or empty |
 | `surface` | routes / endpoints / specs from the plan |
 | `plan_path` | `.bulma-qa/PLAN.md` |
+| `verification_recipe` | Matching project recipe path, or empty |
 | `findings_path` | `.bulma-qa/FINDINGS.md` when any finding exists |
 | `qa` | `PASS` / `FAIL` / `BLOCKED` / `PENDING_TRIAGE` |
 | `triage_class` | after `TRIAGE_RESULT` |
