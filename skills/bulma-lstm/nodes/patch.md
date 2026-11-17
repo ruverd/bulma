@@ -36,6 +36,13 @@ per group; related comments share discovery and one coherent implementation.
 Groups execute sequentially on the same branch. Never parallelize overlapping
 writes. Reuse that coder for corrections, except the final retry uses a fresh one.
 
+For each confirmed behavior defect in scope, apply
+[executable prevention](../../bulma-bus/FEEDBACK.md#make-a-confirmed-fix-executable).
+Verify any review suggestion against the current code. Include or extend the
+smallest relevant check in the same fix when it fits, and record RED/GREEN
+evidence for the original trigger. A broader prevention belongs in `learn`
+as a follow-up candidate.
+
 Inject: all group comments + dispositions + per-comment acceptance, cause evidence,
 grill decisions if any, file whitelist,
 TDD RED/GREEN, same branch. Spawn payload:
