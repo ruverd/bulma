@@ -58,6 +58,20 @@ QA-provider or safety rules. A missing file means no extra input.
 General skill changes go through a normal reviewed change. Do not rewrite
 installed skills or global instructions during a product PR fix.
 
+## Make a confirmed fix executable
+
+For a confirmed behavior defect, check whether the project's CI could catch
+the same failure on a later change. Reuse a relevant check if one exists.
+Suggest or add the smallest useful regression case, extend an existing check,
+or enforce the invariant in the affected API or lint rule. Name the trigger
+and expected result. Avoid generic test requests and duplicate coverage.
+
+Prove that the check fails for the original defect and passes after the fix.
+Use the check's normal CI entry point when available. Report local proof as
+local, and only report CI coverage when the workflow actually runs the check.
+If useful prevention requires a broader change, record it as a follow-up
+candidate under the task criteria below.
+
 ## Decide whether a task is useful
 
 Draft a task only for a confirmed, reusable gap with a concrete change to a

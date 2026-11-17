@@ -149,10 +149,18 @@ the rule.
 Two to four sentences. First line is the severity and the break. Then when it
 happens and what to change. No `Trigger:` / `Fix:` labels on the PR.
 
+For confirmed behavior defects in either inline or body findings, evaluate
+[executable prevention](../../bulma-bus/FEEDBACK.md#make-a-confirmed-fix-executable).
+When a feasible CI check would catch the trigger and coverage is missing,
+include one concrete regression suggestion in the fix, with the input and
+expected result. Phrase it as a recommendation in the existing finding.
+Keep the defect's severity and verdict based on current evidence. An optional
+prevention suggestion does not create a separate finding or approval gate.
+
 ```markdown
 🛑 **Blocker.** `send` gets null.
 
-On first render `user.email` is still undefined, and this calls `send` anyway. Guard before the call.
+On first render `user.email` is still undefined, and this calls `send` anyway. Guard before the call and add a render test that asserts `send` is not called until the email loads.
 ```
 
 `⚠️ **Major.**` for majors; `⚠️ **Medium.**` for mediums. Acceptance findings belong in the body, with the criterion source and missing evidence instead of a fake code line. Include their stable `acceptance:<criterion-slug>` key in marker `open=`. No praise. No questions. No list of other ways to
