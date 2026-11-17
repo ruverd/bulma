@@ -157,7 +157,9 @@ def fresh(record, seconds):
 
 
 def select(data, cfg, authors):
-    families = [identity(author).get('family') for author in authors]
+    implementers = [identity(author) for author in authors]
+    families = [author.get('family') for author in implementers]
+    models = [author.get('model') for author in implementers]
     if not families or not all(families):
         return None
     candidates = data.get('candidates')
@@ -169,7 +171,7 @@ def select(data, cfg, authors):
             continue
         candidate = matches[0]
         actual = identity(candidate.get('identity'))
-        if not actual.get('family') or actual['family'] in families:
+        if not actual.get('family') or actual['family'] in families or actual.get('model') in models:
             continue
         blocked = False
         for name in ('access', 'quota'):

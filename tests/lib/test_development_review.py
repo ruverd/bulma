@@ -106,7 +106,8 @@ class ReviewTest(unittest.TestCase):
 
     def test_same_or_unknown_identity_never_claims_diversity(self):
         self.configure()
-        for identity in (AUTHOR, {}, {'model': 'auto', 'family': 'fixture-b', 'source': 'runtime'}):
+        for identity in (AUTHOR, {}, dict(AUTHOR, family='inconsistent-family'),
+                         {'model': 'auto', 'family': 'fixture-b', 'source': 'runtime'}):
             with self.subTest(identity=identity):
                 self.request['round_id'] += 'x'
                 self.data['candidates'][0]['identity'] = identity
