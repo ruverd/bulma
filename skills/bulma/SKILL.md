@@ -111,3 +111,15 @@ One `J:` line per hook while the overlay runs, for example
 - Write outside `$BULMA_ROOT/.bulma-core/`, `$BULMA_HOME/bulma.json`, and
   `$BULMA_HOME/bulma-watch.json`.
 - Print `TYPESAFE_API_KEY`.
+
+## Bulma Answer
+
+Hosts receiving an open-ended thread can call [answer.py](scripts/answer.py) before composing a reply. Pass ordered turns with verified speaker IDs, thread membership and attachment evidence, a structured model adapter, verified identity mappings and read-only source adapters. The model selects evidence and can request additional reads after seeing results. Work decisions retain independent feedback and review actions for each verified PR. The host rechecks identity, commit and workflow gates before execution and gives Kevin the decision and actual receipts for wording.
+
+For `answer` in chat, inspect the supplied thread and attachments, consult project code for application questions and the owning review policy for gate questions. Reassess the evidence and verify findings at the relevant revision. For work, invoke [reviewer](../bulma-reviewer/SKILL.md) or [feedback](../bulma-lstm/SKILL.md) for the authorized targets, preserving both when applicable. Return actual receipts or a specific outstanding dependency. Ask Kevin to phrase that result.
+
+For a subprocess host, run `python3 scripts/bulma.py answer`. Its JSON-lines session starts with `messages`, `repositories` and verified `identities`. Each turn supplies `ts` (an opaque event ID), `user`, `role`, `in_thread`, `text`, optional extracted `references` and attachment evidence in `files`. For each `{"call": ..., "args": [...]}`, reply with `{"result": ...}` or `{"error": "..."}`. The host supplies structured inference, author lookup, evidence reads and transactional dispatch. The final envelope contains `intent`, factual `content` (dispatch receipts for work), and `jobs`. Delivery belongs to the host. An in-process host may reuse the same investigation function and commit dispatch with its inbox transaction.
+
+Answer reads its own local memory at `$BULMA_HOME/answer/memory.json` (default `~/.bulma/answer/memory.json`). A host may explicitly select another profile with `--memory PATH`. Configure `guidance` for workflow preferences, `repositories` to narrow host-authorized repositories, and `actions` to enable any subset of `review` and `address_feedback`. For advisory-only use, set `actions` to `[]`. Missing fields use host capabilities. Profiles are independent. They never add permissions, override current instructions or change Kevin's voice. In chat, apply this profile specifically for Answer before selecting workflows.
+
+Hosts can advertise other PR workflows in the opening `workflows` array. Answer intersects these with profile actions and returns enabled names in each target’s `workflows` field. The dispatch adapter validates each capability and returns its own receipt.

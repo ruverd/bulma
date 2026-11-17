@@ -5,6 +5,7 @@ this table **before** any Jev call. Trim, then match in order.
 
 | Args | Mode |
 |---|---|
+| `answer <message and context>` | investigate using available project sources, route requested work and return receipts; see [conversation intake](SKILL.md#bulma-answer) |
 | empty | **inventory** → `entry.next_step` |
 | `power [shadow\|cautious\|balanced\|bold]` | print or set the global level; stop |
 | `power <level> <hook>` | set one hook's level (`power_by_hook`); stop |
