@@ -1,5 +1,13 @@
 # 9. Publish — one artifact, fixed template
 
+While preparing the artifact, check confirmed findings in the bound ledger
+for verified recurrence. Follow [Find existing bad examples](../../bulma-bus/FEEDBACK.md#find-existing-bad-examples)
+on the checked head. If it identifies a verified example related to an
+existing finding, recommend the correction there in one optional sentence.
+Keep any verified follow-up outside that correction in the private report.
+This lookup does not change the bound finding, severity, verdict or artifact
+count.
+
 Run [PREFLIGHT.md](../references/PREFLIGHT.md) immediately before POST, including
 promotion and any retry. A changed head returns to review; refresh room and
 CI evidence too. Use the same checked SHA in `commit_id`, STATE and the marker.
