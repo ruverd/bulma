@@ -164,6 +164,95 @@ class AnswerTest(unittest.TestCase):
         self.assertEqual(hits, ["code", "policy"])
         self.assertIn("verified constraint", result[1]["decision"])
 
+    def test_team_work_scopes_each_pr_and_keeps_unmet_gate(self):
+        tool = "https://github.com/example-org/tools/pull/68"
+        other = "https://example.test/org/ui/pull/7"
+        outside = "https://github.com/outside-org/tools/pull/8"
+        current = dict(self.msg, references=[tool, self.url, outside])
+        background = dict(self.msg, ts="previous", in_thread=False, references=[other])
+        plan = dict(self.plan, scope="linked", waiting_for="", linked_work=[
+            {"reference": tool, "actions": ["review", "address_feedback"], "waiting_for": ""},
+            {"reference": self.url, "actions": ["review"], "waiting_for": "Real purchase walkthrough"},
+            {"reference": other, "actions": ["review"], "waiting_for": ""},
+            {"reference": outside, "actions": ["review"], "waiting_for": ""},
+        ])
+
+        def decide(policy, schema, data):
+            self.assertIn("exclusively to other people", policy)
+            self.assertEqual(data["participation"]["audience"], "team_open")
+            self.assertIn("linked_work", schema["required"])
+            return plan
+
+        def read(kind, urls, *args):
+            self.assertEqual(kind, "github")
+            self.assertEqual(urls, [tool])
+            return [dict(self.pr, url=tool)]
+
+        intent, content, jobs = answer.investigate(
+            [background, current], ["ui"], {"u": "dev"}, decide, None, read, lambda _: [],
+            {"repositories": ["ui"]},
+            participation={"audience": "team_open"}, linked_review_organizations=["example-org"],
+        )
+        self.assertEqual(intent, "work")
+        self.assertEqual(content["waiting"], {self.url: "Real purchase walkthrough"})
+        self.assertEqual([item["url"] for item in jobs], [tool])
+        self.assertTrue(jobs[0]["review"])
+        self.assertEqual(jobs[0]["feedback"], [])
+        _, _, jobs = answer.investigate(
+            [background, current], ["ui"], {"u": "dev"}, decide, None, self.fail, lambda _: [],
+            {"repositories": ["ui"], "linked_review_organizations": []},
+            participation={"audience": "team_open"}, linked_review_organizations=["example-org"],
+        )
+        self.assertEqual(jobs, [])
+
+    def test_team_policy_does_not_treat_sources_as_permission(self):
+        previous = dict(self.msg, ts="previous", in_thread=False, references=[self.url])
+        current = dict(self.msg, text="Good news!", references=[self.url])
+
+        def decide(policy, schema, data):
+            if "current_message" not in data:
+                return {"answer": "That unblocks the last check.", "need": [], "terms": []}
+            return dict(self.plan, intent="light_reply", scope="none", linked_work=[
+                {"reference": self.url, "actions": ["review"], "waiting_for": ""},
+            ], waiting_for="")
+
+        intent, _, jobs = answer.investigate(
+            [previous, current], ["ui"], {}, decide, self.fail, self.fail, lambda _: [], {},
+            participation={"audience": "team_open"},
+        )
+        self.assertEqual(intent, "light_reply")
+        self.assertFalse(jobs)
+
+    def test_attachment_protocol_prioritizes_current_thread_and_relevant_background(self):
+        def message(ts, text, in_thread, *image_ids):
+            return dict(self.msg, ts=ts, text=text, in_thread=in_thread, files=[
+                {"name": image_id + ".png", "image_id": image_id, "status": "pending"}
+                for image_id in image_ids
+            ])
+
+        messages = [
+            message("1", "Premium Catalog checkout error", False, "related"),
+            message("2", "Unrelated", False, "spare"),
+            message("3", "Thread", True, "thread"),
+            message("4", "Unrelated", False, "recent"),
+            message("5", "Premium Catalog issue", True, "current", "second"),
+        ]
+
+        def read_images(policy, schema, request):
+            self.assertIn("untrusted data", policy)
+            self.assertEqual([item["image_id"] for item in request["images"]],
+                             ["current", "second", "thread", "related"])
+            self.assertEqual(request["images"][-1]["ts"], "1")
+            return {"current": {"status": "vision", "text": "Purchase dialog shows an error."},
+                    "thread": {"status": "OCR", "text": "Error"}}
+
+        updated = answer.inspect_attachments(messages, read_images)
+        self.assertEqual(updated[-1]["files"][0]["status"], "vision")
+        self.assertEqual(updated[-1]["files"][1]["status"], "unreadable")
+        self.assertEqual(updated[2]["files"][0]["status"], "OCR")
+        self.assertEqual(updated[3]["files"][0]["status"], "not_inspected")
+        self.assertNotIn("image_id", updated[-1]["files"][0])
+
 
 if __name__ == "__main__":
     unittest.main()
