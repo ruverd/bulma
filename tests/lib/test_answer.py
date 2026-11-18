@@ -386,6 +386,30 @@ class AnswerTest(unittest.TestCase):
         )
         self.assertEqual(result["text"], answer.SAFE_REPLY)
 
+    def test_long_evidence_keeps_both_voice_and_accuracy_corrections(self):
+        facts = {"decision": "Recorded finding and its qualification. " * 30}
+        draft = "Verified finding and scope. " * 38
+        feedback = iter([
+            {"pass": False, "correction": "Use the selected voice."},
+            {"pass": False, "correction": "Keep the precondition."},
+            {"pass": True, "correction": ""},
+        ])
+        history = []
+
+        def decide(policy, schema, data):
+            if schema == answer_compose.AUDIT:
+                return next(feedback)
+            self.assertGreater(data["character_limit"], len(draft))
+            history.append(list(data["corrections"]))
+            return {"text": draft}
+
+        result = answer_compose.compose(
+            [self.msg], facts, "reply", {"platform": "portal"}, lambda _: "Voice profile", decide,
+        )
+        self.assertEqual(history, [[], ["Use the selected voice."],
+                                   ["Use the selected voice.", "Keep the precondition."]])
+        self.assertEqual(result["text"], draft.strip())
+
     def test_generic_transport_runs_qa_and_returns_opaque_artifact(self):
         event = "portal-message-b"
         current = dict(self.msg, ts=event, user="account-7", thread_ts="portal-message-a",
