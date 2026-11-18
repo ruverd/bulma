@@ -56,3 +56,9 @@ requested behavior in the plan and publish per-request visual proof before
 returning. Prepare missing local database fixtures and QA auth/provider roles
 through [LOCAL_SETUP.md](references/LOCAL_SETUP.md). Automated evidence never
 counts as the requested human approval.
+
+For a bounded product reproduction, use the
+[direct QA executor](references/THREAD_REPRO.md) from Answer or another
+host. For an exact PR without a ready compatible instance, resolve its head
+and dependencies and provision the approved local runtime under the QA
+lease. Use the sanitized evidence returned by the executor for the request.

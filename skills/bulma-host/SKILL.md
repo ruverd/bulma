@@ -34,6 +34,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
 | `session_usage` | Total tokens this run spent, as the host reports them (Claude Code: sum `usage` in the session transcript; Grok and Codex: their usage readout) | `n/a`. Never estimate |
 
+[Human-facing output through Kevin](references/HUMAN_OUTPUT.md)
 ## Review model identity
 
 For review attribution, read the executing session's model identity from host
