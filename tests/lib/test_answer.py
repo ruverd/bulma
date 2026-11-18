@@ -259,6 +259,7 @@ class AnswerTest(unittest.TestCase):
         parent = dict(self.msg, ts="root", user="reporter", thread_ts="root",
                       text="Checkout error on Buy.", files=[{"status": "vision", "text": "Buy dialog error"}])
         current = dict(self.msg, ts="reply", user="member", thread_ts="root", text=utterance)
+        current["references"] = capabilities.pop("message_references", [])
         request = capabilities.pop("direct_request", {
             "ts": "reply", "user": "member", "utterance": utterance,
             "addresses": [{"user": "assistant-account", "text": "@assistant"}],
@@ -389,6 +390,44 @@ class AnswerTest(unittest.TestCase):
                 intent, facts, jobs = self.direct_answer(text, {}, decide, qa_targets=[target], run_qa=self.fail)
                 self.assertEqual((intent, facts["decision"], jobs),
                                  ("clarify", answer.QA_DETAIL["success_text"], []))
+
+    def test_pr_qa_uses_approved_repository_and_pins_the_plan(self):
+        pr = "https://github.com/example-org/ui/pull/5"
+        text = f"Assistant, run QA on {pr}."
+        head = "a" * 40
+        selected = dict(self.plan, intent="qa", request_excerpt=text, source_ts="reply",
+                        scope="none", actions=[], qa_target="fixture", qa_pr=pr)
+        target = {"id": "fixture", "environment": "local", "repositories": ["Example-Org/UI"],
+                  "surfaces": [{"id": "catalog", "label": "Catalog", "controls": []}]}
+        calls = []
+
+        def decide(policy, schema, data):
+            if schema != answer.QA_PLAN:
+                return selected
+            self.assertIn("Preview ready", data["pr_description"])
+            return dict(surface="catalog", actions=[], bug_text="Preview unavailable",
+                        success_text="Preview ready", missing="none")
+
+        def execute(event, target_id, url, plan):
+            calls.append((event, target_id, url, plan))
+            if plan == {"inspect_pr": True}:
+                return {"status": "planning", "head": head,
+                        "description": "On Catalog, saw Preview unavailable. Expected Preview ready."}
+            return {"status": "not_reproduced"}
+
+        scope = {"message_references": [pr], "linked_review_organizations": ["example-org"]}
+        intent, facts, jobs = self.direct_answer(text, {}, decide, qa_targets=[target], run_qa=execute, **scope)
+        self.assertEqual((intent, facts["qa"]["status"], jobs), ("reply", "not_reproduced", []))
+        self.assertEqual(calls, [
+            ("reply", "fixture", pr, {"inspect_pr": True}),
+            ("reply", "fixture", pr, {"surface": "catalog", "actions": [], "head": head,
+                                       "bug_text": "Preview unavailable", "success_text": "Preview ready"}),
+        ])
+        intent, facts, jobs = self.direct_answer(
+            text, {}, decide, qa_targets=[target | {"repositories": ["example-org/api"]}],
+            run_qa=self.fail, **scope,
+        )
+        self.assertEqual((intent, facts["qa_status"], jobs), ("reply", "blocked", []))
 
     def test_kevin_uses_host_context_for_slack_and_forge(self):
         url = "https://github.com/example-org/ui/pull/5#pullrequestreview-123"

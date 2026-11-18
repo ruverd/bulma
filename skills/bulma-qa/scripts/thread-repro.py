@@ -2,7 +2,7 @@
 """Run a bounded Bulma QA reproduction selected from a host-owned catalog."""
 
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -21,7 +22,9 @@ from uuid import uuid4
 SKILLS = Path(__file__).resolve().parents[2]
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(SKILLS / "bulma/scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from answer_privacy import SENSITIVE_LOCATOR, redact
+from qa_environment import Blocked, OID, PR_URL, provision, read_pr, resolve_revisions, validate_profile
 
 
 TARGET_ID = re.compile(r"[a-z][a-z0-9-]{0,79}")
@@ -30,10 +33,6 @@ TEMPLATE = SKILLS / "bulma-bus/templates/JOBS.md"
 
 
 class Busy(RuntimeError):
-    pass
-
-
-class Blocked(RuntimeError):
     pass
 
 
@@ -51,6 +50,10 @@ def catalog_description(targets):
         if not TARGET_ID.fullmatch(key):
             continue
         target = {"id": key, "environment": item["environment"], "pr": item.get("pr", "")}
+        if "provision" in item:
+            validate_profile(item["provision"])
+            target["repositories"] = [service["repo"] for service in item["provision"]["services"].values()
+                                      if service.get("repo")]
         if "surfaces" in item:
             target["surfaces"] = [
                 {"id": name, "label": surface["label"],
@@ -185,13 +188,15 @@ def origin(url):
     return parsed.scheme, parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
 
 
-def qa_repro(config, out, run):
+def qa_repro(config, out, run, browser=None):
     kind = config["kind"]
     target = config["url"]
     boundary = origin(target)
-    if (kind not in ("local", "dev", "preview")
-            or (kind == "local" and boundary[1] not in ("localhost", "127.0.0.1", "::1"))
-            or (kind != "local" and boundary[0] != "https")):
+    local_origin = origin(browser.url) if browser is not None else None
+    local = kind == "local" and (boundary == local_origin if local_origin
+                                 else boundary[1] in ("localhost", "127.0.0.1", "::1"))
+    hosted = browser is None and kind in ("dev", "preview") and boundary[0] == "https"
+    if not (local or hosted):
         raise Blocked("The QA target is outside the authorized test environments.")
     if config.get("isolated_data") is not True:
         raise Blocked("The target has no verified isolated test data or auth boundary.")
@@ -206,7 +211,13 @@ def qa_repro(config, out, run):
     session = "bulma-thread-qa-" + uuid4().hex
     base = ["agent-browser", "--session", session, "--allowed-domains", boundary[1]]
     state = config.get("auth_state")
-    if state and not Path(state).is_file():
+    if browser is not None:
+        if state:
+            raise Blocked("Provisioned QA requires its own synthetic test session.")
+        if config["provision"].get("browser_test_state") is True:
+            state = "/opt/bulma/qa-state.json"
+            run("test", "-r", state)
+    elif state and not Path(state).is_file():
         raise Blocked("The approved QA session is missing or expired.")
 
     def verify_location():
@@ -237,10 +248,13 @@ def qa_repro(config, out, run):
             raise Blocked("The observed UI contains data that could not be cleared for sharing.")
         with TemporaryDirectory(prefix="bulma-qa-capture-") as private:
             capture = Path(private) / "proof.png"
-            run(*base, "screenshot", config["evidence_selector"], str(capture))
+            if browser is None:
+                run(*base, "screenshot", config["evidence_selector"], str(capture))
+                ocr = run("tesseract", str(capture), "stdout")
+            else:
+                ocr = browser.capture(config["evidence_selector"], capture, *base)
             if config.get("exact_route"):
                 verify_location()
-            ocr = run("tesseract", str(capture), "stdout")
             if (marker.casefold() not in " ".join(ocr.split()).casefold()
                     or redact(ocr) != ocr or SENSITIVE_LOCATOR.search(ocr)
                     or not capture.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
@@ -258,12 +272,38 @@ def qa_repro(config, out, run):
             pass
 
 
+def approved_profile(config, pr):
+    profile = config["provision"]
+    match = PR_URL.fullmatch(pr)
+    if (not match or config.get("pr") or config.get("kind") != "local" or config.get("auth_state")
+            or config.get("isolated_data") is not True or config.get("synthetic_evidence") is not True):
+        raise Blocked("An approved isolated local QA profile and exact PR are required.")
+    validate_profile(profile)
+    allowed = {service["repo"].casefold() for service in profile["services"].values() if service.get("repo")}
+    if match[1].casefold() not in allowed:
+        raise Blocked("The PR repository is outside the approved QA profile.")
+    return profile
+
+
 def run_job(args, targets, plan=None):
-    if not REQUEST_ID.fullmatch(args.event) or args.target not in targets:
+    if not args.event or not args.out or not REQUEST_ID.fullmatch(args.event) or args.target not in targets:
         raise Blocked("The request has no approved QA target.")
-    config = resolve_repro(targets[args.target], plan)
+    config = targets[args.target]
+    profile = None
+    expected_head = None
     plan_hash = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).hexdigest() if plan is not None else None
-    if config.get("pr", "") != args.pr:
+    if "provision" in config:
+        profile = approved_profile(config, args.pr)
+        if plan == {"inspect_pr": True}:
+            revision, body = read_pr(args.pr)
+            return {"status": "planning", "head": revision.oid, "description": redact(body[:10_000])}
+        if isinstance(plan, dict) and "head" in plan:
+            expected_head = plan["head"]
+            if not isinstance(expected_head, str) or not OID.fullmatch(expected_head):
+                raise Blocked("The reproduction is missing a verified plan revision.")
+            plan = {key: value for key, value in plan.items() if key != "head"}
+        resolve_repro(config | {"url": "http://127.0.0.1"}, plan)
+    elif config.get("pr", "") != args.pr:
         raise Blocked("There is no approved preview for this PR.")
     checkout = Path(config["checkout"]).resolve(strict=True)
     repo = Path(subprocess.check_output(
@@ -279,8 +319,8 @@ def run_job(args, targets, plan=None):
             if saved["target"] != args.target or saved["pr"] != args.pr or saved.get("plan_hash") != plan_hash:
                 raise Blocked("This request already has a different QA target or plan.")
             return saved["result"]
-        def verify_head():
-            if not args.pr:
+        def verify_preview():
+            if profile is not None or not args.pr:
                 return
             if not re.fullmatch(r"https://github\.com/[\w.-]+/[\w.-]+/pull/[1-9]\d*", args.pr):
                 raise Blocked("The requested PR cannot be verified.")
@@ -290,7 +330,7 @@ def run_job(args, targets, plan=None):
             ).strip()
             if head != config.get("head"):
                 raise Blocked("The approved preview is not pinned to the current PR commit.")
-        verify_head()
+        verify_preview()
         shim = SKILLS / "before-and-after/scripts/ensure-session.sh"
         with TemporaryDirectory(prefix="bulma-qa-run-") as folder:
             env = {key: os.environ[key] for key in ("HOME", "PATH", "TMPDIR", "BULMA_HOME") if key in os.environ}
@@ -312,13 +352,33 @@ def run_job(args, targets, plan=None):
             subprocess.run(["bash", str(shim)], cwd=repo, env=env, check=True,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
             args.out.mkdir(mode=0o700, parents=True, exist_ok=True)
-            atomic(args.out / "plan.json", json.dumps({"environment": config["environment"], "steps": config["steps"]}))
+            proof = args.out / "proof.png"
+            proof.unlink(missing_ok=True)
             try:
-                result = qa_repro(config, args.out, run)
-                verify_head()
+                revisions = resolve_revisions(profile, args.pr) if profile is not None else None
+                if expected_head is not None:
+                    repository = PR_URL.fullmatch(args.pr)[1].casefold()
+                    revision = next(rev for rev in revisions.values() if rev.repository.casefold() == repository)
+                    if revision.oid != expected_head:
+                        raise Blocked("The PR head changed after planning. Request QA on the current revision.")
+                runtime = provision(profile, revisions, Path(folder)) if revisions is not None else nullcontext()
+                with runtime as browser:
+                    cfg = config | {"url": browser.url} if browser is not None else config
+                    case = resolve_repro(cfg, plan)
+                    atomic(args.out / "plan.json", json.dumps({"environment": case["environment"], "steps": case["steps"]}))
+                    result = qa_repro(case, args.out, browser.run if browser is not None else run, browser)
+                    if browser is not None:
+                        result["revisions"] = {rev.repository: rev.oid for rev in revisions.values()}
+                        result["reused_environment"] = browser.reused
+                if revisions is not None and revisions != resolve_revisions(profile, args.pr):
+                    raise Blocked("A QA revision changed during the run. Request the current head.")
+                verify_preview()
             except Blocked as exc:
                 result = {"status": "blocked", "reason": str(exc)}
-                (args.out / "proof.png").unlink(missing_ok=True)
+                proof.unlink(missing_ok=True)
+            except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
+                proof.unlink(missing_ok=True)
+                raise
             atomic(result_path, json.dumps({"target": args.target, "pr": args.pr,
                                            "plan_hash": plan_hash, "result": result}))
             return result
@@ -342,13 +402,24 @@ def main():
             if len(payload) > 8192:
                 raise Blocked("The reproduction plan exceeds its input limit.")
             plan = json.loads(payload)
-        result = catalog_description(targets) if args.catalog else run_job(args, targets, plan)
+        if args.catalog:
+            result = catalog_description(targets)
+        else:
+            def interrupted(*_):
+                raise Blocked("The QA executor was interrupted or exceeded its execution budget.")
+
+            signal.signal(signal.SIGTERM, interrupted)
+            signal.signal(signal.SIGALRM, interrupted)
+            signal.alarm(340)
+            result = run_job(args, targets, plan)
     except Busy:
         return 75
     except Blocked as exc:
         result = {"status": "blocked", "reason": str(exc)}
     except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
         result = {"status": "blocked", "reason": "The authorized QA target or its local tooling could not be resolved."}
+    finally:
+        signal.alarm(0)
     print(json.dumps(result))
     return 0
 
