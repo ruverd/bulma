@@ -352,6 +352,44 @@ class AnswerTest(unittest.TestCase):
         self.assertEqual(calls, [("reply", "fixture", "")])
         self.assertEqual(facts["qa"]["status"], "reproduced")
 
+    def test_qa_derives_distinct_plans_on_one_approved_environment(self):
+        target = {"id": "fixture", "environment": "local", "surfaces": [
+            {"id": "catalog", "label": "Catalog", "controls": [{"id": "details", "label": "Expand details"}]},
+        ]}
+        for symptom, expected, actions in (
+            ("Preview unavailable", "Preview ready", ["details"]),
+            ("Catalog offline", "Catalog visible", []),
+        ):
+            with self.subTest(symptom=symptom):
+                text = f"Assistant, please run QA on Catalog. Saw {symptom}, expected {expected}."
+                selected = dict(self.plan, intent="qa", source_ts="reply", request_excerpt=text,
+                                scope="none", actions=[], qa_target="fixture", qa_pr="")
+                detail = dict(surface="catalog", actions=actions, bug_text=symptom,
+                              success_text=expected, missing="none")
+                calls = []
+
+                def decide(policy, schema, data):
+                    if schema == answer.QA_PLAN:
+                        self.assertEqual(data["target"], target)
+                        self.assertIn(symptom, data["messages"][-1]["text"])
+                        return detail
+                    return selected
+
+                def execute(*args):
+                    calls.append(args)
+                    return {"status": "reproduced"}
+
+                intent, facts, jobs = self.direct_answer(text, {}, decide, qa_targets=[target], run_qa=execute)
+                self.assertEqual((intent, facts["qa"]["status"], jobs), ("reply", "reproduced", []))
+                self.assertEqual(calls, [("reply", "fixture", "", {
+                    "surface": "catalog", "actions": actions, "bug_text": symptom, "success_text": expected,
+                })])
+
+                detail["success_text"] = "Output invented by the model"
+                intent, facts, jobs = self.direct_answer(text, {}, decide, qa_targets=[target], run_qa=self.fail)
+                self.assertEqual((intent, facts["decision"], jobs),
+                                 ("clarify", answer.QA_DETAIL["success_text"], []))
+
     def test_kevin_uses_host_context_for_slack_and_forge(self):
         url = "https://github.com/example-org/ui/pull/5#pullrequestreview-123"
         facts = {"decision": "One dependency remains.", "citations": [url]}

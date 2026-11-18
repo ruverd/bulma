@@ -132,7 +132,7 @@ To enable authenticated direct requests, provide `direct_request` with the curre
 
 Bind `read_investigation` to allowlisted read-only product evidence with the same arguments as `read`. It grants no command execution, environment access or mutation. Filter sensitive content before inference or composition and check the final text before delivery. Deletion, changes to the assistant or its rules, unsafe operations and disclosure requests return policy replies. The existing PR workflows keep their explicit requester, target and evidence requirements.
 
-Hosts may advertise `qa_targets` with safe target IDs, environment labels and steps. Bind `run_qa(event, target, pr)` to the direct [Bulma QA reproduction executor](../bulma-qa/references/THREAD_REPRO.md). The host rechecks the target before execution and owns delivery of approved artifacts. A QA request returns a reply with its evidence or blocker and does not dispatch a PR review.
+Hosts may advertise `qa_targets` with safe target IDs, environment labels and approved surface and control IDs. Answer derives a reproduction plan from the conversation for these targets. Bind `run_qa(event, target, pr, plan)` to the direct [Bulma QA reproduction executor](../bulma-qa/references/THREAD_REPRO.md). For existing fixed cases, advertise `steps` instead of `surfaces` and use the three-argument call. The host rechecks the approved scope and delivers approved artifacts. QA returns evidence or a blocker in a reply.
 
 Compose a human-facing result with [the host's Kevin binding](../bulma-host/references/HUMAN_OUTPUT.md) once the verified facts are available.
 

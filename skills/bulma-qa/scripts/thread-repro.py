@@ -46,11 +46,63 @@ def read_catalog(path):
 
 
 def catalog_description(targets):
-    return [
-        {"id": key, "environment": item["environment"], "steps": item["steps"],
-         "pr": item.get("pr", "")}
-        for key, item in targets.items() if TARGET_ID.fullmatch(key)
-    ]
+    description = []
+    for key, item in targets.items():
+        if not TARGET_ID.fullmatch(key):
+            continue
+        target = {"id": key, "environment": item["environment"], "pr": item.get("pr", "")}
+        if "surfaces" in item:
+            target["surfaces"] = [
+                {"id": name, "label": surface["label"],
+                 "controls": [{"id": action, "label": control["label"]}
+                              for action, control in surface.get("controls", {}).items()]}
+                for name, surface in item["surfaces"].items()
+            ]
+        else:
+            target["steps"] = item["steps"]
+        description.append(target)
+    return description
+
+
+def resolve_repro(config, plan):
+    if "surfaces" not in config and plan is None:
+        return config
+    if (not isinstance(plan, dict) or set(plan) != {"surface", "actions", "bug_text", "success_text"}
+            or not isinstance(plan["surface"], str)):
+        raise Blocked("The reproduction needs one approved surface and two visible assertions.")
+    surface = config.get("surfaces", {}).get(plan["surface"])
+    if not surface or not TARGET_ID.fullmatch(plan["surface"]):
+        raise Blocked("The reproduction surface is not approved for this environment.")
+    controls = surface.get("controls", {})
+    actions = plan["actions"]
+    if (not isinstance(actions, list) or len(actions) > 8
+            or any(not isinstance(action, str) or not TARGET_ID.fullmatch(action) or action not in controls
+                   for action in actions)):
+        raise Blocked("The reproduction uses a control outside its approved surface.")
+    markers = [plan["bug_text"], plan["success_text"]]
+    if any(not isinstance(marker, str) or not 3 <= len(marker) <= 160 or "\n" in marker
+           or redact(marker) != marker or SENSITIVE_LOCATOR.search(marker) or "[redacted]" in marker
+           for marker in markers):
+        raise Blocked("The reproduction assertions are incomplete or contain sensitive material.")
+    symptom, success = (marker.casefold() for marker in markers)
+    if symptom in success or success in symptom:
+        raise Blocked("The reproduction assertions do not distinguish the expected outcomes.")
+    path = surface["path"]
+    if not path.startswith("/") or (path != "/" and any(
+        not re.fullmatch(r"[A-Za-z0-9_~-][A-Za-z0-9._~-]*", part)
+        for part in path.strip("/").split("/")
+    )) or "//" in path:
+        raise Blocked("The approved surface must have a fixed path within the test origin.")
+    origin(config["url"])
+    return {
+        **config,
+        "url": urlsplit(config["url"])._replace(path=path).geturl(),
+        "exact_route": True,
+        "steps": [f"Open {surface['label']}", *(controls[action]["label"] for action in actions)],
+        "clicks": [controls[action]["selector"] for action in actions],
+        "evidence_selector": surface["evidence_selector"],
+        "bug_text": markers[0], "success_text": markers[1],
+    }
 
 
 def set_fields(content, fields):
@@ -156,17 +208,25 @@ def qa_repro(config, out, run):
     state = config.get("auth_state")
     if state and not Path(state).is_file():
         raise Blocked("The approved QA session is missing or expired.")
+
+    def verify_location():
+        observed = urlsplit(run(*base, "get", "url").strip())
+        clean_url = observed._replace(query="", fragment="").geturl()
+        if (origin(clean_url) != boundary
+                or (config.get("exact_route") and (observed.path != urlsplit(target).path
+                                                   or observed.query or observed.fragment))):
+            raise Blocked("The browser left the approved QA surface.")
+
     try:
         run("agent-browser", "doctor", "--offline", "--quick")
         run(*(base + (["--state", state] if state else [])), "open", target)
         for selector in ["", *actions]:
             if selector:
                 run(*base, "click", selector)
-            observed = urlsplit(run(*base, "get", "url").strip())
-            clean_url = observed._replace(query="", fragment="").geturl()
-            if origin(clean_url) != boundary:
-                raise Blocked("The browser left the approved QA origin before collecting evidence.")
+            verify_location()
         run(*base, "wait", config["evidence_selector"])
+        if config.get("exact_route"):
+            verify_location()
         shown = run(*base, "get", "text", config["evidence_selector"])
         succeeded = config["success_text"] in shown
         failed = config["bug_text"] in shown
@@ -178,6 +238,8 @@ def qa_repro(config, out, run):
         with TemporaryDirectory(prefix="bulma-qa-capture-") as private:
             capture = Path(private) / "proof.png"
             run(*base, "screenshot", config["evidence_selector"], str(capture))
+            if config.get("exact_route"):
+                verify_location()
             ocr = run("tesseract", str(capture), "stdout")
             if (marker.casefold() not in " ".join(ocr.split()).casefold()
                     or redact(ocr) != ocr or SENSITIVE_LOCATOR.search(ocr)
@@ -196,10 +258,11 @@ def qa_repro(config, out, run):
             pass
 
 
-def run_job(args, targets):
+def run_job(args, targets, plan=None):
     if not REQUEST_ID.fullmatch(args.event) or args.target not in targets:
         raise Blocked("The request has no approved QA target.")
-    config = targets[args.target]
+    config = resolve_repro(targets[args.target], plan)
+    plan_hash = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).hexdigest() if plan is not None else None
     if config.get("pr", "") != args.pr:
         raise Blocked("There is no approved preview for this PR.")
     checkout = Path(config["checkout"]).resolve(strict=True)
@@ -213,8 +276,8 @@ def run_job(args, targets):
         result_path = args.out / "result.json"
         if result_path.exists():
             saved = json.loads(result_path.read_text())
-            if saved["target"] != args.target or saved["pr"] != args.pr:
-                raise Blocked("This request already has a different QA target.")
+            if saved["target"] != args.target or saved["pr"] != args.pr or saved.get("plan_hash") != plan_hash:
+                raise Blocked("This request already has a different QA target or plan.")
             return saved["result"]
         def verify_head():
             if not args.pr:
@@ -256,7 +319,8 @@ def run_job(args, targets):
             except Blocked as exc:
                 result = {"status": "blocked", "reason": str(exc)}
                 (args.out / "proof.png").unlink(missing_ok=True)
-            atomic(result_path, json.dumps({"target": args.target, "pr": args.pr, "result": result}))
+            atomic(result_path, json.dumps({"target": args.target, "pr": args.pr,
+                                           "plan_hash": plan_hash, "result": result}))
             return result
 
 
@@ -268,10 +332,17 @@ def main():
     parser.add_argument("--target")
     parser.add_argument("--pr", default="")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--plan-stdin", action="store_true")
     args = parser.parse_args()
     try:
         targets = read_catalog(args.registry)
-        result = catalog_description(targets) if args.catalog else run_job(args, targets)
+        plan = None
+        if args.plan_stdin:
+            payload = sys.stdin.read(8193)
+            if len(payload) > 8192:
+                raise Blocked("The reproduction plan exceeds its input limit.")
+            plan = json.loads(payload)
+        result = catalog_description(targets) if args.catalog else run_job(args, targets, plan)
     except Busy:
         return 75
     except Blocked as exc:

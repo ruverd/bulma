@@ -28,12 +28,12 @@ class ThreadQA(unittest.TestCase):
             "synthetic_evidence": True, "isolated_data": True,
         }
 
-    def browser(self, observed, ocr=None):
+    def browser(self, observed, ocr=None, url=None):
         def run(*argv):
             if argv[0] == "tesseract":
                 return ocr if ocr is not None else observed
             if argv[-2:] == ("get", "url"):
-                return self.case["url"]
+                return url or self.case["url"]
             if argv[-3:-1] == ("get", "text"):
                 return observed
             if argv[-3] == "screenshot":
@@ -63,6 +63,48 @@ class ThreadQA(unittest.TestCase):
                      dict(self.case, isolated_data=False)):
             with self.assertRaises(qa.Blocked):
                 qa.qa_repro(case, self.root, lambda *args: self.fail(args))
+
+    def dynamic_case(self):
+        return {key: value for key, value in self.case.items()
+                if key not in {"steps", "clicks", "bug_text", "success_text", "evidence_selector"}} | {
+            "surfaces": {
+                "checkout": {"label": "Checkout", "path": "/checkout", "evidence_selector": "#result",
+                             "controls": {"details": {"label": "Expand details", "selector": "#details"}}},
+            },
+        }
+
+    def test_dynamic_case_resolves_two_reports_without_fixed_assertions(self):
+        config = self.dynamic_case()
+        config["auth_state"] = "private-test-session.json"
+        catalog = qa.catalog_description({"fixture": config})
+        self.assertEqual(catalog[0]["surfaces"][0]["controls"], [{"id": "details", "label": "Expand details"}])
+        self.assertNotIn("auth_state", str(catalog))
+        self.assertNotIn("#result", str(catalog))
+        config.pop("auth_state")
+        for symptom, expected, actions in (
+            ("Checkout unavailable", "Checkout ready", []),
+            ("Details missing", "Details expanded", ["details"]),
+        ):
+            case = qa.resolve_repro(config, {
+                "surface": "checkout", "actions": actions, "bug_text": symptom, "success_text": expected,
+            })
+            self.assertEqual(case["clicks"], ["#details"] if actions else [])
+            result = qa.qa_repro(case, self.root, self.browser(symptom))
+            self.assertEqual(result["status"], "reproduced")
+            self.assertEqual(result["observation"], symptom)
+
+    def test_dynamic_case_rejects_raw_controls_and_navigation(self):
+        config = self.dynamic_case()
+        plan = dict(surface="checkout", actions=[], bug_text="Checkout failed", success_text="Checkout ready")
+        for change in (dict(actions=["#arbitrary"]), dict(url="https://example.test/"),
+                       dict(actions=["details"] * 9), dict(bug_text="See Checkout ready"),
+                       dict(bug_text="password=fixture-private-value")):
+            with self.assertRaises(qa.Blocked):
+                qa.resolve_repro(config, plan | change)
+        case = qa.resolve_repro(config, plan)
+        with self.assertRaisesRegex(qa.Blocked, "left the approved QA surface"):
+            qa.qa_repro(case, self.root, self.browser("Checkout failed", url=self.case["url"] + "/outside"))
+        self.assertFalse((self.root / "proof.png").exists())
 
     def test_shares_existing_bus_slot_and_releases_it(self):
         repo = self.root / "repo"
