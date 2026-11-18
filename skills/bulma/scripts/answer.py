@@ -7,6 +7,7 @@ import re
 from urllib.parse import urlsplit
 
 from answer_privacy import SENSITIVE_LOCATOR, SAFE_REPLY, scrub
+from answer_compose import compose
 
 def load_memory(path=None):
     """Read only the host-selected Answer profile. Conversation data cannot select it."""
@@ -286,14 +287,25 @@ EXPLICIT_WORKFLOW = {
     ),
     "address_feedback": re.compile(r"\b(?:address|fix|resolve|handle|corrig\w*|resolv\w*|trate|tratar)\b.{0,70}\b(?:feedback|review comments|change requests|comentários|achados)\b", re.I),
 }
+DIRECT_PREFIX = r"^(?:(?:please|por favor)\s*,?\s*|(?:(?:could|can|would) you|(?:você )?(?:pode|poderia|consegue))\s+)*"
+DELETION_REQUEST = re.compile(DIRECT_PREFIX + r"(?:delete|erase|apagu[ea]r?|exclu(?:a|i[ra])|delet[ea]r?|drop\s+(?:the\s+)?(?:table|database))\b", re.I)
+AUTOMATION_CHANGE = re.compile(
+    DIRECT_PREFIX + r"(?:change|modify|update|edit|altere?|mud[ea]r?|modifique?|atualiz[ea]r?)\b"
+    r".{0,100}\b(?:your|own|su[ao]s?|própri[ao]s?|bulma|herdr|kevin|hooverbot)\b"
+    r".{0,70}\b(?:behavio[u]?r|config\w*|polic\w*|rules?|permissions?|comportamento|regras?|"
+    r"permiss[õo]es)\b", re.I,
+)
 
 
 def has_assistant_address(text, assistant):
     identifier = str(assistant.get("id", ""))
     if identifier and re.search(rf"<@{re.escape(identifier)}(?:\|[^>]+)?>", text):
         return True
-    return any(re.search(rf"(?<!\w){re.escape(name)}(?!\w)", text, re.I)
-               for name in assistant.get("names", []) if name)
+    return any(
+        re.search(rf"(?:^|[\n.!?])\s*(?:(?:hey|hi|oi|olá)\s+)?{re.escape(name)}\s*[:,!]"
+                  rf"|,\s*{re.escape(name)}\s*[.!?]*\s*$", text, re.I)
+        for name in assistant.get("names", []) if name
+    )
 
 
 def request_excerpt(plan, request, current, assistant):
@@ -309,6 +321,11 @@ def workflow_words(excerpt, assistant):
     for name in assistant.get("names", []):
         excerpt = re.sub(rf"(?<!\w){re.escape(name)}(?!\w)", "", excerpt, flags=re.I)
     return excerpt.strip(" \n,:-")
+
+
+def policy_block(reason):
+    return "reply", {"decision": BLOCKED_REQUESTS[reason], "security_block": True,
+                     "sensitive": reason == "sensitive_data"}, []
 
 
 def linked_review_repository(url, organizations):
@@ -392,6 +409,15 @@ def investigate(
     if direct:
         messages = scrub(messages)
         direct_request = scrub(direct_request)
+    if addressed:
+        utterance = direct_request["utterance"]
+        operation = workflow_words(utterance, assistant)
+        if SENSITIVE_LOCATOR.search(utterance):
+            return policy_block("sensitive_data")
+        if DELETION_REQUEST.search(operation):
+            return policy_block("deletion")
+        if AUTOMATION_CHANGE.search(operation):
+            return policy_block("automation_behavior")
     if read_images:
         messages = inspect_attachments(messages, read_images)
         if direct:
@@ -428,14 +454,11 @@ def investigate(
     excerpt = request_excerpt(plan, direct_request, current, assistant) if addressed else ""
     if intent in ("investigate", "qa", "blocked") and not excerpt:
         return "ignore", {}, []
-    if addressed and SENSITIVE_LOCATOR.search(direct_request["utterance"]):
-        return "reply", {"decision": SAFE_REPLY, "security_block": True, "sensitive": True}, []
     if addressed and excerpt and plan.get("block_reason") in BLOCKED_REQUESTS:
         intent = "blocked"
     if intent == "blocked":
-        return "reply", {"decision": BLOCKED_REQUESTS.get(
-            plan.get("block_reason"), BLOCKED_REQUESTS["outside_scope"]
-        ), "security_block": True, "sensitive": plan.get("block_reason") == "sensitive_data"}, []
+        reason = plan.get("block_reason")
+        return policy_block(reason if reason in BLOCKED_REQUESTS else "outside_scope")
     if intent == "work" and addressed:
         explicit = {action for action, pattern in EXPLICIT_WORKFLOW.items()
                     if pattern.search(workflow_words(excerpt, assistant))}
@@ -468,6 +491,8 @@ def investigate(
         dict.fromkeys(url for url in plan["references"] if url in observed)
     )
     if intent == "qa":
+        if not re.search(r"\b(?:qa|reproduc\w*|reproduz\w*|test(?:e|ar)?|teste)\b", excerpt, re.I):
+            return "clarify", {"decision": "Ask whether runtime QA is the requested check."}, []
         targets = {target["id"]: target for target in qa_targets}
         target = targets.get(plan.get("qa_target"))
         pr = plan.get("qa_pr") or ""
@@ -475,7 +500,8 @@ def investigate(
             target = None
         if not target or not run_qa:
             return "reply", {
-                "decision": "QA is blocked until the authorized test environment and concrete reproduction steps can be identified. Ask only for the missing detail.",
+                "decision": ("QA is blocked because no approved test target is configured for this channel."
+                             if not targets else "QA is blocked because no approved target matches the request. Ask only for the missing environment or reproduction step."),
                 "qa_status": "blocked",
             }, []
         result = scrub(run_qa(current["ts"], target["id"], pr))
@@ -576,9 +602,9 @@ def investigate(
         if intent == "investigate":
             if not read_investigation:
                 return {"unavailable": "The host has no configured read-only investigation adapter."}
-            return scrub(read_investigation(name, references, search_query, lookup_repos, terms[:8]))
+            return scrub(read_investigation(name, references, search_query, lookup_repos, terms[:8]), locators=True)
         value = read(name, references, search_query, lookup_repos, terms)
-        return scrub(value) if direct else value
+        return scrub(value, locators=intent != "work") if direct else value
 
     def collect(sources, terms):
         for name in sorted(sources - evidence.keys()):
@@ -693,6 +719,13 @@ def protocol(stream, output, memory_path=None):
         return response["result"]
 
     request = json.loads(stream.readline())
+    if request.get("mode") == "compose":
+        send(compose(
+            request["messages"], request["facts"], request["intent"], request["context"],
+            lambda data: call("compile_kevin", data), lambda *args: call("decide", *args),
+            request.get("github_organizations", ()),
+        ))
+        return
     supplied_links = {m["text"]: m.get("references", []) for m in request["messages"]}
     intent, content, jobs = investigate(
         request["messages"],

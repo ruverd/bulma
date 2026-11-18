@@ -10,6 +10,7 @@ import unittest
 SCRIPT = Path(__file__).resolve().parents[2] / "skills/bulma/scripts"
 sys.path.insert(0, str(SCRIPT))
 import answer
+import answer_compose
 
 
 class AnswerTest(unittest.TestCase):
@@ -336,6 +337,39 @@ class AnswerTest(unittest.TestCase):
             self.assertFalse(jobs)
         self.assertEqual(calls, [("reply", "fixture", "")])
         self.assertEqual(facts["qa"]["status"], "reproduced")
+
+    def test_kevin_uses_host_context_for_slack_and_forge(self):
+        url = "https://github.com/example-org/ui/pull/5#pullrequestreview-123"
+        facts = {"decision": "One dependency remains.", "citations": [url]}
+        for platform in ("slack", "forge"):
+            with self.subTest(platform=platform):
+                compiled = []
+
+                def compile_kevin(request):
+                    compiled.append(request)
+                    return "Host-selected profile"
+
+                def decide(policy, schema, data):
+                    if schema == answer_compose.TEXT:
+                        self.assertEqual(data["kevin"], "Host-selected profile")
+                        return {"text": "One dependency remains."}
+                    self.assertEqual(data["facts"]["decision"], facts["decision"])
+                    return {"pass": True, "correction": ""}
+
+                result = answer_compose.compose(
+                    [self.msg], facts, "reply", {"platform": platform, "task": "review"},
+                    compile_kevin, decide, ["example-org"],
+                )
+                self.assertEqual(compiled[0]["context"]["platform"], platform)
+                self.assertIn(f"<{url}|Evidence>" if platform == "slack" else f"[Evidence]({url})",
+                              result["text"])
+
+    def test_kevin_cannot_publish_sensitive_draft(self):
+        result = answer_compose.compose(
+            [self.msg], {"decision": "An issue was observed."}, "reply", {"platform": "slack"},
+            lambda _: "Profile", lambda *args: {"text": "password=fixture-test-secret"},
+        )
+        self.assertEqual(result["text"], answer.SAFE_REPLY)
 
 
 if __name__ == "__main__":

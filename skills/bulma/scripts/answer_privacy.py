@@ -37,13 +37,14 @@ def redact(text, known=()):
     return text
 
 
-def scrub(value, known=()):
+def scrub(value, known=(), *, locators=False):
     if isinstance(value, str):
-        return redact(value, known)
+        value = redact(value, known)
+        return SENSITIVE_LOCATOR.sub(REDACTED, value) if locators else value
     if isinstance(value, list):
-        return [scrub(item, known) for item in value]
+        return [scrub(item, known, locators=locators) for item in value]
     if isinstance(value, dict):
-        return {redact(key, known): scrub(item, known) for key, item in value.items()}
+        return {redact(key, known): scrub(item, known, locators=locators) for key, item in value.items()}
     return value
 
 
