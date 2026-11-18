@@ -37,7 +37,18 @@ Spec axis: the ticket + SPEC.md, not a new design.
 - Investigate matching project `## Prevention` entries for `review` from
   [FEEDBACK.md](../../bulma-bus/FEEDBACK.md). A failure needs current code/test
   evidence; the memory entry alone is never a finding
-- Tests assert behavior, not only mocks
+- Tests assert behavior, not only mocks.
+- For a feature, check the failure scenario in the
+  [feature playbook](../playbooks/feature.md). Verify that the test reaches the
+  failure and asserts the observable outcome. The RED receipt must show the
+  relevant assertion failing before the handling is in place. Reuse that
+  receipt when it demonstrates the gap. Otherwise, verify that disabling the
+  handling in an isolated checkout fails the assertion and that the unchanged
+  head passes. Record the evidence in the review.
+- Where the failure affects a person, verify the user-visible message,
+  placement, preserved state and recovery against the agreed behavior.
+  For API changes, verify the status and error contract at the caller
+  boundary and its mapping when the change includes a consumer.
 - Security/errors/loading if applicable
 - **UI** (if the ticket/diff is UI) — [UI_DESIGN_SYSTEM.md](../UI_DESIGN_SYSTEM.md):
   reused repo DS/primitives; no magic colors/spacing / reinvented primitive;
