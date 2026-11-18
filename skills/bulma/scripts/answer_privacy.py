@@ -4,9 +4,8 @@ import re
 
 
 REDACTED = "[redacted]"
-SAFE_REPLY = "Não posso compartilhar dados sensíveis nesta thread."
+SAFE_REPLY = "Não posso compartilhar dados sensíveis neste contexto."
 SECRET_PATTERNS = (
-    re.compile(r"https://files\.slack\.com/[^\s<>|]+"),
     re.compile(r"-----BEGIN [^-\n]+PRIVATE KEY-----[\s\S]*?(?:-----END [^-\n]+PRIVATE KEY-----|\Z)"),
     re.compile(r"(?i)\b(?:bearer|basic)\s+[a-z0-9+/_.=-]{8,}"),
     re.compile(r"\b(?:xox[a-z]-[A-Za-z0-9-]{8,}|gh[pousr]_[A-Za-z0-9_]{12,}|github_pat_[A-Za-z0-9_]{12,}|sk_(?:live|test)_[A-Za-z0-9]{8,}|sk-[A-Za-z0-9_-]{16,}|(?:AKIA|ASIA)[A-Z0-9]{16})\b"),

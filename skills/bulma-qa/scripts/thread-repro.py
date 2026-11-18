@@ -25,7 +25,7 @@ from answer_privacy import SENSITIVE_LOCATOR, redact
 
 
 TARGET_ID = re.compile(r"[a-z][a-z0-9-]{0,79}")
-EVENT_ID = re.compile(r"\d{10}\.\d{6}")
+REQUEST_ID = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,95}")
 TEMPLATE = SKILLS / "bulma-bus/templates/JOBS.md"
 
 
@@ -197,7 +197,7 @@ def qa_repro(config, out, run):
 
 
 def run_job(args, targets):
-    if not EVENT_ID.fullmatch(args.event) or args.target not in targets:
+    if not REQUEST_ID.fullmatch(args.event) or args.target not in targets:
         raise Blocked("The request has no approved QA target.")
     config = targets[args.target]
     if config.get("pr", "") != args.pr:

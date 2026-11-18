@@ -26,7 +26,7 @@ internal paths. Keep the reply at most 900 characters."""
 AUDIT_POLICY = """Compare the draft with the supplied verified facts and compiled voice plan.
 Reject invented actions, reproductions, attachments, concessions, findings, or unsupported
 certainty. Missing evidence does not prove absence of a defect. Review intent, a test gate,
-CI success and an approval are distinct. For an ordinary Slack response, require recognizable
+CI success and an approval are distinct. For an ordinary conversational response, require recognizable
 cadence for the selected voice. Use light humor only when allowed, with a turn grounded in
 this exact situation. For a serious incident or sensitive data require clear, straight wording.
 For a policy block name the reason without instructions, workarounds or escalation. Return a
@@ -64,21 +64,21 @@ def allowed_reference(url, organizations):
     )
 
 
-def compose(conversation, facts, intent, context, compile_kevin, decide, organizations=()):
+def compose(conversation, facts, intent, context, compile_kevin, decide, organizations=(), reference_style="markdown"):
     """Return final wording and verified references. The host owns identity and publication."""
     supplied = scrub(facts)
     turns = scrub(conversation, locators=True)
-    envelope = {"text": "", "resolved": False, "conversation": intent in ("reply", "light_reply")}
+    envelope = {"text": "", "resolved": False, "conversation": intent in ("reply", "light_reply"),
+                "artifacts": []}
     if supplied.get("sensitive"):
         return {**envelope, "text": SAFE_REPLY}
-    site = context.get("platform")
     latest = turns[-1]["text"] if turns else ""
     language = context.get("language") or (
         "pt-BR" if re.search(r"\b(?:você|pode|verifica\w*|confere|revisão|comportamento|exclu\w*|mudar)\b", latest, re.I) else "en"
     )
     instructions = [
         "Deliver the verified result in the language of the latest request. Preserve attribution, qualification and evidence.",
-        "For Slack answer in the original thread as a teammate. For forge use the selected formal review voice.",
+        "Match the destination and audience in the compiled voice plan.",
     ]
     if supplied.get("security_block"):
         instructions.append("State that the operation is blocked and why. Give no workaround, steps or escalation.")
@@ -94,7 +94,7 @@ def compose(conversation, facts, intent, context, compile_kevin, decide, organiz
     }
     if supplied.get("incident") or supplied.get("security_finding"):
         voice_request["humor"] = "off"
-    if intent == "light_reply" and site == "slack":
+    if intent == "light_reply":
         voice_request["context"].update(audience="teammate", energy="playful", existingHumor=True)
     voice = compile_kevin(voice_request)
     revision = {}
@@ -102,7 +102,7 @@ def compose(conversation, facts, intent, context, compile_kevin, decide, organiz
         draft = decide(VOICE_POLICY, TEXT, {"kevin": voice, **revision})["text"].strip()
         if safe_reply(draft) != draft:
             return {**envelope, "text": SAFE_REPLY}
-        if (not draft or len(draft) > 900 or re.search(r"https?://|<[@!#]", draft)):
+        if (not draft or len(draft) > 900 or re.search(r"https?://|<[^\s<>]+>", draft)):
             revision = {"correction": "Return only the reply, within 900 characters and free of URLs or mentions."}
             continue
         verdict = decide(AUDIT_POLICY, AUDIT, {"facts": supplied, "draft": draft, "kevin": voice})
@@ -126,18 +126,23 @@ def compose(conversation, facts, intent, context, compile_kevin, decide, organiz
                 and re.fullmatch(r"[0-9a-f]{40}", sha) and allowed_reference(pr, organizations)
                 and artifact.startswith(pr + "#") and allowed_reference(artifact, organizations)):
             repo, _, number = pr.split("/")[-3:]
-            ref = f"<{artifact}|{repo} #{number}>" if site == "slack" else f"[{repo} #{number}]({artifact})"
-            receipts.append(f"**{verdict}** · `{sha[:7]}` {ref}" if site != "slack"
+            ref = f"<{artifact}|{repo} #{number}>" if reference_style == "angle_label" else f"[{repo} #{number}]({artifact})"
+            receipts.append(f"**{verdict}** · `{sha[:7]}` {ref}" if reference_style != "angle_label"
                             else f"*{verdict}* · `{sha[:7]}` {ref}")
     if links:
         draft += "\n" + " · ".join(
-            f"<{url}|Evidence>" if site == "slack" else f"[Evidence]({url})" for url in links)
+            f"<{url}|Evidence>" if reference_style == "angle_label" else f"[Evidence]({url})" for url in links)
     if receipts:
         draft += "\n" + "\n".join(receipts)
     text = safe_reply(draft)
     result = {**envelope, "text": text}
     if text != SAFE_REPLY and supplied.get("qa", {}).get("evidence") == "reviewed_synthetic_png":
-        note = ("A captura de QA não pôde ser anexada no Slack." if language == "pt-BR"
+        result["artifacts"] = [
+            item for item in supplied["qa"].get("artifacts", [])
+            if re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,95}", item.get("id", ""))
+            and item.get("media_type") == "image/png" and item.get("verification") == "reviewed_synthetic_png"
+        ][:1]
+        note = ("A captura de QA não pôde ser anexada à resposta." if language == "pt-BR"
                 else "The QA screenshot could not be attached.")
         result["without_attachment"] = text + "\n\n" + note
     return result

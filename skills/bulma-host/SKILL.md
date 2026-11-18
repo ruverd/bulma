@@ -34,20 +34,7 @@ relative path in git. Never hardcode `~/.agents/skills`, `~/.grok`,
 | `session_model` | Whatever the current session already uses | Do not pin `grok-*` / `sonnet` / `opus` in graph files; `/bulma` worker tiers map in user config (§Worker tier) |
 | `session_usage` | Total tokens this run spent, as the host reports them (Claude Code: sum `usage` in the session transcript; Grok and Codex: their usage readout) | `n/a`. Never estimate |
 
-## Human-facing output
-
-Use [Kevin](../kevin/SKILL.md) for Bulma's human-facing prose. The host supplies the
-destination, audience, and selected profile binding. Keep protocol records, logs, code,
-verdicts, hashes and evidence outside the voice layer.
-
-Answer's JSON-lines `mode: "compose"` accepts `messages`, verified `facts`, the reply
-`intent` and trusted `context` such as `{"platform": "slack", "channel": "developers", "task": "reply"}`.
-Supply `github_organizations` for verified GitHub citations. Bind `compile_kevin(request)`
-to the host-selected Kevin profile and `decide(policy, schema, data)` to a tool-free
-structured provider. Bulma returns final `text` and delivery metadata after checking the
-draft against the evidence. The publisher verifies the destination and delivers that text
-with the approved artifacts. It must not add or rewrite factual claims.
-
+[Human-facing output through Kevin](references/HUMAN_OUTPUT.md)
 ## Review model identity
 
 For review attribution, read the executing session's model identity from host

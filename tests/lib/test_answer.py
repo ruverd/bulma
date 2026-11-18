@@ -1,6 +1,7 @@
 """Offline tests for Bulma Answer, including its process boundary."""
 
 import json
+from io import StringIO
 from pathlib import Path
 import subprocess
 import sys
@@ -258,19 +259,23 @@ class AnswerTest(unittest.TestCase):
         parent = dict(self.msg, ts="root", user="reporter", thread_ts="root",
                       text="Checkout error on Buy.", files=[{"status": "vision", "text": "Buy dialog error"}])
         current = dict(self.msg, ts="reply", user="member", thread_ts="root", text=utterance)
-        request = capabilities.pop("direct_request", {"ts": "reply", "user": "member", "utterance": utterance})
+        request = capabilities.pop("direct_request", {
+            "ts": "reply", "user": "member", "utterance": utterance,
+            "addresses": [{"user": "assistant-account", "text": "@assistant"}],
+            "capabilities": ["investigate", "qa", "review"],
+        })
         plan = dict(self.plan, scope="none", actions=[], source_ts="reply",
                     repos=["ui"], references=[], sources=[], terms=[], block_reason="none",
                     request_excerpt=utterance, qa_target="", qa_pr="") | plan
         return answer.investigate(
             [parent, current], ["ui"], {}, decide or (lambda *args: plan),
             self.fail, self.fail, lambda _: [], {},
-            participation={"audience": "team_open", "assistant": {"id": "U9", "names": ["Assistant"]}},
+            participation={"audience": "team_open", "assistant": {"id": "assistant-account", "names": ["Assistant"]}},
             direct_request=request, **capabilities,
         )
 
     def test_direct_investigation_uses_parent_and_scrubs_read_result(self):
-        text = "Can you check this, <@U9>?"
+        text = "Can you check this, @assistant?"
         calls = []
 
         def decide(policy, schema, data):
@@ -319,6 +324,15 @@ class AnswerTest(unittest.TestCase):
         self.assertEqual(intent, "clarify")
         self.assertFalse(jobs)
 
+    def test_generic_host_capability_is_required_for_execution(self):
+        text = "Assistant, check the product behavior change."
+        request = {"ts": "reply", "user": "member", "utterance": text, "capabilities": []}
+        intent, facts, jobs = self.direct_answer(text, {"intent": "investigate"}, direct_request=request,
+                                                 read_investigation=self.fail)
+        self.assertEqual(intent, "reply")
+        self.assertEqual(facts["decision"], answer.BLOCKED_REQUESTS["outside_scope"])
+        self.assertFalse(jobs)
+
     def test_qa_runs_only_a_host_approved_target_and_never_dispatches(self):
         text = "Assistant, can QA reproduce the checkout error?"
         target = {"id": "fixture", "environment": "local", "steps": ["Open checkout"]}
@@ -359,6 +373,7 @@ class AnswerTest(unittest.TestCase):
                 result = answer_compose.compose(
                     [self.msg], facts, "reply", {"platform": platform, "task": "review"},
                     compile_kevin, decide, ["example-org"],
+                    reference_style="angle_label" if platform == "slack" else "markdown",
                 )
                 self.assertEqual(compiled[0]["context"]["platform"], platform)
                 self.assertIn(f"<{url}|Evidence>" if platform == "slack" else f"[Evidence]({url})",
@@ -370,6 +385,44 @@ class AnswerTest(unittest.TestCase):
             lambda _: "Profile", lambda *args: {"text": "password=fixture-test-secret"},
         )
         self.assertEqual(result["text"], answer.SAFE_REPLY)
+
+    def test_generic_transport_runs_qa_and_returns_opaque_artifact(self):
+        event = "portal-message-b"
+        current = dict(self.msg, ts=event, user="account-7", thread_ts="portal-message-a",
+                       text="Please run QA on the checkout problem, Helper tag.", references=[])
+        request = {
+            "messages": [current], "repositories": ["ui"], "identities": {},
+            "participation": {"audience": "team_open", "assistant": {"id": "helper-service", "names": []}},
+            "direct_request": {"ts": event, "user": "account-7", "utterance": current["text"],
+                               "addresses": [{"user": "helper-service", "text": "Helper tag"}],
+                               "capabilities": ["qa"]},
+            "qa_targets": [{"id": "local-checkout", "environment": "test", "steps": ["Open checkout"]}],
+        }
+        plan = dict(self.plan, intent="qa", source_ts=event, request_excerpt=current["text"],
+                    block_reason="none", qa_target="local-checkout", qa_pr="")
+        artifact = {"id": event, "media_type": "image/png", "verification": "reviewed_synthetic_png"}
+        receipt = {"status": "not_reproduced", "evidence": "reviewed_synthetic_png", "artifacts": [artifact]}
+
+        def exchange(initial, *results):
+            input_stream = StringIO("\n".join(json.dumps(item) for item in (initial, *results)))
+            output_stream = StringIO()
+            with tempfile.TemporaryDirectory() as tmp:
+                answer.protocol(input_stream, output_stream, Path(tmp) / "empty.json")
+            return [json.loads(line) for line in output_stream.getvalue().splitlines()]
+
+        calls = exchange(request, {"result": plan}, {"result": receipt})
+        self.assertEqual(calls[1], {"call": "run_qa", "args": [event, "local-checkout", ""]})
+        self.assertEqual(calls[2]["jobs"], [])
+        replies = exchange(
+            {"mode": "compose", "messages": [current], "facts": calls[2]["content"],
+             "intent": "reply", "context": {"platform": "portal", "audience": "team"}},
+            {"result": "Host-selected portal voice"},
+            {"result": {"text": "The error did not reproduce in the test environment."}},
+            {"result": {"pass": True, "correction": ""}},
+        )
+        self.assertEqual(replies[0]["args"][0]["context"]["platform"], "portal")
+        self.assertEqual(replies[-1]["artifacts"], [artifact])
+        self.assertIn("could not be attached", replies[-1]["without_attachment"])
 
 
 if __name__ == "__main__":
