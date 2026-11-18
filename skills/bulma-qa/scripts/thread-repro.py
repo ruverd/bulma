@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from tempfile import TemporaryDirectory
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -76,6 +77,24 @@ def atomic(path, text):
         temp.unlink(missing_ok=True)
 
 
+def active_claim(content, bus, active):
+    if not active:
+        return False
+    if not re.fullmatch(r"[a-zA-Z0-9.-]+", active):
+        return True
+    if not (bus / "jobs" / active).is_dir():
+        return False
+    row = re.search(rf"(?m)^\|\s*{re.escape(active)}\s*\|[^|]*\|[^|]*\|\s*([^|]+)\|", content)
+    if row and row[1].strip() in {"done", "done_notes", "escalated", "handed_off", "blocked"}:
+        return False
+    try:
+        stamp = datetime.fromisoformat(field(content, "qa_claimed_at").replace("Z", "+00:00"))
+        age = (datetime.now(timezone.utc) - stamp).total_seconds()
+        return age <= 60 * int(field(content, "qa_lease_minutes") or "90")
+    except (ValueError, TypeError):
+        return True
+
+
 @contextmanager
 def qa_slot(repo, job):
     home = Path(os.environ.get("BULMA_HOME", Path.home() / ".bulma"))
@@ -91,7 +110,7 @@ def qa_slot(repo, job):
             atomic(jobs, TEMPLATE.read_text())
         starting = jobs.read_text()
         active = field(starting, "qa_active")
-        if (active and active != job) or field(starting, "qa_waiting"):
+        if (active != job and active_claim(starting, bus, active)) or field(starting, "qa_waiting"):
             raise Busy("Bulma QA already has active or queued work.")
         request_dir = bus / "jobs" / job
         request_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -122,7 +141,9 @@ def qa_repro(config, out, run):
             or (kind == "local" and boundary[1] not in ("localhost", "127.0.0.1", "::1"))
             or (kind != "local" and boundary[0] != "https")):
         raise Blocked("The QA target is outside the authorized test environments.")
-    if not config.get("synthetic_evidence") or not config.get("evidence_selector"):
+    if config.get("isolated_data") is not True:
+        raise Blocked("The target has no verified isolated test data or auth boundary.")
+    if config.get("synthetic_evidence") is not True or not config.get("evidence_selector"):
         raise Blocked("This target has no approved synthetic evidence area.")
     actions = config.get("clicks", [])
     if not isinstance(actions, list) or len(actions) > 8 or any(not isinstance(s, str) or not s for s in actions):
@@ -195,7 +216,9 @@ def run_job(args, targets):
             if saved["target"] != args.target or saved["pr"] != args.pr:
                 raise Blocked("This request already has a different QA target.")
             return saved["result"]
-        if args.pr:
+        def verify_head():
+            if not args.pr:
+                return
             if not re.fullmatch(r"https://github\.com/[\w.-]+/[\w.-]+/pull/[1-9]\d*", args.pr):
                 raise Blocked("The requested PR cannot be verified.")
             head = subprocess.check_output(
@@ -204,17 +227,22 @@ def run_job(args, targets):
             ).strip()
             if head != config.get("head"):
                 raise Blocked("The approved preview is not pinned to the current PR commit.")
+        verify_head()
         shim = SKILLS / "before-and-after/scripts/ensure-session.sh"
         with TemporaryDirectory(prefix="bulma-qa-run-") as folder:
             env = {key: os.environ[key] for key in ("HOME", "PATH", "TMPDIR", "BULMA_HOME") if key in os.environ}
             config_file = Path(folder) / "agent-browser.json"
             config_file.write_text('{"headed":false}\n')
             env["AGENT_BROWSER_CONFIG"] = str(config_file)
+            deadline = time.monotonic() + 270
 
             def run(*argv):
                 try:
+                    remaining = 10 if argv[-1] == "close" else min(25, deadline - time.monotonic())
+                    if remaining <= 0:
+                        raise Blocked("The configured QA case exceeded its execution budget.")
                     return subprocess.check_output(argv, cwd=folder, env=env, text=True,
-                                                   stderr=subprocess.DEVNULL, timeout=30)
+                                                   stderr=subprocess.DEVNULL, timeout=remaining)
                 except (OSError, subprocess.SubprocessError):
                     raise Blocked("The QA browser or evidence checkout could not complete a configured step.") from None
 
@@ -224,8 +252,10 @@ def run_job(args, targets):
             atomic(args.out / "plan.json", json.dumps({"environment": config["environment"], "steps": config["steps"]}))
             try:
                 result = qa_repro(config, args.out, run)
+                verify_head()
             except Blocked as exc:
                 result = {"status": "blocked", "reason": str(exc)}
+                (args.out / "proof.png").unlink(missing_ok=True)
             atomic(result_path, json.dumps({"target": args.target, "pr": args.pr, "result": result}))
             return result
 

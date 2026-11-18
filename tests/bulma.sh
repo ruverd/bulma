@@ -26,6 +26,7 @@ need "$SKILL/decisions.json"
 need "$SKILL/HOOKS.md"
 need "$BULMA"
 python3 -B "$ROOT/tests/lib/test_answer.py" || fail "Bulma Answer"
+python3 -B "$ROOT/tests/lib/test_thread_qa.py" || fail "Bulma thread QA"
 
 # --- catalog and checker ---
 python3 "$BULMA" catalog >/dev/null || fail "bulma.py catalog rejects decisions.json"

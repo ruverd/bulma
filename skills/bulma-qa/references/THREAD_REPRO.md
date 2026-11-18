@@ -11,7 +11,9 @@ The host configures the executor's JSON registry outside git. Each entry in
 trusted `clicks` selectors, an `evidence_selector`, and distinct visible
 `bug_text` and `success_text` assertions. For a preview add `pr` and `head`.
 An optional `auth_state` points at an already provisioned test session state
-used only by the browser. Set `synthetic_evidence` only after verifying that
+used only by the browser. Mark `isolated_data` after verifying the target's
+app, API, identity provider, and data boundaries using [LOCAL_SETUP.md](LOCAL_SETUP.md).
+Set `synthetic_evidence` only after verifying that
 the cropped area contains shareable synthetic data. The registry is host-owned
 and its URLs, selectors and auth paths are not supplied by the model.
 
