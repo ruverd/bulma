@@ -56,3 +56,7 @@ requested behavior in the plan and publish per-request visual proof before
 returning. Prepare missing local database fixtures and QA auth/provider roles
 through [LOCAL_SETUP.md](references/LOCAL_SETUP.md). Automated evidence never
 counts as the requested human approval.
+
+For an authenticated product reproduction request from Answer, use the
+[direct thread executor](references/THREAD_REPRO.md). It shares the QA
+lease with the PR graph and delivers evidence through the requesting host.
