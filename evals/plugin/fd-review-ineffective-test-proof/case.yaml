@@ -1,0 +1,51 @@
+schema_version: "1.0"
+name: fd-review-ineffective-test-proof
+description: 'Internal delivery review with a weak assertion and an undiscovered integration test.'
+expected_outcome: 'Review spots both independent limits of the supplied test proof.'
+tags: [fd-test-proof]
+context:
+  scaffold_script: stage-contract.sh
+execution:
+  allowed_tools: [Read]
+  max_turns: 8
+  timeout_seconds: 90
+  prompt: |
+    Read `reviewer.md` and `LESSONS.md` in the workspace root. Apply them as
+    Bulma's internal reviewer. Return both verdicts and any findings for this
+    snapshot. The excerpts and receipts below are the review input.
+
+    When an order's group lookup succeeds, the HTTP response must contain the
+    resolved group ID. When it fails, the response must omit the group ID. A unit
+    suite on the reviewed commit runs two cases. One spy resolves to `{id: 'g-1'}`
+    and the test expects `lookupGroup` to have been called with the order ID after
+    requesting the route. The other spy rejects and the test expects HTTP 200 and
+    no group ID. Both cases passed. This is the route's response logic:
+
+    ```ts
+    const group = await lookupGroup(order.id).catch(ignoreLookupUnavailable);
+    return response.status(200).json(group ? { groupId: group.id } : {});
+    ```
+
+    `ignoreLookupUnavailable` returns undefined for the recognized outage in
+    the test and rethrows any other error.
+
+    `test/contract/order-group.e2e.test.ts` requests the route and asserts that the
+    HTTP response actually includes `groupId: 'g-1'`. The only supplied execution
+    receipt is the green CI workflow for this commit. Its unit job excludes
+    `*.e2e.test.ts`. Its integration job discovers only `src/**/*.e2e.test.ts`.
+graders:
+  - type: tool_used
+    name: reviewer-contract-read
+    tool: Read
+    input_match: 'reviewer\.md'
+    min: 1
+  - type: llm
+    name: behavior
+    criteria: |
+      PASS if spec passes and quality fails. The review must identify that the
+      success unit assertion stays green if `body.groupId` is dropped, and that the
+      integration test has a relevant response assertion but neither green CI job
+      selects its path. It must propose running the existing integration test through
+      a supported job or asserting the response group ID in the selected unit suite.
+      FAIL if it credits the CI status as execution proof, mistakes the success case
+      for a missing input, or reports a confirmed product defect from the test gaps.
