@@ -81,8 +81,9 @@ State: $BULMA_ROOT/.bulma-code-review/STATE.md
 Caller: <bulma-code-review | bulma-reviewer>
 
 Refresh the snapshot, context and gates on the live head SHA. If retained
-analysis matches, do not reread code. If it does not, run the normal deep/light
-pass and critic, then retain the replacement analysis even if CI is pending.
+analysis matches, reuse it and refresh case evidence per preflight. If it
+does not, run the normal deep/light pass and critic, then retain the replacement
+analysis even if CI is pending.
 If CI is still pending, keep the wake and end the turn without posting.
 If green, cancel_wake, then resume verdict and publication with fresh preflight
 and gate.py. If Caller is bulma-reviewer, continue at diagnose → report.

@@ -23,7 +23,7 @@ init | waiting_ci | reviewing | published | deferred | done
 | `base_sha` | base SHA used for this pass; a base change invalidates the full PR diff |
 | `review_context` | clear \| blocked \| unknown; evidence and concern URLs live in preflight files |
 | `human_signoff` | `not_required`, or `required` plus the sensitive paths. Private job report and STATE only. Never a PR row |
-| `ci_evidence` | run/check IDs, links, SHA and execution results; local tests recorded separately |
+| `ci_evidence` | run/check IDs, links, SHA and execution results; include case and attempt for applicable failure-case tests; record local tests separately |
 | `reviewer_model` | executing reviewer's runtime model name or id for this pass; `unknown` when unavailable |
 | `reviewer_effort` | executing reviewer's actual reasoning effort for this pass; `unknown` when unavailable; internal telemetry only; preserve paired role attribution across contributing sessions |
 | `ci` | pending \| green \| red \| unknown \| unverified |

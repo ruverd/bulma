@@ -54,10 +54,12 @@ class SnapshotTest(unittest.TestCase):
     def response(self, *args):
         text = ' '.join(str(arg) for arg in args)
         if args[:2] == ('run', 'list'):
-            return (
-                b'[{"databaseId":7,"name":"CI","status":"completed","conclusion":"success",'
-                b'"workflowName":"CI"}]'
-            )
+            return json.dumps([{
+                'databaseId': 7, 'name': 'CI', 'status': 'completed',
+                'conclusion': 'success', 'workflowName': 'CI',
+                'headSha': 'a' * 40, 'attempt': 2,
+                'url': 'https://github.com/o/r/actions/runs/7',
+            }]).encode()
         if args[:2] == ('run', 'view'):
             return b'{"jobs":[{"name":"build-and-test","status":"completed","conclusion":"success"}]}'
         if args[0:2] == ('api', 'graphql') and 'statusCheckRollup' in text:
@@ -87,11 +89,18 @@ class SnapshotTest(unittest.TestCase):
         self.assertEqual((self.root / 'PR_FILES.txt').read_text(), 'new\nold\n')
         actions = json.loads((self.root / 'actions.json').read_text())
         self.assertIsNone(actions['error'])
-        self.assertEqual(actions['runs'][0]['jobs'][0]['name'], 'build-and-test')
+        run = actions['runs'][0]
+        self.assertEqual(run['jobs'][0]['name'], 'build-and-test')
+        self.assertEqual((run['headSha'], run['attempt'], run['url']),
+                         (result['head'], 2, 'https://github.com/o/r/actions/runs/7'))
         rollup = json.loads((self.root / 'rollup.json').read_text())
         self.assertEqual(rollup['state'], 'SUCCESS')
         self.assertFalse(any('check-runs' in str(arg) or 'check-suites' in str(arg) for call in calls for arg in call))
-        self.assertTrue(any(call[:2] == ('run', 'list') for call in calls))
+        run_list_call = next(call for call in calls if call[:2] == ('run', 'list'))
+        self.assertEqual(run_list_call[run_list_call.index('--commit') + 1], result['head'])
+        self.assertEqual(set(run_list_call[run_list_call.index('--json') + 1].split(',')),
+                         {'databaseId', 'name', 'status', 'conclusion', 'workflowName',
+                          'headSha', 'attempt', 'url'})
         changed = dict(self.pr, head={'sha': 'c' * 40})
         with patch.object(m, 'pr', side_effect=[self.pr, changed]), patch.object(m, 'gh', side_effect=self.response):
             with self.assertRaises(ValueError):

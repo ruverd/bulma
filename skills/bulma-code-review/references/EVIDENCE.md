@@ -36,8 +36,26 @@ uncovered scenario and observable consequence.
 Follow the assertion to the production symbol. A test that recreates the
 implementation or mocks away the failing boundary does not verify that path.
 Compare mocks with the real provider contract, including error and empty
-responses. Confirm the relevant test is selected by a CI job or explicitly
-report local-only coverage.
+responses. When a changed behavior has a meaningful failure path, choose a
+concrete failure case that can distinguish the regression. Identify the test
+file and full case name, the production boundary reached, and the observable
+assertion. A mock can supply the failing input from outside that boundary.
+If it replaces the boundary itself, explain which production behavior the
+assertion bypasses, even when the runner reports the case passed.
+
+For that case, follow [case-level CI evidence in preflight](PREFLIGHT.md#case-level-ci-evidence).
+In Coverage, record the assertion and whether CI executed the case, excluded
+it, or could not verify it. Include the run and attempt, job and case result
+link where available. Report any local result separately.
+
+- A proven exclusion or skip that leaves new meaningful logic without an
+  effective test, or an assertion that proves only a mock, follows the
+  existing Tests finding rules. Cite the filter, skip or bypass and the
+  behavior left untested. Apply normal causality and severity rules.
+- Verified omission of explicitly required validation evidence follows
+  verdict §6, including any accepted waiver. A missing or inaccessible case
+  report alone proves neither exclusion nor an unmet requirement. Record the
+  gap under Not verified and apply the existing CI and coverage rules.
 
 For a bug fix, check whether its regression test would fail with the defect
 present and pass with the correction. When an existing isolated comparison
