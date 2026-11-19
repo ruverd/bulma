@@ -66,6 +66,7 @@ A case is a folder with `prompt.md` (frontmatter: description, outcome, turn
 and tool limits; body: the prompt, sent verbatim) and one grader per file
 under `graders/`. Quote frontmatter values that contain a colon. Results land
 in `evals/plugin/results/`, which git ignores.
+A `case.yaml` can also declare the prompt, graders and workspace setup together.
 
 Pair a `tool_used: Skill` grader with a grader on the reply. In a two-arm run
 the fire indicator is left out of the score, so on its own it measures
@@ -99,6 +100,15 @@ These supplied-context cases check the answer, not a full delivery execution.
 Inspect retained traces to distinguish actual skill reads from correct generic
 reasoning or denied tools. A passing reply alone does not prove the selected
 playbook ran. Use real project fixtures for a full graph evaluation.
+
+The `fd-test-proof` cases stage the checkout's reviewer contract and coder
+lessons in disposable workspaces. They exercise a missing refresh case,
+valid existing coverage, and a weak assertion paired with an undiscovered
+integration test. Run the targeted smoke with staging enabled:
+
+```bash
+claude plugin eval . --tag fd-test-proof --scaffold --runs 1 --ablation none --model haiku --max-cost-usd 0.50 --no-publish
+```
 
 ## Rejected changes
 

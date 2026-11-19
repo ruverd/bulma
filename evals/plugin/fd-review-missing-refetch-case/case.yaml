@@ -1,0 +1,53 @@
+schema_version: "1.0"
+name: fd-review-missing-refetch-case
+description: 'Internal delivery review of a list with a first-load error test.'
+expected_outcome: 'Review identifies the cached-refresh regression and names a test that would catch it.'
+tags: [fd-test-proof]
+context:
+  scaffold_script: stage-contract.sh
+execution:
+  allowed_tools: [Read]
+  max_turns: 8
+  timeout_seconds: 90
+  prompt: |
+    Read `reviewer.md` and `LESSONS.md` in the workspace root. Apply them as
+    Bulma's internal reviewer. Return both verdicts and any findings for this
+    snapshot. The excerpts and receipts below are the review input.
+
+    The folder picker must show Retry when the initial load fails. If a background
+    refresh fails with data in cache, the listed folders must remain selectable.
+    The query retains cached data and can return both `data` and `isError: true`.
+    Initial loading is handled outside this excerpt. The only product change is
+    the new branch using the shared RetryNotice. The existing folder list accepts
+    an absent list as empty and is specific to this picker.
+
+    `FolderPicker.tsx`:
+
+    ```tsx
+    const { data, isError, refetch } = useFolders();
+    if (isError) return <RetryNotice onRetry={() => refetch()} />;
+    return <FolderList folders={data} onSelect={selectFolder} />;
+    ```
+
+    The test uses the real query client with automatic retries disabled. The new
+    first-load case rejects the loader, clicks Retry, and asserts the successful
+    retry displays the loaded folder. It failed on the base because Retry was
+    absent. The initial successful-load case selects a folder.
+
+    The unit receipt for the reviewed snapshot `d746b23` lists both cases in
+    `FolderPicker.test.tsx`: initial success PASS, new first-load retry PASS.
+    Exit 0, 0 skipped. These are the only tests of this component.
+graders:
+  - type: tool_used
+    name: reviewer-contract-read
+    tool: Read
+    input_match: 'reviewer\.md'
+    min: 1
+  - type: llm
+    name: behavior
+    criteria: |
+      PASS if the review flags a spec or quality failure, identifies that the
+      `isError` branch hides cached folders, and proposes supplying cached data with
+      `isError: true` and asserting the folder remains visible and selectable. FAIL
+      if it passes, gives only generic test advice, or treats the executed first-load
+      test as skipped or defective for the first-load behavior.

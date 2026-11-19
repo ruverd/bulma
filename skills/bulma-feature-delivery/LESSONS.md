@@ -20,10 +20,14 @@ second registry or allowlist of the same ids, and the inverse operation
 
 ### test that cannot fail
 
-Make every new test able to fail. Before GREEN, break the code on purpose and
-watch the test go red. Set up mocks and spies outside the `try` under test.
-Assert on values that a bug would change, not `>= 0` or "was called". Do not
-add a skip or env gate unless a CI workflow turns it on.
+Watch each new behavior test fail on the intended assertion before GREEN.
+Assert the result the regression would change at the chosen seam, such as a
+response, rendered state, persisted value or absence of a side effect. Run
+the implementation under test and stub dependencies at their real boundary.
+When the test depends on a provider's state transitions or failure semantics,
+use the real client or a fixture verified against its contract. Set up mocks
+and spies outside the `try` under test. Use a skip or env gate only if a CI
+workflow turns it on.
 
 ### multi-store write / side effect
 
@@ -64,17 +68,18 @@ access before a read or a write; take the scope from the session, not the body.
 
 ### untested branch
 
-Every branch this change adds gets a test for each side: an `if`, a `??` or
-`||` default, a `catch`, an early return, a cap, a status or error mapping.
-Make the mock return the failing value for the failing side. A test that only
-walks the happy path leaves the new branch unproven.
+Cover the distinct observable outcomes the diff can change, including a
+sibling path when the change reaches it. Drive the specific condition that
+could go wrong, such as a failed refresh with usable cached data or a provider
+returning an error value without throwing. Count an existing test when its
+setup reaches the outcome and its assertion would catch the regression.
 
 ### null / empty / boundary
 
-For each input the change reads, try null, undefined, empty string, zero, an
-empty list, a malformed value and one past the limit. Use `??` when zero or
-empty is valid. Input a client can get wrong fails as a typed client error
-(400, 404, 409), never as an unhandled 500.
+Choose boundaries from the input contract and changed behavior. When absence
+and a valid falsy or empty value have different meanings, exercise that
+distinction and use `??` where appropriate. Invalid client inputs follow the
+contract's typed error path (for example, 400, 404 or 409).
 
 ### silent catch / no error report
 
@@ -98,10 +103,10 @@ a lock, and test the duplicate or concurrent case.
 
 ### test wired into CI
 
-A new test file proves nothing until a CI job runs it. Check the test runner's
-include patterns, the CI workflow's paths and any allowlist, and name the job
-that picks the file up. Never assert wall-clock timing or sleep for a fixed
-time in a test.
+For a new test file, name the CI job that selects it and check the runner's
+include patterns, job paths and any allowlist. For a claimed test run, verify
+case selection and execution in the receipt for that checkout. Never assert
+wall-clock timing or sleep for a fixed time in a test.
 
 ### clean branch
 

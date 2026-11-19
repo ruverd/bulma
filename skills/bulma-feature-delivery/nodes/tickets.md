@@ -9,6 +9,12 @@ One ticket = one implement window. Load bundled
 
 Seams: apply [../TDD.md](../TDD.md). Default table, DECIDE. Record `seams` in STATE.
 
+For each behavior change, use the ticket's existing RED step to name the
+consequential scenario, its observable result and the test seam. Consider
+where the happy path could pass while a changed or preserved contract breaks.
+Choose cases from the affected callers, states and dependency outcomes. Cite
+existing tests that already prove preserved behavior.
+
 Do **not** create tracker issues from this node. [BLOCKERS.md](../BLOCKERS.md) is the only create path (missing contract).
 
 Main thread.
