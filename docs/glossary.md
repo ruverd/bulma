@@ -15,8 +15,8 @@ The files that stages use to hand work to each other: a message file
 
 ## Draft pull request
 
-A pull request that GitHub marks as not ready for review. Bulma opens every
-pull request as a draft and marks it ready only after QA passes.
+GitHub's draft status indicates that the author is still preparing the PR.
+New delivery PRs open ready for review. Existing drafts keep their status.
 
 ## Engine
 

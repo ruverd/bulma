@@ -3,7 +3,7 @@ name: bulma-feature-delivery
 category: engine
 description: >
   Use when delivering a ticket, bug, or chore end-to-end (implementation
-  through draft PR with CI green) via /bulma-feature-delivery or /bulma-fd, or
+  through ready-for-review PR with CI green) via /bulma-feature-delivery or /bulma-fd, or
   when resuming a run whose HANDOFF.md exists. Spine: grill -> spec -> tickets
   -> implement(tdd) -> review.
 ---
@@ -58,7 +58,7 @@ Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
    It disables checkout creation. Then `mcp_context` and `triage` select the
    task contract under [PLAYBOOKS.md](PLAYBOOKS.md). Critical MCP down → STOP.
 3. Walk GRAPH. Grill / spec / tickets on the main thread. `plan_critic` on the main thread unless `risk=elevated` (then one read-only spawn). Spawn **one** node subagent at a time for implement / review / diagnose / tester / evidence / quality / shipper.
-4. Never merge. Draft PR only from `shipper`.
+4. Never merge. Open new PRs ready for review from `shipper`.
 5. Near context limit → `handoff`.
 
 ## Paths
@@ -70,7 +70,7 @@ Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 | **light_change** | chore | one ticket → one coder |
 | **`scope: fullstack`** | FE and BE, sibling resolved | same branch, git worktrees ([FULLSTACK.md](FULLSTACK.md); Orca optional) |
 
-Ship: implement → blast when required → quality → review → tester → final evidence → commit → push → draft PR
+Ship: implement → blast when required → quality → review → tester → final evidence → commit → push → ready PR
 (reviewers and assignee: [PRODUCT.md](PRODUCT.md))
 → **CI 100% green** (only then **delivered**).
 

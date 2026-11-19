@@ -244,11 +244,11 @@ Keep its identity in frontmatter. Record proof paths here only, not in a second 
 
 ## CI (delivery)
 
-- **ci.status:** pending | watching | fixing | green | escalated | skipped_no_pr
+- **ci.status:** pending | watching | fixing | green | out_of_scope | escalated | skipped_no_pr
 - **pr_url:**
 - **fix_loops_used:** 0
 - **checks_summary:**
-- **delivered:** no   # yes only if green (or explicit skipped_no_pr)
+- **delivered:** no   # yes after the applicable CI gate or explicit skipped_no_pr
 
 ## Handoff / continuity
 

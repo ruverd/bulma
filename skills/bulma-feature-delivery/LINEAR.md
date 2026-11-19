@@ -15,6 +15,26 @@ get_issue on related / parent / children / blocks / blockedBy
 extract_images if screenshots matter
 ```
 
+## Child discovery
+
+For a resolved single issue, query `list_issues(parentId: <parent UUID or ID>)`
+and follow every returned cursor while `hasNextPage` is true. Request
+`parentId`, `statusType`, and `archivedAt` in addition to identity and task
+fields. Verify each child's actual parent against the resolved parent's
+identifiers. Linked issues and IDs in the description do not count as children.
+On a verified parent, load each eligible child's description and comments,
+and call `get_issue(id, includeRelations: true)` to read `blocks` and
+`blockedBy`. Normalize both directions into `depends_on` using the resolved
+issue identifiers. Preserve external edges and the parent's acceptance.
+
+Pass the verified rows to the [stack planner](../bulma-developer/STACKED.md#plan-and-state).
+Record its result under `delivery_mode`. Failure reading a page or child
+relationship is incomplete discovery, so retry or block the parent before
+checkout. An unavailable Linear connector for a bare ID retains the existing
+tracker fallback until the ID actually resolves to a Linear issue. Skip child
+discovery for an assigned stack member. Its own ticket requirements and
+dependencies still use the normal fetch above.
+
 ## Branch
 
 [JOBS.md](../bulma-bus/JOBS.md) §Worktree. Always

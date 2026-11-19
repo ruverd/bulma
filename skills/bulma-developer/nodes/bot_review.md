@@ -3,15 +3,19 @@
 **Verb:** wait / route
 **Capability:** read gh, `schedule_wake`, bus `LSTM_REQUEST`. No product patch.
 
-Between **mergeable** (CI green and MERGEABLE) and **request_qa**.
-Do not open QA from here.
+Between **mergeable** (applicable CI gate passed and MERGEABLE) and the next delivery gate.
+On skip or pass, a stack child returns to **stack** to await its human merge.
+Single delivery and the QA-enabled umbrella continue to **request_qa**.
 
 ## Detect
 
 Run [PRODUCT.md](../../bulma-feature-delivery/PRODUCT.md) §9, or read
 `review_bot` from STATE if already set. Write the field on developer STATE.
 
-No bot → **request_qa**. Do not wait.
+No bot → skip and take the applicable exit. For a stack child, also skip
+when repository configuration proves the bot is excluded for this base.
+Record the scope evidence. Workflow CI scope alone does not determine bot
+review applicability.
 
 ## Review on head SHA
 
@@ -23,8 +27,9 @@ gh api "repos/$REPO/pulls/$PR/reviews" --paginate
 gh pr view "$PR" --repo "$REPO" --json headRefOid,mergeable,state,url
 ```
 
-CI not green or not MERGEABLE → **mergeable**.
-PR CLOSED or MERGED → `cancel_wake`, stop.
+Applicable CI gate failed or PR no longer MERGEABLE → **mergeable**.
+PR CLOSED or MERGED → cancel the bot wake. For a stack, return to
+**stack** to reconcile the result. Otherwise stop.
 
 No review on this SHA yet → **wait**.
 
@@ -56,11 +61,11 @@ Repo: <owner/repo>
 State: $BULMA_ROOT/.bulma-developer/STATE.md
 
 Re-enter nodes/bot_review.md on the live head SHA.
-If required CI is not green or the PR is not MERGEABLE, go to mergeable.
+If the applicable CI gate failed or the PR is not MERGEABLE, go to mergeable.
 If no bot review exists on this SHA, do nothing else and end the turn.
 If a bot review exists, follow bot_review (threads / score / skip).
-If the PR is CLOSED or MERGED, cancel_wake and stop.
-Do not request QA until bot_review skip or pass.
+If the PR is CLOSED or MERGED, cancel_wake. Resume stack if it owns this PR.
+Apply the graph's bot_review exit for this job on skip or pass.
 Do not merge. Chat: `bulma-memory`. Apply Kevin for human-facing communication, one short S/D/P block.
 ```
 
@@ -91,7 +96,7 @@ means the score gate does not apply.
 
 ## Exit
 
-Pass → **request_qa** when:
+Pass when:
 
 - zero unresolved bot threads, and
 - the score gate holds

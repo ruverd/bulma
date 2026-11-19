@@ -3,8 +3,11 @@
 **Verb:** switch or enqueue  
 **Capability:** write bus only
 
-Mandatory after CI green, MERGEABLE, and **bot_review** skip or pass.
-Do not stop at "delivered".
+For single delivery and the QA-enabled umbrella, run after CI green,
+MERGEABLE, and **bot_review** skip or pass. A child of a stack returns to
+**stack** without creating a QA request. The umbrella uses the parent
+acceptance and the current integrated SHA. Apply the usual external
+provider and evidence rules.
 
 Write `QA_REQUEST` ([../references/QA_HANDOFF.md](../references/QA_HANDOFF.md))
 to `.bulma-bus/jobs/<job_id>/qa-request.md`. PR link + `job_id` required.

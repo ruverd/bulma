@@ -37,7 +37,7 @@ deliver      fix
         │
    apply_qa
         │
-   PASS → ready
+   PASS → done
    FAIL+PR_BUG → fix
 ```
 
@@ -47,22 +47,22 @@ deliver      fix
 2. Claim the lane ([bulma-bus](bulma-bus.md) JOBS). Busy main → worker + worktree.
 3. **deliver** runs [feature-delivery](bulma-feature-delivery.md) until CI green.
 4. **fix** stays on the existing PR branch.
-5. MERGEABLE + CI green → **bot_review** → envelope `QA_REQUEST`.
-6. On `QA_RESULT` PASS → mark the PR ready. Ready is not merge.
+5. For one PR, MERGEABLE + CI green → **bot_review** → envelope `QA_REQUEST`.
+6. On `QA_RESULT` PASS, record completion on the tested head. Review status stays as set on the PR.
 
 ## Stacked tasks
 
-A parent with sub-issues, several ids, or an explicit stacked request runs
-**stack** ([STACKED.md](../../skills/bulma-developer/STACKED.md)). The main
-thread only orchestrates:
+A Linear parent with open subtasks automatically uses
+[stacked delivery](../../skills/bulma-developer/STACKED.md). Several task
+IDs or an explicit stack also use it. For local feature plans, one PR with
+a coder per slice is the default. Distinct review or rollout boundaries
+can warrant a stack without creating tracker subtasks.
 
-- one worker per child, each in its own worktree, running
-  `bulma-feature-delivery` end-to-end itself
-- every child PR targets `main`, never another child's branch
-- the orchestrator polls `gh pr checks` for every child and sends a fresh fix
-  worker for any red CI, up to `ci_fix_loops` per child
-- each green child goes through mergeable, bot review, and QA as its own job
-- the parent is done only when every child is
+Each child targets the next branch. After a human merges a child, the next
+worker starts with the changes received on its branch. The final umbrella
+targets the default branch. Each PR opens ready for review and keeps its
+CI, mergeability and applicable review gates. Integrated QA runs on the
+umbrella's current combined head with the usual provider and evidence rules.
 
 Workers (`bulma-fd-coder`, tester, shipper, …) write the code. The
 graph engineer only walks edges.

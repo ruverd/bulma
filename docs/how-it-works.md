@@ -9,7 +9,7 @@ in this page are defined in the [glossary](glossary.md).
 ```mermaid
 flowchart LR
   you["/bulma"] --> route{"route<br/>fixed rules first,<br/>Jev second"}
-  route -->|ticket or goal| dev["developer<br/>questions · spec · TDD<br/>draft PR · CI green"]
+  route -->|ticket or goal| dev["developer<br/>questions · spec · TDD<br/>ready PR · CI green"]
   route -->|someone else's PR| rev["reviewer<br/>code review · CI diagnosis"]
   route -->|review on your PR| lstm["lstm<br/>check each comment<br/>fix on the same branch"]
   dev --> qa["qa<br/>browser or HTTP<br/>evidence on the PR"]
@@ -28,7 +28,7 @@ flowchart LR
 
 | Stage | Command | Job |
 |---|---|---|
-| developer | `/developer` | Turns a ticket or goal into a draft pull request with green CI, then asks QA to test it |
+| developer | `/developer` | Turns a ticket or goal into a ready-for-review pull request with green CI, then asks QA to test it |
 | qa | `/qa` | Tests a pull request in a browser or over HTTP and posts the evidence |
 | triage | `/bulma-triage` | Decides whether a problem QA found comes from this pull request, was already there, or is not a bug |
 | reviewer | `/reviewer` | Reviews someone else's pull request and explains any CI failure |
@@ -60,7 +60,7 @@ developer continues. The message files and the stack are called the bus.
 developer
     │
     ▼
-feature delivery ── draft PR, CI green
+feature delivery ── ready PR, CI green
     │
     ▼
    qa ──► triage

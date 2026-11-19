@@ -10,12 +10,16 @@ Trim. Then, in order:
 |---|---|
 | empty, and STATE exists with `status` not in `done` / `done_notes` | **resume** the current job |
 | `resume` / `continue` (whole token, case-insensitive) | **resume** |
+| several tracker ids or an explicit stacked / multi-task request | resolve tasks and dependencies before **stack** ([STACKED.md](STACKED.md)) |
 | Tracker issue URL, any vendor (detection: PRODUCT.md) | **ticket** |
 | GitHub PR or GitLab MR URL, or envelope `QA_RESULT` FAIL+`PR_BUG` | **fix** (existing PR/MR) |
 | issue id `[A-Z][A-Z0-9]+-\d+` | **ticket** (resolve tracker in PRODUCT.md; not a tracker gate) |
-| several tracker ids, a parent issue with sub-issues, or a stacked / multi-task request | **stack** ([STACKED.md](STACKED.md)) |
 | free text with no resume, no STATE | **local goal** |
 | empty, no STATE, no goal text | **stop** — ask for the ticket or the goal |
+
+A single resolved tracker issue enters feature-delivery discovery, which
+looks up actual children and selects stack mode when present. If the same
+parent already has a stack plan, resume it against GitHub before rediscovery.
 
 Examples:
 

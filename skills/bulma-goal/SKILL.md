@@ -3,7 +3,7 @@ name: bulma-goal
 category: graph
 description: >
   Drive developer → CI green → QA comment+evidence across turns with
-  schedule_wake. Use when /goal or /bulma-goal, or after a draft PR is
+  schedule_wake. Use when /goal or /bulma-goal, or after a PR is
   opened and CI is still pending.
 argument-hint: "<ticket | PR url | status | cancel>"
 ---
@@ -37,7 +37,7 @@ Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 2. Name the completion bar (verifier / user):
 
 ```text
-Draft PR for <id> is CI-green, MERGEABLE, and has a bulma-qa
+PR for <id> is CI-green, MERGEABLE, and has a bulma-qa
 comment on the head SHA that includes evidence.
 ```
 
@@ -45,7 +45,7 @@ If the host has a `/goal` (or equivalent) command, register that
 sentence there. If it does not, STATE is enough.
 
 3. If there is no PR yet → load **bulma-developer** GRAPH (`deliver`).
-4. When a draft PR exists and CI is not green → **schedule_wake**
+4. When a PR exists and CI is not green → **schedule_wake**
    ([LOOP.md](references/LOOP.md)). Do not `gh pr checks --watch`.
 5. Stop the turn. The wake resumes this skill.
 

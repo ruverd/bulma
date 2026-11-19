@@ -23,10 +23,15 @@
    - Pre-check: MCP or CLI (`gh` / `glab`) available?
    - Critical and unreachable → ERROR block (MCP_CONTEXT.md), `mcp_gate: failed`, **blocked**.
    - Ok → fetch → `*-context.md`.
-4. Tracker ok → checkout `feature/<id-lowercase>`
-   ([JOBS.md](../../bulma-bus/JOBS.md) §Worktree). Not main. Skip checkout
-   creation for explicit read-only or planning-only goals; investigation runs
-   against the existing checkout without commits or branch mutations.
+4. When PRs are enabled and the selected tracker adapter supports
+   [child discovery](../LINEAR.md#child-discovery), run it
+   before choosing its work branch. Pass the planner's `mode` to STATE and
+   hand the plan to **triage** when it is a stack. Resolve explicit stack
+   requests with the same planner. Skip branch creation for a stack parent
+   and for read-only or planning-only goals.
+   Ordinary tracker delivery uses `feature/<id-lowercase>` per
+   [JOBS.md](../../bulma-bus/JOBS.md). A stack member uses its assigned
+   worktree, branch and start SHA. Never reset it to the default branch.
 5. Re-scan the ticket body for more URLs.
 6. `mcp-sources.md` + STATE.
 

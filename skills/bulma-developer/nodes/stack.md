@@ -1,22 +1,29 @@
 # Node: stack
 
-**Verb:** orchestrate children  
-**Capability:** `spawn_worker` per child, `gh pr checks`, write `STACK.md` and JOBS. No product code.
+**Verb:** orchestrate children and umbrella
+**Capability:** stack helper, `spawn_worker`, branch preparation, CI and QA handoff, write STACK and JOBS. No product code.
 
 Follow [../STACKED.md](../STACKED.md).
 
-1. Resolve children (tracker sub-issues, several ids, or the listed tasks).
-   Record `depends_on` from tracker blocks/blockedBy or the user's order.
-2. Write `.bulma-developer/STACK.md`. One JOBS row per child (`lane=worker`).
-3. Spawn every child whose start ref exists. Each runs `bulma-feature-delivery`
-   inline in its own worktree and writes `RESULT.md`.
-4. On each RESULT or wake: `gh pr checks` per child PR. Green → that child
-   walks mergeable → bot_review → request_qa. Red → fresh fix worker resuming
-   that child's fd at `ci_watch`. Pending → `schedule_wake`.
-5. Spawn dependents as their start ref appears. Re-check dependents when a
-   dependency's head moves.
-6. Stop when every child is terminal. Report one row per child.
+1. On admission, persist `mode=stack`, the validated plan and registry rows.
+   On resume, load the same plan. Preserve the per-row job and worker receipts.
+2. Reconcile from origin and GitHub. Use the verified active row and actual
+   bases. A missing prerequisite or drift stops dependent work.
+3. For a new row, prepare its destination and dispatch its feature-delivery
+   worker at the verified start SHA. The final row packages and validates the
+   integrated tree against parent acceptance.
+4. On RESULT, QA return or wake, recheck the active row's head, base and
+   gates. CI pending → schedule wake. CI red → bounded fix worker.
+   A child with verified CI out of scope may advance on matching local tests.
+   Under developer, every PR goes through mergeability and bot review.
+   Only the umbrella with `active.qa_required: true` goes to **request_qa**,
+   using the full parent acceptance on the current combined head.
+   Under fd alone, use its existing CI and evidence gates.
+5. After gates, wait for a human to merge that child into the next branch.
+   Resume only after verifying the merge result. When the umbrella's gates
+   pass, report the release PR and its actual review status.
 
 ## Output
 
-`STACK.md` rows, parent `status`, and the per-child summary.
+`STACK.md` rows, parent status, and the verified order of linked PRs with
+destinations. Identify unopened positions as planned.

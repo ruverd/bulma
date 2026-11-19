@@ -13,12 +13,12 @@ init | delivering | stacking | fixing | mergeable | qa_requested | applying_qa |
 | Field | Use |
 |---|---|
 | `mode` | delivery \| fix \| stack |
-| `stack_path` | `.bulma-developer/STACK.md` when `mode=stack` ([STACKED.md](STACKED.md)) |
+| `stack_path` | `.bulma-developer/STACK.md` and adjacent `STACK.plan.json` when `mode=stack` ([STACKED.md](STACKED.md)) |
 | `goal` | user text; enough to start without a tracker |
 | `fd_status` | mirror of fd graph if delivery |
-| `pr_url` | draft PR |
+| `pr_url` | open PR |
 | `sha` | head |
-| `ci` | pending \| green \| red |
+| `ci` | pending \| green \| out_of_scope \| red |
 | `mergeable` | MERGEABLE \| … |
 | `review_bot` | PRODUCT.md §9 login(s), empty means skip |
 | `review_bot_loops` / `review_bot_loops_used` | remaining + used on bot threads. Default 3 |

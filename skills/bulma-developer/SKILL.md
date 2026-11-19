@@ -23,7 +23,7 @@ You are the **orchestrator**. Chat: `bulma-memory`. Apply Kevin for human-facing
 - `bulma-memory`
 - delivery voice + policy: `../bulma-feature-delivery/VOICE.md` · `../bulma-feature-delivery/DECISION_POLICY.md` · `../bulma-feature-delivery/PSTACK.md`
 
-Never merge. Stay Draft until **QA PASS**, then `gh pr ready`. Ready is not merge.
+Never merge. New PRs open ready for review. CI, mergeability, bot review and QA still gate delivery.
 Worktree and branch rules: [JOBS.md](../bulma-bus/JOBS.md) §Worktree.
 
 ## Start
@@ -50,7 +50,7 @@ Parse `$ARGUMENTS` with [ARGS.md](ARGS.md) **before** anything else.
 |---|---|
 | Goal / ticket / feature / bug / chore | `deliver` = run **bulma-feature-delivery** until CI green |
 | `QA_RESULT` FAIL + `PR_BUG` | `fix` = existing PR branch only |
-| Stacked task (sub-issues, several ids, "stacked") | `stack` = one worker per child running Bulma, PRs on main, orchestrator fixes any red CI ([STACKED.md](STACKED.md)) |
+| Stacked task (sub-issues, several ids, "stacked") | `stack` = one worker per child, then an umbrella worker; each PR targets the next branch ([STACKED.md](STACKED.md)) |
 
 Delivery spine (inside fd): grill → spec → tickets → implement(TDD). Bugs go through diagnose first. TDD iron law. Thermo before PR.
 

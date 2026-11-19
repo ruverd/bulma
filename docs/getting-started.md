@@ -1,7 +1,7 @@
 # Getting started
 
 In this guide, we install Bulma, check the setup, and deliver one small ticket
-to a draft pull request. It takes about 15 minutes plus the time your CI needs.
+to a pull request ready for review. It takes about 15 minutes plus the time your CI needs.
 
 We use Claude Code in the examples. In Codex, type `$` where the examples show
 a leading `/`. For example, `/bulma doctor` becomes `$bulma doctor`.
@@ -123,14 +123,13 @@ Bulma now works through these steps:
    what the code and docs cannot tell it.
 2. It writes a spec and a list of small tickets, then works through them. Each
    ticket gets a fresh worker agent that writes a failing test, then the code.
-3. It runs your tests and checks, opens a **draft** pull request, and waits for
+3. It runs your tests and checks, opens a pull request **ready for review**, and waits for
    CI. If CI fails, it fixes the cause and pushes again.
 4. It runs QA against the pull request and posts a comment with a video, or with
    HTTP evidence for an API change.
 
-When QA passes, Bulma marks the pull request ready for review. It does not
-merge. Open the pull request, read the diff and the QA comment, and merge it
-yourself when you are satisfied.
+When QA passes, Bulma records the result on the tested commit. Review the
+diff, checks, and QA evidence before merging the pull request yourself.
 
 ## 7. Pick up where you left off
 

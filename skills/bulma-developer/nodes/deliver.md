@@ -15,6 +15,11 @@ If `lane=worker`, work only in `worktree` (or host isolation).
 
 `fd_status` + `pr_url` + `sha` into developer STATE.
 
-When a draft PR exists and CI is not yet green, start **bulma-goal**
+When fd discovers a tracker stack or chooses a stack from the settled plan,
+transfer that plan on the same foreground to [stack](stack.md). Persist
+`mode=stack` and resume from that plan. If discovery runs in a busy-lane
+worker, return the plan in its RESULT for foreground dispatch.
+
+When an open PR exists and CI is not yet green, start **bulma-goal**
 wait loop (`../../bulma-goal/references/LOOP.md`). Do not
 block this turn on `--watch`.

@@ -41,7 +41,7 @@ Called by a graph.
 
 | Command | When | Page |
 |---|---|---|
-| `/bulma-feature-delivery` (`/bulma-fd`) | Grill → spec → tickets → TDD → draft PR | [bulma-feature-delivery](bulma-feature-delivery.md) |
+| `/bulma-feature-delivery` (`/bulma-fd`) | Grill → spec → tickets → TDD → ready PR | [bulma-feature-delivery](bulma-feature-delivery.md) |
 | `/bulma-code-review` | One review artifact per PR | [bulma-code-review](bulma-code-review.md) |
 
 How they connect: [../ARCHITECTURE.md](../ARCHITECTURE.md).

@@ -54,7 +54,7 @@ tester / quality / shipper are workers (`bulma-fd-coder`, …).
 
 ## What “delivered” means here
 
-Draft PR **and** required CI green. `--no-pr` or `forge=git`: commit
+Open PR **and** required CI green. New PRs open ready for review. `--no-pr` or `forge=git`: commit
 (+ push). No PR. Until then `status ≠ done`.
 Forge, tracker, toolchain, reviewers, assignee:
 [PRODUCT.md](../../skills/bulma-feature-delivery/PRODUCT.md).

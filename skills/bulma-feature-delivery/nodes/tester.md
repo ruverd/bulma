@@ -12,7 +12,9 @@ Objective hard gate with **real commands**.
 
 0. Floor guard, first and always:
    `python3 <this skill>/scripts/floor-guard.py --repo <worktree> --base <base_branch>`.
-   It reads the diff from the merge base, untracked files included, and fails
+   For a stack child, use `stack_member.start_sha` for its incremental test
+   floor. For the umbrella use the actual default base and check combined
+   acceptance on the merge candidate. The guard reads the diff from the merge base, untracked files included, and fails
    on a move that lowers the bar: new suppression, skipped or focused test,
    deleted test file, assertions removed from a kept test, empty catch, stub,
    silenced CI step, lowered coverage threshold. Exit 1 is a fail like a red

@@ -12,13 +12,13 @@ Skill: [`../../skills/bulma-goal`](../../skills/bulma-goal).
 - `/bulma-goal https://github.com/org/repo/pull/99`
 - `/bulma-goal status`
 - `/bulma-goal cancel`
-- After a draft PR exists and CI is still pending
+- After a PR exists and CI is still pending
 
 ## Completion bar
 
 All must hold on the **current** head SHA:
 
-1. Draft PR exists
+1. PR exists
 2. Required CI green
 3. MERGEABLE
 4. QA comment with `bulma-qa` marker for that SHA
