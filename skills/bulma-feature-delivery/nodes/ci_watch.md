@@ -19,7 +19,12 @@ Follow [CI_DELIVERY.md](../CI_DELIVERY.md) + the spirit of `loop-on-ci` / `fix-c
    tool call (10 min cap); a dead watch is **not** a CI fail — re-check.
 4. Fail → extract the error → dispatch a **fresh** `bulma-fd-coder` with the fix
    (this node does not edit product code) → push → goto 2 (≤ `ci_fix_loops`).
-5. All green → STATE `ci.status: green`, allow `status: done`.
+5. All green → for each applicable feature failure test, verify execution
+   on the current PR head using the relevant CI job log or test report.
+   Record the test name and run link in CI evidence. If discovery or workflow
+   scope excluded the test, route the gap through the fix loop. If execution
+   cannot be verified, report it as unverified and escalate. Set STATE
+   `ci.status: green` and allow `status: done` after these checks pass.
 6. Fullstack: repeat for **each** PR.
 
 ## Output
