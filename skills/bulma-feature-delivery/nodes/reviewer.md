@@ -28,7 +28,8 @@ Spec axis: the ticket + SPEC.md, not a new design.
 
 `pass` only if all of:
 
-- **TDD:** every new piece of logic has a test; STATE has RED→GREEN evidence
+- **TDD:** changed behavior has effective test coverage and STATE has the
+  required RED→GREEN evidence. Verify the proof below
 - **Lessons:** no violation of [LESSONS.md](../LESSONS.md) or of the
   recurring-lessons block in the prompt. A violation is a finding (record it,
   §Observe)
@@ -37,7 +38,6 @@ Spec axis: the ticket + SPEC.md, not a new design.
 - Investigate matching project `## Prevention` entries for `review` from
   [FEEDBACK.md](../../bulma-bus/FEEDBACK.md). A failure needs current code/test
   evidence; the memory entry alone is never a finding
-- Tests assert behavior, not only mocks
 - Security/errors/loading if applicable
 - **UI** (if the ticket/diff is UI) — [UI_DESIGN_SYSTEM.md](../UI_DESIGN_SYSTEM.md):
   reused repo DS/primitives; no magic colors/spacing / reinvented primitive;
@@ -45,6 +45,27 @@ Spec axis: the ticket + SPEC.md, not a new design.
   from recent same-type refs; loading/empty/error like the refs
 
 `fail` if any of those miss. Spec-correct code with no TDD is a quality fail.
+
+## Test proof
+
+Follow the diff through affected callers and contracts. For a consequential
+outcome, identify a plausible regression and read the relevant tests, including
+unchanged tests. Credit an existing case when it reaches that outcome and its
+assertion would fail if the behavior broke.
+
+Ground each test finding in the trigger, observable consequence and smallest
+test or evidence change that would resolve it:
+
+- **Missing scenario.** The setup never reaches the relevant state or outcome.
+- **Ineffective test.** The case exists but would stay green, for example when
+  its assertion only checks the lookup call or its mock replaces the logic
+  being reviewed. Name the wrong result the assertion would let through.
+- **Execution gap.** Check that the runner selects the relevant case and that
+  evidence for any claimed run matches the reviewed code. Record an expected
+  pending tester run as pending. The tester still owns command execution.
+
+Use the existing verdict rules. Base severity on the concrete behavior and
+impact. A generic edge-case suggestion alone is advisory.
 
 ## Graph pass
 
@@ -87,6 +108,6 @@ runner's finalized verdicts so fallback cannot erase prior findings.
 ## Hard rules
 
 - Read-only on product code.
-- Missing tests on new logic = quality **fail** (not a nit).
+- Uncovered changed behavior = quality **fail**.
 - Spec miss = spec **fail** even when tests and DS look fine.
 - Do not rubber-stamp.
