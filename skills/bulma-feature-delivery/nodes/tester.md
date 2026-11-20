@@ -27,11 +27,52 @@ Objective hard gate with **real commands**.
 2. `test_cmd` on the **touched area** (full suite only if expected <3 min)
 3. `lint_cmd` only if expected <3 min and it is part of usual local CI
 4. `e2e_cmd` only if done criteria require it
-5. every command under project memory `## Checks`
+5. every plain command under project memory `## Checks`
    ([bulma-memory](../../bulma-memory/SKILL.md)), from the repo root, through
    the same runtime evidence capture. They are the project's own pre-push guards.
    A non-zero exit is a fail like any other. A command that cannot run here
    (missing tool) is recorded as skipped with the reason, never as a pass
+6. Run the existing hard gate's scoped checks when the shared project memory has
+   a `prevention` registration or STATE has `work_kind: feature`.
+
+   ```text
+   python3 <this skill>/scripts/tester-checks.py --repo <worktree> \
+     --base <same base as floor guard> --project <BULMA_REPO> \
+     --directory <tester evidence directory> --work-kind <STATE work_kind>
+   ```
+
+   For deterministic commands already run in this attempt, pass their
+   `--ran <receipt>` and the complete current `--environment <fingerprint>`.
+   The helper uses runtime evidence to reuse an exact current-tree command only
+   when its receipt is reusable. A prevention
+   registration without verified evidence stays advisory. A selected test that
+   fails or cannot be verified fails this existing hard gate. Confirm the
+   regression actually executed in the current receipt log as for other tests.
+
+   For `work_kind: feature`, including `path: light_change`, pass one
+   `--feature-path <repo-relative file>` per changed executable production file
+   in the feature's ticket. Use the plan and diff to include every feature file
+   and exclude tests and unrelated edits. If a file mixes feature and unrelated
+   edits, pass `--feature-lines FILE:START-END` for each feature range in that
+   file, using current worktree line numbers. For stack children scope to the
+   incremental change and use the child floor base. For an umbrella that
+   delivers a feature use the integrated feature scope and umbrella floor base.
+   Pass `--no-feature-code <evidenced reason>` only when the ticket and diff
+   establish that this feature adds or changes no executable production code.
+
+   Use the project runner from
+   [project memory](../../bulma-memory/references/TESTER_CHECKS.md#feature-line-coverage) or pass
+   its discovered command with `--coverage-argv <JSON argv>`. Use the coverage
+   run in place of `test_cmd` only when it runs the same planned tests. Record
+   the returned scope, covered and executable counts, minimum, report and
+   runtime receipt. Missing or incompatible evidence for an executable feature,
+   including zero measured lines, leaves the hard gate failed. A real
+   no-code reason is recorded as not applicable without a percentage.
+
+   A nonzero helper exit sets `hard_gate: fail` and takes the existing tester
+   failure edge. On success include the scoped results in tester STATE and
+   continue with the other required checks. The helper result alone cannot make
+   the complete tester pass.
 
 Use the discovered `pkg` (`bun` / `pnpm` / `go` / `cargo` / …). Never `npm` when the lockfile is something else.
 

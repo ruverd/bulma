@@ -149,6 +149,9 @@ Do not create this preference or a personal adapter without the user's request.
 Do not duplicate a fact that already lives in the target repo
 (`AGENTS.md`, `CODEOWNERS`, `REVIEW.md`).
 
+The feature-delivery tester also supports [scoped regressions and feature line
+coverage](references/TESTER_CHECKS.md) configured in this file.
+
 ## `/memory`
 
 ```text

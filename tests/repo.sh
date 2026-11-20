@@ -59,6 +59,7 @@ check trail-adapter env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_
 check development-review env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_development_review.py"
 check model-attribution env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_model_attribution.py"
 check runtime-evidence env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_runtime.py"
+check tester-checks env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_tester_checks.py"
 check process-feedback env PYTHONDONTWRITEBYTECODE=1 python3 "$LIB/test_process_feedback.py"
 check task-playbooks env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_playbooks.py"
 check floor-guard env PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT/tests/lib/test_floor_guard.py"
