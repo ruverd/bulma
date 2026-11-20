@@ -140,7 +140,7 @@ No `CODEOWNERS` file (`CODEOWNERS`, `.github/CODEOWNERS`,
 
 Shipper requests only `confirmed` (`gh pr edit --add-reviewer` /
 `glab mr update --reviewer`, one failure must not block the rest).
-Open the draft PR anyway if `proposed` or `missing`. Do not block CI.
+Open the PR ready for review if `proposed` or `missing`. Do not block CI.
 
 Orchestrator, after ship, asks **one** question (chat language from
 `bulma-memory`). Next user message writes project `## Product`

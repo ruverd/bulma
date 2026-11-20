@@ -5,5 +5,5 @@
 
 Follow [../references/GATES.md](../references/GATES.md).
 
-Both required: CI green **and** `MERGEABLE`.
+Both required: applicable CI gate passed **and** `MERGEABLE`.
 Conflicts → orchestrator may loop back to fix (branch only).

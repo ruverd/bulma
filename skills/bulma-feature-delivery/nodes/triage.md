@@ -16,9 +16,14 @@ Do not implement. Do not debug in depth (that is **diagnose** on path debug_fix)
 3. Classify `work_kind`: feature | bug | regression | chore | spike.
 4. Classify **`scope`**: frontend_only | backend_only | mono | **fullstack**
    ([PRODUCT.md](../PRODUCT.md)). Fullstack only if a sibling resolved.
-5. Stacked task (tracker sub-issues, several ids, or the user asks for one PR
-   per task) → stop routing here and take the **stack** edge
-   ([STACKED.md](../../bulma-developer/STACKED.md)). Each child triages itself.
+5. For a shipping request with `delivery_mode: stack` from tracker or
+   explicit task discovery, take **stack** using the saved plan
+   ([STACKED.md](../../bulma-developer/STACKED.md)). A regular member
+   continues triage on its assigned slice. For the final member, load the
+   parent contract and completed child tests and proof, then send the
+   combined tree through quality, review, tester, and evidence. Prepare
+   the combined acceptance checklist from the existing contract. This path
+   adds no implementation of its own.
 6. Choose `path`: full_feature | debug_fix | light_change
    (if fullstack, path is the mode **per worker**; coordination is FULLSTACK.md).
 7. Choose `risk`: low | normal | elevated ([ROUTING.md](../ROUTING.md) §Risk).

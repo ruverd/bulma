@@ -15,6 +15,18 @@ where the happy path could pass while a changed or preserved contract breaks.
 Choose cases from the affected callers, states and dependency outcomes. Cite
 existing tests that already prove preserved behavior.
 
+For a full feature without tracker children, choose `delivery_mode` from
+the plan. Default to `delivery`: implement each slice in its own coder
+session and ship the validated combined tree as one PR. Choose `stack`
+when each proposed PR has a distinct, testable review, rollout, or delivery
+purpose. Record the decision with the acceptance boundaries and dependencies.
+Example: a disabled path can be reviewed before a separate activation
+change. Only ask for a product or rollout decision if it blocks either
+shape. Use [the stack planner](../../bulma-developer/STACKED.md#plan-and-state)
+with the existing local slices, using `source: planned` or
+`source: integrated`. Finish the applicable plan critic first. A stack
+member, a no-PR run, and a cross-repo fullstack run retain their own path.
+
 Do **not** create tracker issues from this node. [BLOCKERS.md](../BLOCKERS.md) is the only create path (missing contract).
 
 Main thread.

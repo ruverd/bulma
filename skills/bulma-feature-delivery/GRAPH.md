@@ -8,7 +8,7 @@ Bundled primitives.
 goal / resume
   → mcp_context
   → triage
-       ├ stacked task → stack (../bulma-developer/STACKED.md): one worker per child runs this graph; orchestrator fixes red CI
+       ├ tracker or explicit stack → stack: same delivery workers, then umbrella
        ├ scope=fullstack → fullstack (same branch, git worktrees; Orca optional) then this path per worker
        ├ full_feature → grill → spec → tickets → plan_critic → implement* → blast? → quality → review → tester
        ├ debug_fix    → diagnose → one ticket → implement → blast? → quality → review → tester
@@ -45,7 +45,8 @@ are nodes (subagents where the adapter says so).
 | start | fresh goal / ticket | **mcp_context** |
 | mcp_context | mcp_gate=passed / passed_partial | **triage** |
 | mcp_context | mcp_gate=failed | **STOP** + English error |
-| triage | stacked task (sub-issues, several ids, "stacked") | **stack** per [STACKED.md](../bulma-developer/STACKED.md); each child stops at CI green (no QA under `/bulma-fd`) |
+| triage | verified tracker or explicit stack plan, shipping | **stack** per [STACKED.md](../bulma-developer/STACKED.md); fd alone stops at CI green for each PR |
+| triage | final stack member, parent contract and child proof loaded | **quality** on the integrated candidate |
 | triage | work_kind=spike | **diagnose** read-only, then playbook check → `done_report` |
 | triage | scope=fullstack and work_kind≠spike | **fullstack** (FULLSTACK.md) |
 | triage | path=full_feature | **grill** |
@@ -57,10 +58,12 @@ are nodes (subagents where the adapter says so).
 | grill | ASK in flight | `waiting_user` **stop dependent work** |
 | spec | SPEC.md written | **tickets** |
 | tickets | tickets written, seams decided, path=full_feature and risk≠low | **plan_critic** |
+| tickets | tickets written, no critic owed, delivery_mode=stack | **stack** |
 | tickets | tickets written, seams decided, else | **implement** (first unblocked ticket) |
-| plan_critic | pass or skip | **implement** (first unblocked ticket) |
+| plan_critic | pass or skip, delivery_mode=stack | **stack** |
+| plan_critic | pass or skip, delivery_mode=delivery | **implement** (first unblocked ticket) |
 | plan_critic | revise + loops left | apply on main, **plan_critic** |
-| plan_critic | revise + loops exhausted | DECIDE residuals; **implement** unless every path is a guess → **escalate** |
+| plan_critic | revise + loops exhausted | DECIDE residuals; take the settled **implement** or **stack** edge, or **escalate** if every path is a guess |
 | diagnose | root cause + fix slice | **implement** (one ticket) |
 | diagnose | this is a feature | re-route **grill** |
 | diagnose | ASK needed | `waiting_user` |
@@ -81,7 +84,7 @@ are nodes (subagents where the adapter says so).
 | quality | blocked | **escalate** |
 | shipper | PR created | **ci_watch** |
 | shipper | `--no-pr` | `done_local` |
-| ci_watch | all green | **done** |
+| ci_watch | all required green or verified stack-child out_of_scope | **done** |
 | ci_watch | fail + loops left | **implement** (fix, then quality/review/tester/evidence/shipper) |
 | ci_watch | loops exhausted | **escalate** |
 | plan/implement | missing contract or open blocker | **blocker_handler** |
@@ -103,7 +106,7 @@ plan_critic_loops: 1
 tdd: required_for_behavior_change
 subagents_on_implement: always
 never_merge: true
-stay_draft: true
+new_pr_status: ready_for_review
 chat_language: en  # user-facing messages; this file is English
 voice: kevin
 decide_by_default: true
@@ -125,7 +128,7 @@ existing loop caps, or escalates. It never permits skipping an earlier gate.
 - Declaring **delivered** with CI red/pending
 - full_feature on every small bug
 - Main thread writing product code
-- Shipping a stacked task as one PR, or basing a child PR on another child's branch
+- Shipping a stack out of verified head/base order
 - Product changes after final review without revalidation
 - Shipping without TDD evidence on behavior change
 - Auto-merge

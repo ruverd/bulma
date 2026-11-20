@@ -29,5 +29,5 @@
 
 ## Never
 
-- Merge, or mark ready before QA `PASS`.
+- Merge or change an existing PR's draft status.
 - Sit in `gh pr checks --watch`.

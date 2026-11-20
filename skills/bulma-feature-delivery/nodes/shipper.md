@@ -1,12 +1,12 @@
 # Node: shipper
 
 **Verb:** package
-**Capability:** git commit + push + draft PR; **never** merge
+**Capability:** git commit + push + ready PR; **never** merge
 **Does not** mark final delivery alone — **ci_watch** closes done.
 
 ## Mission
 
-After quality, review, tester and final evidence match the current tree: commit → push → draft PR.
+After quality, review, tester and final evidence match the current tree: commit → push → ready-for-review PR.
 Then the orchestrator runs **ci_watch** if a PR/MR exists.
 
 ## Sequence
@@ -19,14 +19,26 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
 2. `git branch --show-current` must not be `main` or `master`. Fail the node if it is.
    Branch == tracker branch if set.
 3. Forge from [PRODUCT.md](../PRODUCT.md). `github` → `gh`. `gitlab` → `glab`. `git` → push only, no PR (`done_local` unless the user insisted).
-4. Idempotency: list PRs/MRs on this head. Exists → update, do not recreate.
+4. Idempotency: look up this exact head and base before publication. Update
+   the existing open PR/MR in place and preserve its draft flag. A merged PR
+   is a resume receipt, never a reason to push or publish again. A closed
+   unmerged PR or a changed base needs reconciliation before publication.
 5. Commit (cite ticket id if any). **No Co-Authored-By, no "Generated with", no trailers.**
 6. `git fetch origin && git rebase origin/<base>`. If the tree or base changes,
    return to review, tester and final evidence before pushing. Preserve completed
    decisions; revalidate affected contracts against the new base.
    Then push (`-u`). `--force-with-lease` only after a rebase that rewrote
    commits, and only on the task branch. Never `--force`. Never on main/master.
-7. Draft PR/MR with the ticket link. Body from
+   **Stack member:** use the assigned head, base, and position from STATE.
+   Re-read origin and refuse publication if either the saved destination tip
+   or the expected source tip drifted. Verify the candidate descends from
+   the assigned start SHA. Record the candidate SHA in the worker's STATE
+   before pushing so a retry can recover a push without a PR receipt.
+   Keep its integrated history and push by
+   fast-forward only. For the umbrella, package the validated existing head
+   and skip the commit when the tree is clean. A base change goes back to
+   combined validation or conflict handling before publish.
+7. Ready-for-review PR/MR with the ticket link. Body from
    [../templates/PR_BODY.md](../templates/PR_BODY.md). Inline the
    evidence fragment (`$BULMA_ROOT/.bulma-feature-delivery/pr-body-evidence.md`).
    **UI + `forge=github`:** load
@@ -46,12 +58,17 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
    and read back each saved description after creation or update.
 8. **Reviewers + assignee** per PRODUCT.md §6 (re-read at PR open).
    ```bash
-   ME=$(gh api user --jq .login)   # or glab equivalent
-   gh pr create --draft --title "..." --body "..." \
+   ME=$(gh api user --jq .login)
+   python3 <fd-skill>/scripts/delivery_pr.py --repo "$REPO" --head "$HEAD_BRANCH" \
+     --base "$BASE_BRANCH" --title "$TITLE" --body-file "$BODY_FILE" \
      --assignee "${ASSIGNEE:-$ME}"
-   # only if reviewers_status=confirmed:
-   # gh pr edit "$PR" --add-reviewer "$LOGIN"   # one login per call
    ```
+   For a stack member add `--position "$POSITION"` from STATE. The helper
+   applies the same title position on a resumed open PR and verifies the
+   result. Update the existing body/evidence using its URL and preserve the
+   draft flag. With GitLab, use the same exact source and target checks,
+   create with `glab mr create` without a draft flag or Draft title prefix,
+   and read back draft status. Use `glab` for assignee and reviewers there.
    Request only `confirmed`. `proposed` / `missing`: still open the
    PR; orchestrator asks once (PRODUCT.md). One failed reviewer
    request must not block the rest. Never pass `git user.name` to
@@ -67,7 +84,7 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
 
 | Situation | graph `status` |
 |---|---|
-| PR + CI green | **`done`** (delivered) |
+| PR + applicable CI gate passed | **`done`** (delivered) |
 | PR + CI pending/red | `shipping` / `ci_watching` — **not** delivered |
 | `--no-pr` + quality ok | `done_local` or done with note "no PR CI" |
 

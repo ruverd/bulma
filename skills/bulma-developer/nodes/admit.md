@@ -8,9 +8,12 @@ Load `bulma-memory` (read both files). Chat follows that skill.
 
 1. Init `.bulma-bus/JOBS.md` if missing.
 2. `job_id` = `dev-<ticket>` or `dev-pr-<n>`.
-3. Stacked task ([../STACKED.md](../STACKED.md)) → idle main: `mode=stack`,
-   `lane=foreground`, go **stack**. Busy main: tell the user and stop;
-   the orchestrator must own the foreground to spawn child workers.
+3. A single issue ID or URL goes through **deliver** for tracker discovery.
+   An explicit stack request goes through the same discovery to resolve its
+   tasks. A verified stack plan enters **stack** after discovery
+   ([../STACKED.md](../STACKED.md)). If another
+   graph owns main, retain the plan and resume it when the orchestrator can
+   own the foreground and dispatch its children.
 4. Idle main → `lane=foreground`, write
    `.bulma-developer/STATE.md` (`job_id`, `lane`), then
    **deliver** or **fix**.

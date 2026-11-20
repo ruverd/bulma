@@ -1,7 +1,8 @@
 # CI/CD green = delivered
 
-**Graph done:** PR(s) open **and** **all** CI/CD checks green. Until then the
-task is **not** delivered (`status` ≠ `done`).
+**Graph done:** PRs open and the applicable CI gate has passed. For ordinary
+delivery and the umbrella, required checks must be green. Stack children
+can use the documented proof below when CI is scoped away from their base.
 
 Source of truth: **`gh pr checks`** on GitHub, **`glab ci status`** on GitLab
 (not only `gh run list`). `forge=git` → no PR CI; `done_local`.
@@ -13,7 +14,7 @@ Wake: `schedule_wake` in [bulma-host](../bulma-host/SKILL.md). Follow
 ```
 quality ok
  → commit + push
- → create/update draft PR
+ → open ready-for-review PR or update existing PR
       reviewers/assignee: PRODUCT.md
  → ci_watch (required if open_pr)
       pending → poll checks (short calls, ~5 min apart)
@@ -47,6 +48,41 @@ Green = no **required** check in `fail` / `pending` / failed `cancelled`. Prefer
 - `bucket` / required: if `gh` exposes required, require those; otherwise
   **every** check attached to the PR
 
+## Stack child CI
+
+Use the normal hosted gate when the repository runs build or test checks
+for the actual PR base. When a child lacks those checks, use the same
+[workflow scope validator as code review](../bulma-code-review/references/PREFLIGHT.md#ci-out-of-scope-for-the-base).
+Read workflows from the verified base commit. The candidate head cannot
+change its own scope decision.
+
+For a candidate out-of-scope result, run the relevant tester checks on the
+clean, committed PR head in its recorded worktree. Its history includes
+the pinned destination commit. Check the selected suites ran assertions
+and capture receipts through [runtime evidence](../bulma-bus/PERFORMANCE.md).
+Write the head SHA, base SHA, and receipt paths as
+`{"head":"…","base":"…","receipts":["/path/to/result.json"]}` under the
+worker state. Supply that proof to the script:
+
+```bash
+python3 <fd-skill>/scripts/stack-ci.py --checkout "$WORKTREE" --repo "$REPO" \
+  --pr "$PR" --head-sha "$HEAD_SHA" --base "$BASE_BRANCH" --base-sha "$BASE_SHA" \
+  --default "$DEFAULT_BRANCH" --proof "$PROOF_FILE"
+```
+
+Use the `out_of_scope` result only for the exact pair on its receipt. The
+script checks live refs, reported checks, classic branch protection and
+applicable rulesets, and verifies local receipts with `runtime.py check`.
+Failed, pending, unreadable, or missing required checks need the ordinary
+CI gate. If a required workflow rule applies, verify it through that gate.
+An `in_scope` result with missing expected checks or an `unknown` result
+does not pass. Re-run on head, base or test environment changes.
+
+Store `ci.status: out_of_scope` separately from `green`. Report
+**CI out of scope for this base**, with the local tests that ran.
+The umbrella always needs hosted CI and, on the Developer route, integrated
+QA. Preserve existing external QA-provider and required check policies.
+
 ## Fix loop
 
 1. Extract the **first** actionable failure.
@@ -71,13 +107,14 @@ If loops blow / infinite flake / failure on main that is unrelated:
 
 ```yaml
 ci:
-  status: pending | watching | fixing | green | escalated | skipped_no_pr
+  status: pending | watching | fixing | green | out_of_scope | escalated | skipped_no_pr
   pr_url: ...
   last_checks: summary
   fix_loops_used: 0
 ```
 
-Graph `status: done` **only** if `ci.status: green` (when there was a PR).
+Graph `status: done` requires `ci.status: green` or a verified stack-child
+`out_of_scope` result when there was a PR.
 
 If this run sits **inside** the `bulma-developer` graph, `done` here
 **does not** finish delivery: the developer orchestrator continues to
@@ -89,7 +126,7 @@ If this run sits **inside** the `bulma-developer` graph, `done` here
 Call it **delivered** only when you have:
 
 - PR URL
-- CI green (check list or "all green")
+- CI outcome (green checks, or scope and local proof for a stack child)
 - branch + SHA
 
 Speak that summary in the chat language (`bulma-memory`). Fullstack: FE green + BE green. Forge notes stay English.

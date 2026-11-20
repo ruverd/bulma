@@ -61,8 +61,10 @@ Worker jobs use `.bulma-bus/jobs/<id>/STATE.md` only.
 
 ## Worktree
 
-Every task, including foreground, gets its own worktree and branch from
-`origin/main` (or the repo default). If the host already created a
+Every implementation task, including foreground, gets its own worktree.
+Ordinary tasks branch from the repository default. A stack orchestrator
+defers checkout to the member workers, which use their assigned branch
+and start SHA from [STACKED.md](../bulma-developer/STACKED.md). If the host already created a
 worktree, keep the **directory**. The **git branch** is still the name
 below. Host isolation on `{login}/dev-4525` (or any tracker
 `gitBranchName` that is not `feature/<id-lowercase>`) is not the task
@@ -118,7 +120,7 @@ Scope check at fd tickets, once files are known: `gh pr list` and
 Never `--force`. `--force-with-lease` only on the task branch, never on
 main/master.
 
-Shipper: rebase onto `origin/<base>` and re-run the hard gate before push.
+Shipper: for ordinary delivery, rebase onto `origin/<base>` and re-run the hard gate before push. Stack members keep their incoming history.
 
 Lockfile conflict: regenerate with the discovered `pkg`. Never hand-merge.
 
@@ -166,17 +168,21 @@ Worker **must not** spawn children.
 
 Prompt must include: job id, worktree path (or “host worktree”),
 PR/ticket, “execute the skill **yourself** — no bulma-* / bulma-fd-*
-spawns”, never merge, stay draft.
+spawns”, never merge, open new delivery PRs ready for review.
 
 | kind | Worker does |
 |---|---|
-| developer | `bulma-feature-delivery` nodes inline (or Fix contract). Draft PR. Write `jobs/<id>/RESULT.md`. |
-| stack child | `bulma-feature-delivery` end-to-end inline in its own worktree, PR `--base main` ([STACKED.md](../bulma-developer/STACKED.md)). Write `RESULT.md` under the orchestrator's `$BULMA_ROOT`. |
+| developer | `bulma-feature-delivery` nodes inline (or Fix contract). Open new PRs ready for review. Write `jobs/<id>/RESULT.md`. |
+| stack child | `bulma-feature-delivery` end-to-end inline in its own worktree on its assigned head and base ([STACKED.md](../bulma-developer/STACKED.md)). Write `RESULT.md` under the orchestrator's `$BULMA_ROOT`. |
 | stack fix | Resume that child's fd at `ci_watch` for one red check. Same branch, no force. Write `RESULT.md`. |
 | reviewer | `bulma-code-review` for **one** PR only. Write `RESULT.md`. |
 | lstm | `bulma-lstm` nodes inline for **one** PR. Same branch. TDD via coder contract (spawn `bulma-fd-coder` on foreground; inline on depth-1 worker). Write `RESULT.md`. |
 
-On RESULT: update JOBS. Developer worker with green+MERGEABLE →
+On RESULT: update JOBS. A verified parent plan discovered by a busy-lane
+worker is queued for foreground stack dispatch. A stack member returns
+to its stack coordinator, which owns the wake and reserves integrated QA
+for the final PR.
+An ordinary developer worker with green+MERGEABLE →
 [Enqueue or start QA](#enqueue-or-start-qa). CI pending → start
 `bulma-goal` loop for **that** PR (one loop per PR).
 

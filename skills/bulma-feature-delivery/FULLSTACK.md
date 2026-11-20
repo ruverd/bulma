@@ -82,7 +82,7 @@ Tracker MCP for the ticket. Never a vendor CLI.
 - tracker-context (AC)
 - backend: contracts, migrations, API TDD
 - frontend: UI_DESIGN_SYSTEM + Figma if any + contract consumption
-- never merge; draft PR if `open_pr`
+- never merge; ready PR if `open_pr`
 - quality before final review in that worker's repo
 
 ## 6. Dual ship + CI green
@@ -91,7 +91,7 @@ For **each** repo, after the worker is ok:
 
 1. quality, then independent review/tester/evidence in that worktree
 2. commit + push on the **same** branch
-3. draft PR (base main) linking the ticket + the sibling PR
+3. ready PR (base main) linking the ticket + the sibling PR
    - reviewers/assignee per [PRODUCT.md](PRODUCT.md)
 4. **ci_watch** on **each** PR
 

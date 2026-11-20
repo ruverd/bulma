@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Minimal GitHub CLI fixture backed by the test's bare Git repository."""
+
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from urllib.parse import unquote
+
+REPO = "fixture/product"
+args = sys.argv[1:]
+store = Path(os.environ["DELIVERY_FIXTURE"])
+data = json.loads(store.read_text())
+pulls = data["pulls"]
+
+
+def tip(ref):
+    return subprocess.check_output(
+        ["git", "--git-dir", data["remote"], "rev-parse", f"refs/heads/{ref}"], text=True
+    ).strip()
+
+
+def option(name):
+    return args[args.index(name) + 1]
+
+
+def save():
+    data["calls"].append(args)
+    store.write_text(json.dumps(data))
+
+
+if args[:3] == ["api", "--method", "GET"]:
+    assert args[3] == f"repos/{REPO}/pulls"
+    key = next(value.split(":", 1)[1] for value in args if value.startswith("head="))
+    matches = [pr for pr in reversed(pulls) if pr["head"]["ref"] == key]
+    print(json.dumps([[], matches]))
+elif args[0] == "api" and "/rules/branches/" in args[1]:
+    print(json.dumps([data.get("rules", [])]))
+elif args[0] == "api" and "/branches/" in args[1]:
+    branch = unquote(args[1].split("/branches/")[1])
+    print(json.dumps({"commit": {"sha": tip(branch)},
+                      "protection": {"required_status_checks": {"contexts": data.get("classic", [])}}}))
+elif args[0] == "api":
+    number = int(args[1].split("/")[-1])
+    pull = next(pr for pr in pulls if pr["number"] == number)
+    print(json.dumps(pull))
+elif args[:2] == ["pr", "create"]:
+    assert option("--repo") == REPO
+    head = option("--head")
+    base = option("--base")
+    assert not any(pr["head"]["ref"] == head for pr in pulls)
+    number = [71, 19, 92, 4][len(pulls)]
+    repo = {"full_name": REPO}
+    pr = {
+        "number": number, "html_url": f"https://github.com/{REPO}/pull/{number}",
+        "draft": "--draft" in args, "title": option("--title"),
+        "head": {"ref": head, "sha": tip(head), "repo": repo},
+        "base": {"ref": base, "sha": tip(base), "repo": repo},
+        "state": "open", "merged": False, "merge_commit_sha": None,
+    }
+    subprocess.run(["git", "--git-dir", data["remote"], "update-ref",
+                    f"refs/pull/{number}/head", pr["head"]["sha"]], check=True)
+    pulls.append(pr)
+    save()
+    print(pr["html_url"])
+elif args[:2] == ["pr", "view"]:
+    pr = next(pr for pr in pulls if pr["html_url"] == args[2])
+    print(json.dumps({
+        "state": pr["state"].upper(), "headRefOid": pr["head"]["sha"],
+        "baseRefName": pr["base"]["ref"], "baseRefOid": pr["base"]["sha"],
+        "statusCheckRollup": data.get("rollup", []),
+    }))
+elif args[:2] == ["pr", "checks"]:
+    assert "--required" in args
+    print(json.dumps(data.get("required", [])))
+elif args[:2] == ["pr", "edit"]:
+    pr = next(pr for pr in pulls if pr["html_url"] == args[2])
+    pr["title"] = option("--title")
+    save()
+else:
+    raise AssertionError(args)

@@ -1,6 +1,6 @@
 ---
 name: bulma-fd-shipper
-description: Bulma FD shipper. After final validation — commit, push, draft PR. Does not claim delivery; CI gate follows.
+description: Bulma FD shipper. After final validation — commit, push, ready PR. Does not claim delivery; CI gate follows.
 tools: Read, Grep, Glob, Bash
 model: inherit
 color: purple
@@ -18,10 +18,11 @@ Follow `../skills/bulma-feature-delivery/nodes/shipper.md`.
    `gh`/`glab` — never the `orca linear` CLI.
 3. Commit hygiene (hard rule): conventional prefix + tracker id if any; **NO Co-Authored-By,
    no "Generated with", no trailers of any kind.**
-4. Idempotency: before creating anything, `gh pr list --head <branch>` — if a PR
-   already exists, update it instead of creating a duplicate.
-5. Rebase onto origin/base, re-run the hard gate, push (`--force-with-lease` on the task branch only).
-6. If `open_pr: true`: draft PR. Body from
+4. Use the node's exact head/base lookup. Preserve the draft flag when
+   updating an existing PR.
+5. Follow the node's base and push rules. A stack member keeps its assigned
+   branch, base, and integrated history.
+6. If `open_pr: true`: publish ready for review with the node's helper. Body from
    `../skills/bulma-feature-delivery/templates/PR_BODY.md`. Inline the
    evidence fragment. Publish leftover local PNGs with
    `../skills/bulma-qa/scripts/publish-evidence.sh` (`--screenshot`) first.

@@ -32,7 +32,7 @@ step  (exactly one, from the table below)
 | start | PR url and a live PR | **admit** (skip implement) |
 | start | empty args with live STATE | **inspect** |
 | admit | no PR yet | **step** → developer `deliver` |
-| admit | draft PR exists, CI not green | **schedule_wake**, stop |
+| admit | PR exists, CI not green | **schedule_wake**, stop |
 | inspect | no PR | **step** → developer `deliver` |
 | inspect | CI pending or in progress | **stop** (wait for the next fire) |
 | inspect | CI red | **step** → developer `fix` / fd ci loop |

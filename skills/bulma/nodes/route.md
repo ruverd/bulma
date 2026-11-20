@@ -10,6 +10,8 @@ Deterministic first, Jev second. Never guess a graph.
 1. `../ARGS.md` already classified the args. Tracker id or tracker URL →
    `target: developer`, `target_args: <id or URL>`, no Jev call, write the
    Route block with `why: deterministic: ticket id`, go to **overlay**.
+   Developer passes a single issue into feature-delivery tracker discovery,
+   which resolves any child issues before choosing the delivery shape.
    Args that are only PR or MR refs → one `world.sh --pr` per ref, then read
    `pr.author_is_user`: `true` → `qa`, `false` → `reviewer`, no Jev call,
    `why: deterministic: pr author`. Several refs: one `reviewer` run with

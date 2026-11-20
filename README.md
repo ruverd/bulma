@@ -19,9 +19,8 @@ Grok. You type one command, `/bulma`, and it decides which step comes next.
 
 ## What Bulma promises
 
-- **You merge. Bulma never does.** Every pull request stays a draft until
-  its checks pass, it has no merge conflicts, and QA has attached proof that it
-  works.
+- **You merge. Bulma never does.** New delivery PRs open ready for review.
+  CI, applicable reviews, and QA still gate delivery.
 - **Code is written test-first.** A fresh worker agent writes a failing test,
   then the code that makes it pass, one ticket at a time.
 - **Every change is tested like a user would test it.** QA clicks through the
@@ -41,7 +40,7 @@ agent's own permission settings are the real boundary. Read
    into small tickets.
 2. **Build.** A worker agent does each ticket test-first. Bulma checks the result
    against the spec and runs your tests, linter, and type checker.
-3. **Ship.** Bulma opens a draft pull request and waits for CI. If CI fails,
+3. **Ship.** Bulma opens a pull request ready for review and waits for CI. If CI fails,
    it fixes the cause and pushes again.
 4. **QA.** Bulma tests the change the way a user would, happy path and broken
    input, and comments on the pull request with the evidence.

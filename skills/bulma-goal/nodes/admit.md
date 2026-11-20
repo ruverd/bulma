@@ -11,7 +11,7 @@
 3. Name the completion bar:
 
 ```text
-Draft PR for <id> is CI-green, MERGEABLE, and has a bulma-qa
+PR for <id> is CI-green, MERGEABLE, and has a bulma-qa
 comment on the head SHA that includes evidence.
 ```
 

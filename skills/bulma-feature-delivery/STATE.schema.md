@@ -22,6 +22,12 @@ done_report | escalated
 
 ## Fields
 
+- `delivery_mode`: `delivery` or `stack`, chosen by discovery or the settled local plan.
+- `stack_member`: assigned `head`, `base`, `start_sha`, `base_sha`,
+  `position`, and `final`. Preserve it on resume. This member bypasses stack
+  discovery and uses the incoming SHA as the slice baseline. An umbrella
+  validates the combined candidate against the actual default base.
+
 | Field | Use |
 |---|---|
 | `schema_version: 5` | resume compat. v4 resume: missing `risk` → `normal` |

@@ -23,9 +23,10 @@ Then decide, in this order:
 do not pad this PR.
 
 On **`QA_RESULT` PASS** (including PASS + NEW_BUG / EXISTING_BUG /
-NOT_A_BUG when this PR's ACs still hold): mark the PR Ready for
-Review — `gh pr ready "$PR" --repo "$REPO"`. Confirm `isDraft=false`.
-Still **never merge**.
+NOT_A_BUG when this PR's ACs still hold), record completion on the tested SHA.
+Read and report the PR's actual review status. Preserve an existing draft.
+For a stack, record the result against the row's head and base, then return
+to **stack**. Never merge.
 
 Do not invent product behavior on ambiguity → escalate.
 Do not dequeue the next QA here — `verdict` does that after

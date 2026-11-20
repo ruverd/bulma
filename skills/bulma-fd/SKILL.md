@@ -3,7 +3,7 @@ name: bulma-fd
 category: engine
 description: >
   Alias for bulma-feature-delivery. Use when /bulma-fd or $bulma-fd starts or
-  resumes ticket, bug, or chore delivery through draft PR and green CI.
+  resumes ticket, bug, or chore delivery through ready PR and green CI.
 argument-hint: "<goal | ticket | resume> [--no-pr]"
 ---
 

@@ -2,7 +2,7 @@
 
 The goal is done only when **all** are true on the **current head SHA**:
 
-1. Draft PR exists (`pr_url` in STATE).
+1. PR exists (`pr_url` in STATE).
 2. `gh pr checks`: no required check pending/fail.
 3. `mergeable` / `mergeStateStatus` is MERGEABLE (or CLEAN).
 4. The PR has a comment whose body contains:

@@ -110,7 +110,7 @@ Never opens a new PR. Draft stays draft.
 
 ## Goal loop
 
-`/bulma-goal` uses `schedule_wake` (`bulma-host`) until the draft PR is
+`/bulma-goal` uses `schedule_wake` (`bulma-host`) until the PR is
 CI-green, MERGEABLE, and has a QA comment with evidence on the head
 SHA. CI is often longer than a tool timeout, so the loop polls
 instead of `gh pr checks --watch`.
@@ -127,6 +127,6 @@ loop caps; bulma never appears on `STACK.md`. Every Jev answer is logged to
 
 ## Invariants
 
-- Never merge. Mark the PR ready only after QA PASS.
+- Never merge. New PRs open ready for review. Developer still requires CI, mergeability, bot review and QA.
 - Chat follows `bulma-memory` (default English). Forge text stays English. Apply Kevin for human-facing communication.
 - ASK the user only as a last resort.
