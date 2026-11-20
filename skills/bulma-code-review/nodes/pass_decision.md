@@ -46,7 +46,7 @@ promotion. Run a fresh deep pass under the new rules, preserving prior findings.
 | none | **deep** |
 | `open=` contains an acceptance key | recheck PR evidence and waivers even on an unchanged SHA before skip; changed evidence needs a fresh verdict, APPROVE after our change request still requires deep |
 | `sha == headRefOid`, state APPROVED or CHANGES_REQUESTED | **skip** — post nothing, report in chat |
-| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*` or `review_pending`, that gate now clear (CI green or `out_of_scope`; the change request approved or dismissed), `blockers=0 majors=0 mediums=0` | **promote** — §8.1, no diff re-read |
+| `sha == headRefOid`, DEFERRED `pass=deep\|light`, `reason=ci*` or `review_pending`, that gate now clear (CI green or `out_of_scope`; the change request approved or dismissed), `blockers=0 majors=0 mediums=0` | **promote** — §8.1, refresh case evidence |
 | `sha == headRefOid`, COMMENTED (any reason, older runs) | **deep** — a COMMENT is not a verdict. Post one |
 | `sha == headRefOid`, DEFERRED `pass=none` `reason=ci_pending`, CI still pending | **wait_ci** — [LOOP.md](../LOOP.md). No new comment. |
 | `sha == headRefOid`, DEFERRED `pass=none` (gate), the gated condition is gone | **deep** — nothing was reviewed yet |
@@ -79,6 +79,9 @@ every run. A prior `reason=human_signoff` is withdrawn: do not skip on it.
 Use the current preflight result to decide whether the earlier concern still
 blocks approval. Promotion always re-runs the full preflight, including the sensitive-path
 list and CI evidence. The sensitive-path list stays in the private job report.
+When reusing prior test analysis, refresh its case evidence as described in
+[PREFLIGHT.md](../references/PREFLIGHT.md#case-level-ci-evidence), including for
+light passes, rebases and promotions.
 
 ## Rebase only
 
@@ -95,7 +98,7 @@ Fetch both commits into the review checkout first. Equal ids mean the same
 content. Then:
 
 - Re-verify every `open=` entry at the new head, as §4.2 carry-forward does.
-- Read no other product file and add no new finding.
+- Limit further reads to the failure-case evidence refresh in preflight.
 - Run the full preflight again. CI must have run on the new head, because a
   new base can still break the build.
 - Prior APPROVE with a clean ledger → APPROVE, first line "Rebase only, same
@@ -138,7 +141,8 @@ of every repository rule file used by the review. Refresh those sources, not a
 copy of the old context. Missing tracker/rule evidence invalidates reuse.
 Run `scripts/snapshot.py check --dir "$REVIEW_DIR" --context "$REVIEW_DIR/CONTEXT.json"`.
 Success reuses only completed code analysis, including carried findings and
-coverage. Resume at verdict with live CI and room evidence. If prior own
+coverage. Refresh case evidence before resuming at verdict with live CI and
+room evidence. If prior own
 REQUEST_CHANGES or coverage/uncertainty/critic_failed requires deep, the retained
 pass must be deep too. A changed head, base, PR text, context, policy or artifact
 invalidates the cache. Apply the normal deep/light rules above. Never turn an

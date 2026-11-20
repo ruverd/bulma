@@ -16,9 +16,9 @@ DEFER (CI, draft, conflict, active change request or blocking concern); never a 
 Access and tooling errors are job-report notes, not Deferred comments.
 The observation collection below is telemetry, not a replacement for that gate.
 Apply the engine's [evidence rules](../../bulma-code-review/references/EVIDENCE.md)
-within that same pass: preserve the checkout, verify regression assertions and
-check paired deployment compatibility when applicable. Do not run a second
-review or publish a separate checklist.
+within that same pass: preserve the checkout, verify the failure-case assertion
+and its CI result, and check paired deployment compatibility when applicable.
+Do not run a second review or publish a separate checklist.
 The engine's `gate.py` decides whether an APPROVE posts; this node never
 posts a review around it. A gate block, a DEFER, or a dismissal is an
 engine outcome to report, not something to retry. Do not dismiss our approval

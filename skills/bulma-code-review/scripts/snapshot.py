@@ -16,6 +16,8 @@ THREADS = '''query($owner:String!, $name:String!, $number:Int!, $endCursor:Strin
  } } } }'''
 ARTIFACTS = ('AC.md', 'bound.json', 'coverage.json', 'analysis.json')
 FAILED_RUN = {'failure', 'timed_out', 'cancelled', 'startup_failure', 'action_required', 'stale'}
+RUN_FIELDS = ('databaseId', 'name', 'status', 'conclusion', 'workflowName',
+              'headSha', 'attempt', 'url')
 ROLLUP = '''query($owner:String!, $name:String!, $number:Int!) {
  repository(owner:$owner, name:$name) { pullRequest(number:$number) {
  commits(last:1) { nodes { commit { oid statusCheckRollup { state } } } }
@@ -59,14 +61,14 @@ def graphql_denied(payload):
 def collect_actions(repo, head):
     payload, err = try_json(
         'run', 'list', '-R', repo, '--commit', head, '--limit', '100',
-        '--json', 'databaseId,name,status,conclusion,workflowName')
+        '--json', ','.join(RUN_FIELDS))
     if err or not isinstance(payload, list):
         return {'head': head, 'runs': [], 'error': err or 'unreadable'}
     runs = []
     for run in payload:
         if not isinstance(run, dict) or not isinstance(run.get('databaseId'), int):
             return {'head': head, 'runs': [], 'error': 'unreadable'}
-        item = {key: run.get(key) for key in ('databaseId', 'name', 'status', 'conclusion', 'workflowName')}
+        item = {key: run.get(key) for key in RUN_FIELDS}
         rid = str(run['databaseId'])
         viewed, jerr = try_json('run', 'view', rid, '-R', repo, '--json', 'jobs')
         jobs = viewed.get('jobs') if isinstance(viewed, dict) else viewed

@@ -121,8 +121,10 @@ re-run every approval gate, including room and head-bound CI. CI that is
 the approve." Name the
 sensitive-path list in the private job report. It does not block promotion.
 Older markers without preflight/one-hop evidence require a fresh deep pass.
-Promotion reads no diff, so write `bound.json` as
-`{"kept":[],"body":[],"dropped":[]}` from that clean marker for `gate.py`.
+Apply the [case evidence refresh](../references/PREFLIGHT.md#case-level-ci-evidence)
+before promotion. If this requires a new review, use the normal pass and bind
+its findings. Otherwise write `bound.json` as
+`{"kept":[],"body":[],"dropped":[]}` from the clean marker for `gate.py`.
 Only then post APPROVE whose body links the earlier comment. First line: "I already
 reviewed this SHA while CI was still running. Checks are green now, so this is
 the approve." Marker keeps the prior `pass=` and adds `reason=promote`.

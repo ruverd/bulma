@@ -642,7 +642,7 @@ skill = (root / 'SKILL.md').read_text()
 assert "Other reviewers' state is ignored" not in skill
 preflight = (root / 'references/PREFLIGHT.md').read_text()
 collector = (root / 'scripts/snapshot.py').read_text()
-for required in ('reviewThreads', 'pageInfo', '--paginate', 'statusCheckRollup', '--log-failed', 'databaseId,name,status,conclusion,workflowName'):
+for required in ('reviewThreads', 'pageInfo', '--paginate', 'statusCheckRollup', '--log-failed'):
     assert required in collector, required
 assert 'check-runs' not in collector and 'check-suites' not in collector
 fetch = (root / 'nodes/fetch.md').read_text()

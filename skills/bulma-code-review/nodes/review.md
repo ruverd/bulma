@@ -81,9 +81,10 @@ finding, `axis: spec`, severity from verdict ยง6. Wording mismatches are nits โ€
 Run **before** correctness. Tests state what the PR claims to do.
 
 Apply [EVIDENCE.md](../references/EVIDENCE.md), Tests that distinguish the
-defect. Trace assertions to production code, inspect weakened tests and record
-whether a regression comparison actually ran. Use isolated execution for
-local checks. Static inspection is not a runtime reproduction.
+defect. Trace assertions to production code, verify the selected failure case
+against the applicable CI attempt, and record whether a regression comparison
+actually ran. Use isolated execution for local checks. Static inspection is
+not a runtime reproduction.
 
 New meaningful logic with no test is a **major**, `axis: tests`. Also: test
 asserts a mock instead of behaviour, error path untested, `it` description

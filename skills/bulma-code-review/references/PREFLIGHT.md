@@ -120,7 +120,7 @@ facts come from:
 
 ```bash
 gh run list -R "$REPO" --commit "$HEAD_SHA" --limit 100 \
-  --json databaseId,name,status,conclusion,workflowName
+  --json databaseId,name,status,conclusion,workflowName,headSha,attempt,url
 gh run view "$RUN_ID" -R "$REPO" --json jobs
 gh run view "$RUN_ID" -R "$REPO" --log-failed
 gh api graphql -f owner="$OWNER" -f name="$NAME" -F number="$PR" -f query='
@@ -172,6 +172,40 @@ If Actions could be read, use them even when the rollup query failed. If
 Actions could not be read and the rollup state is `FAILURE` or `PENDING`,
 that state still counts (`failure` or `pending`). Rollup `SUCCESS` without
 Actions jobs is not success.
+
+### Case-level CI evidence
+
+When the [Tests phase](EVIDENCE.md#tests-that-distinguish-the-defect) identifies
+a meaningful failure case, use `actions.json` to locate its workflow run.
+Read the workflow and runner selection at the reviewed SHA (paths, shard,
+filters, conditional skips and required services). Verify the actual case
+result even on a green job. Fetch only the relevant job or test report:
+
+```bash
+gh run view "$RUN_ID" -R "$REPO" --attempt "$ATTEMPT" --json headSha,attempt,url,jobs
+gh run view "$RUN_ID" -R "$REPO" --attempt "$ATTEMPT" --job "$JOB_ID" --log
+```
+
+Use the effective attempt for the relevant workflow and job. Verify job
+membership in that attempt before using its log. For a partial rerun, use a
+previous job result only when the forge shows it is the effective result and
+identifies its originating attempt. Require a matching head or the verified
+synthetic merge SHA above. A log, JUnit result or equivalent test artifact
+must name the full case and show an executed outcome. A command line, a green
+job or an artifact name without attempt provenance cannot establish execution.
+An explicit skip or selection that rules out the case is evidence of
+exclusion. An unnamed summary, stale result or unavailable log is unverified.
+
+Record `reviewed_sha`, the run SHA, run and attempt IDs, job and a link to the
+case result in `ci_evidence` where available. Save only relevant excerpts in
+the private review directory. On final refresh, including after a wait,
+promotion or rebase, check those identifiers again. Revisit the affected Tests
+evidence when a result was pending or the head, applicable run, attempt or job
+changed. If prior analysis lacks the case or a recorded reason the check did
+not apply, run the Tests phase for the affected behavior before reuse. Take
+changed findings through self-verification, binding and the usual critic rule
+before deciding the verdict. Use the existing aggregate CI and out-of-scope
+rules below.
 
 ## CI out of scope for the base
 
