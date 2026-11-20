@@ -76,7 +76,7 @@ done_report | escalated
 | diagnose | sentry/linear, repo | debug (root cause, evidence, one ticket) |
 | implement | one ticket + spec excerpt | code, tdd evidence, files_touched |
 | review | spec, ticket, diff, runtime receipts | spec_verdict, quality_verdict, review, reviewer_model, reviewer_effort (internal), development_review |
-| tester | files, scripts | hard gate, floor_guard, floor_allowed + runtime receipt paths |
+| tester | files, scripts | hard gate, floor_guard, floor_allowed, applicable scoped check results + runtime receipt paths |
 | evidence | qa_tool, pr_url, sha | fragment, before/after png paths |
 | blast | diff | blast section |
 | quality | diff, files | quality section |

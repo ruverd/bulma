@@ -13,6 +13,10 @@ Then the orchestrator runs **ci_watch** if a PR/MR exists.
 
 1. Pre-checks: review pass, tester pass, quality ok, final evidence current —
    confirm recorded exit codes in the runtime receipts cited in STATE.
+   When tester's scoped checks apply, confirm their recorded results for this
+   tree, including the feature coverage counts or evidenced no-code reason.
+   If an older or resumed attempt lacks a required scoped result, return to
+   tester before publishing.
    Recheck the selected playbook with `scripts/playbook.py check`. Required
    task proof cannot be waived by an optional-step skip. Investigation never
    enters this node.

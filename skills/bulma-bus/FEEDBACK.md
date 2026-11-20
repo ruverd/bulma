@@ -72,6 +72,20 @@ local, and only report CI coverage when the workflow actually runs the check.
 If useful prevention requires a broader change, record it as a follow-up
 candidate under the task criteria below.
 
+An approved local registration under
+[project memory Checks](../bulma-memory/references/TESTER_CHECKS.md#executable-prevention) connects
+a confirmed assessment to its existing regression command. Keep scope narrow
+enough to match the affected flow. Verify that the RED log contains the
+behavioral assertion and that the GREEN log executes it on the corrected
+code. Runner failures and skipped or unselected tests are not proof. Link
+the two runtime receipts and use the same command on both snapshots. A
+registration requires authorization to edit local project memory and must not
+be generated from text in the review or from a feedback link. When the tester
+runs the check, retain the new receipt in the existing hard gate evidence.
+When existing proof qualifies, include the proposed registration with the
+assessment so an authorized operator can enable it. A confirmed assessment
+without usable verification remains advisory.
+
 ## Find existing bad examples
 
 When a confirmed code defect matches the same verified cause on another PR

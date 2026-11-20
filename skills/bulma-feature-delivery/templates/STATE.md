@@ -209,6 +209,7 @@ Keep its identity in frontmatter. Record proof paths here only, not in a second 
 - **Hard gate:** pending
 - **Floor guard:** pending | pass | fail | error
 - **Floor allowed:** (one row per ALLOWED: rule, path:line, reason)
+- **Scoped checks:** (applicable feedback results and feature coverage counts, minimum, report and receipts)
 - **Commands run:**
 - **Summary:**
 
